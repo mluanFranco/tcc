@@ -1,0 +1,92 @@
+/* Importação de fonte */
+.montserrat {
+    font-family: "Montserrat", sans-serif;
+    font-optical-sizing: auto;
+    font-style: normal;
+}
+
+/* Configurações gerais da página */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    height: 100vh;
+
+    font-family: "Montserrat";
+    font-size: 20px;
+
+    background-image: url(/frontend/assets/images/background.png);
+    background-size: cover;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+
+    background-color: white;
+
+    padding: 30px;
+
+    border-radius: 20px;
+}
+
+.imagem-logo {
+    display: flex;
+    justify-content: center;
+}
+
+.campo-email {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.campo-email input {
+    height: 35px;
+    border: 1px solid #e8e6e6;
+    border-radius: 10px;
+    background-color: #fcfcfc;
+}
+
+.campo-senha {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.campo-senha input {
+    height: 35px;
+    border: 1px solid #e8e6e6;
+    border-radius: 10px;
+    background-color: #fcfcfc;
+}
+
+button {
+    padding: 10px;
+    margin-top: 7px;
+
+    font-weight: bold;
+    text-transform: uppercase;
+
+    color: white;
+    background-color: #21308f;
+
+    border-radius: 10px;
+}
+
+p {
+    margin-top: 30px;
+}
+
+a {
+    text-decoration: none;
+    color: #21308f;
+}
