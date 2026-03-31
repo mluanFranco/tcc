@@ -39,6 +39,7 @@ form {
     background-color: white;
 
     padding: 30px;
+    width: 400px;
 
     border-radius: 20px;
 }
@@ -85,13 +86,4 @@ button {
     background-color: #21308f;
 
     border-radius: 10px;
-}
-
-p {
-    margin-top: 30px;
-}
-
-a {
-    text-decoration: none;
-    color: #21308f;
 }
