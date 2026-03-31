@@ -46,16 +46,34 @@ body {
     font-weight: 500;
 }
 
+.produto {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
 .produto a {
     color: white;
     text-decoration: none;
     text-transform: uppercase;
 }
 
+.cliente {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
 .cliente a {
     color: white;
     text-decoration: none;
     text-transform: uppercase;
+}
+
+.fornecedor {
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
 
 .fornecedor a {
@@ -85,10 +103,22 @@ body {
     font-weight: 500;
 }
 
+.pedido-compra {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
 .pedido-compra a {
     color: white;
     text-decoration: none;
     text-transform: uppercase;
+}
+
+.pedido-venda {
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
 
 .pedido-venda a {
