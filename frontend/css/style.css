@@ -42,6 +42,7 @@ form {
     width: 400px;
 
     border-radius: 20px;
+    border: 1px solid #e8e6e6;
 }
 
 .imagem-logo {
@@ -86,4 +87,11 @@ button {
     background-color: #21308f;
 
     border-radius: 10px;
+    border: none;
+}
+
+button:hover {
+    background-color: #2640e0;
+    cursor: pointer;
+    box-shadow: 2px 2px 5px black;
 }
