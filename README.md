@@ -1,8 +1,8 @@
-# Sistema de Gestão de Estoque e Monitoramento
+# Sistema de Gestão de Estoque e Monitoramento de Equipamentos
 
 ### Visão Geral
 
-...
+O sistema tem como principal objetivo entregar uma solução simples e eficiente de controle de estoque, insumos e monitoramento de equipamentos (geladeiras e freezer), para a empresa [Nova Sorvetes](https://www.instagram.com/nova_sorvetes/), localizada em Itapira - SP.
 
 ### DER (Diagrama Entidade Relacionamento)
 
