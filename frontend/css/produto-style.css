@@ -16,6 +16,8 @@
 body {
     font-family: "Montserrat";
     font-size: 16px;
+
+    display: flex;
 }
 
 /* Confiuração geral sidebar */
@@ -154,4 +156,80 @@ body {
     color: white;
     text-decoration: none;
     text-transform: uppercase;
+}
+
+/* Configurações de Cadastro */
+.campo-cadastro {
+    display: flex;
+    justify-content: center;
+
+    padding: 10px;
+}
+
+form {
+    display: flex;
+    gap: 10px;
+}
+
+/* Produto */
+.campo-produto input {
+    height: 30px;
+
+    border: 1px solid #e8e6e6;
+    border-radius: 10px;
+    background-color: #fcfcfc;
+}
+
+/* Campo Descrição */
+.campo-descricao input {
+    height: 30px;
+
+    border: 1px solid #e8e6e6;
+    border-radius: 10px;
+    background-color: #fcfcfc;
+}
+
+/* Campo Categoria */
+.campo-categoria select {
+    height: 30px;
+
+    border: 1px solid #e8e6e6;
+    border-radius: 10px;
+    background-color: #fcfcfc;
+}
+
+/* Campo Unidade Medida */
+.campo-unidade-medida select {
+    height: 30px;
+
+    border: 1px solid #e8e6e6;
+    border-radius: 10px;
+    background-color: #fcfcfc;
+}
+
+/* Campo Preco Custo */
+.campo-preco-custo input {
+    height: 30px;
+
+    border: 1px solid #e8e6e6;
+    border-radius: 10px;
+    background-color: #fcfcfc;
+}
+
+/* Campo Preco Venda */
+.campo-preco-venda input {
+    height: 30px;
+
+    border: 1px solid #e8e6e6;
+    border-radius: 10px;
+    background-color: #fcfcfc;
+}
+
+/* Campo Botões */
+.campo-botoes button {
+    height: 30px;
+
+    border: 1px solid #e8e6e6;
+    border-radius: 10px;
+    background-color: #fcfcfc;
 }
