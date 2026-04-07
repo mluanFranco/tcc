@@ -158,12 +158,20 @@ body {
     text-transform: uppercase;
 }
 
+/* Seção Principal*/
+main {
+    display: flex;
+    flex-direction: column;
+}
+
 /* Configurações de Cadastro */
 .campo-cadastro {
     display: flex;
     justify-content: center;
+    align-items: center;
 
     padding: 10px;
+    margin: 5px;
 }
 
 form {
@@ -173,7 +181,12 @@ form {
 
 /* Produto */
 .campo-produto input {
-    height: 30px;
+    font-family: inherit;
+
+    height: 40px;
+    width: 200px;
+
+    padding: 5px;
 
     border: 1px solid #e8e6e6;
     border-radius: 10px;
@@ -182,7 +195,12 @@ form {
 
 /* Campo Descrição */
 .campo-descricao input {
-    height: 30px;
+    font-family: inherit;
+
+    height: 40px;
+    width: 200px;
+
+    padding: 5px;
 
     border: 1px solid #e8e6e6;
     border-radius: 10px;
@@ -191,7 +209,12 @@ form {
 
 /* Campo Categoria */
 .campo-categoria select {
-    height: 30px;
+    font-family: inherit;
+
+    height: 40px;
+    width: 100px;
+
+    padding: 5px;
 
     border: 1px solid #e8e6e6;
     border-radius: 10px;
@@ -200,7 +223,12 @@ form {
 
 /* Campo Unidade Medida */
 .campo-unidade-medida select {
-    height: 30px;
+    font-family: inherit;
+
+    height: 40px;
+    width: 100px;
+
+    padding: 5px;
 
     border: 1px solid #e8e6e6;
     border-radius: 10px;
@@ -209,7 +237,12 @@ form {
 
 /* Campo Preco Custo */
 .campo-preco-custo input {
-    height: 30px;
+    font-family: inherit;
+
+    height: 40px;
+    width: 110px;
+
+    padding: 5px;
 
     border: 1px solid #e8e6e6;
     border-radius: 10px;
@@ -218,7 +251,12 @@ form {
 
 /* Campo Preco Venda */
 .campo-preco-venda input {
-    height: 30px;
+    font-family: inherit;
+
+    height: 40px;
+    width: 110px;
+
+    padding: 5px;
 
     border: 1px solid #e8e6e6;
     border-radius: 10px;
@@ -227,9 +265,30 @@ form {
 
 /* Campo Botões */
 .campo-botoes button {
-    height: 30px;
+    font-family: inherit;
+
+    height: 40px;
+    width: 100px;
 
     border: 1px solid #e8e6e6;
     border-radius: 10px;
-    background-color: #fcfcfc;
+}
+
+.btn-cadastrar {
+    color: white;
+    background-color: #21308f;
+}
+
+.btn-cadastrar:hover {
+    background-color: #2640e0;
+    cursor: pointer;
+}
+
+.btn-limpar {
+    background-color: #54e37a;
+}
+
+.btn-limpar:hover {
+    background-color: #2ffa65;
+    cursor: pointer;
 }

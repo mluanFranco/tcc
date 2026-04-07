@@ -58,9 +58,13 @@ form {
 
 .campo-email input {
     height: 35px;
+
     border: 1px solid #e8e6e6;
     border-radius: 10px;
     background-color: #fcfcfc;
+
+    font-family: inherit;
+    padding: 5px;
 }
 
 .campo-senha {
@@ -71,12 +75,18 @@ form {
 
 .campo-senha input {
     height: 35px;
+
     border: 1px solid #e8e6e6;
     border-radius: 10px;
     background-color: #fcfcfc;
+
+    font-family: inherit;
+    padding: 5px;
 }
 
 button {
+    height: 45px;
+
     padding: 10px;
     margin-top: 7px;
 
