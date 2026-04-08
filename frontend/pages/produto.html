@@ -59,35 +59,54 @@
     </div>
 
     <main>
+        <div class="titulo-cadastro">
+            <h2>Cadastro de Produtos</h2>
+        </div>
+
         <div class="campo-cadastro">
             <form action="">
-                <div class="campo-produto">
-                    <input type="text" placeholder="Nome">
+                <div class="primeira-secao">
+                    <div class="campo-produto">
+                        <label for="">Nome</label>
+                        <input type="text" id="nome">
+                    </div>
+
+                    <div class="campo-descricao">
+                        <label for="descricao">Descrição</label>
+                        <input type="text" id="descricao">
+                    </div>
+
+                    <div class="campo-categoria">
+                        <label for="categoria">Categoria</label>
+                        <select name="" id="categoria">
+                            <option value="">Escolher categoria</option>
+                            <option value="teste-1">Teste 1</option>
+                        </select>
+                    </div>
                 </div>
 
-                <div class="campo-descricao">
-                    <input type="text" placeholder="Descrição">
-                </div>
+                <div class="segunda-secao">
+                    <div class="campo-unidade-medida">
+                        <label for="unidade-medida">Unidade de Medida</label>
+                        <select name="" id="unidade-medida">
+                            <option value="">Escolher Unidade de Medida</option>
+                        </select>
+                    </div>
 
-                <div class="campo-categoria">
-                    <select name="" id="">
-                        <option value="">Categoria</option>
-                        <option value="teste-1">Teste 1</option>
-                    </select>
-                </div>
+                    <div class="campo-preco-custo">
+                        <label for="preco-custo">Preço de Custo</label>
+                        <input type="text" id="preco-custo">
+                    </div>
 
-                <div class="campo-unidade-medida">
-                    <select name="" id="">
-                        <option value="">U.M</option>
-                    </select>
-                </div>
+                    <div class="campo-preco-venda">
+                        <label for="preco-venda">Preço de Venda</label>
+                        <input type="text" id="preco-venda">
+                    </div>
 
-                <div class="campo-preco-custo">
-                    <input type="number" step="0.01" min="0" placeholder="Preço Custo">
-                </div>
-
-                <div class="campo-preco-venda">
-                    <input type="number" step="0.01" min="0" placeholder="Preço Venda">
+                    <div class="campo-estoque-minimo">
+                        <label for="estoque-minimo">Estoque Mínimo</label>
+                        <input type="text" id="estoque-minimo">
+                    </div>
                 </div>
 
                 <div class="campo-botoes">
@@ -98,7 +117,7 @@
         </div>
 
         <div class="grid-cadastrados">
-            
+
         </div>
     </main>
 </body>

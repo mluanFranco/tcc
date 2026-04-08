@@ -20,6 +20,8 @@ body {
     display: flex;
 }
 
+/* ========================================================================================================================= */
+
 /* Confiuração geral sidebar */
 .sidebar {
     display: flex;
@@ -158,33 +160,81 @@ body {
     text-transform: uppercase;
 }
 
+/* ========================================================================================================================= */
+
 /* Seção Principal*/
 main {
     display: flex;
+    align-items: center;
     flex-direction: column;
+
+    flex: 1;
+}
+
+/* Título Seção Cadastro */
+.titulo-cadastro {
+    margin-top: 10px;
+}
+
+.titulo-cadastro h2 {
+    font-family: inherit;
+    text-transform: uppercase;
+    font-weight: 500;
+
+    color: #21308f;
 }
 
 /* Configurações de Cadastro */
 .campo-cadastro {
     display: flex;
-    justify-content: center;
+    flex-direction: column;
     align-items: center;
 
-    padding: 10px;
+    width: 100%;
+
+    padding: 30px;
     margin: 5px;
 }
 
 form {
     display: flex;
+    flex-direction: column;
+
+    width: 100%;
+    gap: 10px;
+}
+
+/* Seções */
+.primeira-secao {
+    display: flex;
+    flex-direction: column;
+
+    width: 100%;
+    gap: 10px;
+}
+
+.segunda-secao {
+    display: flex;
+
+    width: 100%;
     gap: 10px;
 }
 
 /* Produto */
+.campo-produto {
+    display: flex;
+    flex-direction: column;
+
+    gap: 5px;
+    flex: 1;
+}
+
 .campo-produto input {
     font-family: inherit;
 
     height: 40px;
-    width: 200px;
+    width: 100%;
+    
 
     padding: 5px;
 
@@ -194,11 +244,19 @@ form {
 }
 
 /* Campo Descrição */
+.campo-descricao {
+    display: flex;
+    flex-direction: column;
+    
+    gap: 5px;
+    flex: 1;
+}
+
 .campo-descricao input {
     font-family: inherit;
 
     height: 40px;
-    width: 200px;
+    width: 100%;
 
     padding: 5px;
 
@@ -208,11 +266,19 @@ form {
 }
 
 /* Campo Categoria */
+.campo-categoria {
+    display: flex;
+    flex-direction: column;
+    
+    gap: 5px;
+    flex: 1;
+}
+
 .campo-categoria select {
     font-family: inherit;
 
     height: 40px;
-    width: 100px;
+    width: 100%;
 
     padding: 5px;
 
@@ -222,11 +288,19 @@ form {
 }
 
 /* Campo Unidade Medida */
+.campo-unidade-medida {
+    display: flex;
+    flex-direction: column;
+    
+    gap: 5px;
+    flex: 1;
+}
+
 .campo-unidade-medida select {
     font-family: inherit;
 
     height: 40px;
-    width: 100px;
+    width: 100%;
 
     padding: 5px;
 
@@ -236,11 +310,19 @@ form {
 }
 
 /* Campo Preco Custo */
+.campo-preco-custo {
+    display: flex;
+    flex-direction: column;
+    
+    gap: 5px;
+    flex: 1;
+}
+
 .campo-preco-custo input {
     font-family: inherit;
 
     height: 40px;
-    width: 110px;
+    width: 100%;
 
     padding: 5px;
 
@@ -250,11 +332,41 @@ form {
 }
 
 /* Campo Preco Venda */
+.campo-preco-venda {
+    display: flex;
+    flex-direction: column;
+    
+    gap: 5px;
+    flex: 1;
+}
+
 .campo-preco-venda input {
     font-family: inherit;
 
     height: 40px;
-    width: 110px;
+    width: 100%;
+
+    padding: 5px;
+
+    border: 1px solid #e8e6e6;
+    border-radius: 10px;
+    background-color: #fcfcfc;
+}
+
+/* Campo Estoque Minimo */
+.campo-estoque-minimo {
+    display: flex;
+    flex-direction: column;
+    
+    gap: 5px;
+    flex: 1;
+}
+
+.campo-estoque-minimo input {
+    font-family: inherit;
+
+    height: 40px;
+    width: 100%;
 
     padding: 5px;
 
@@ -264,6 +376,13 @@ form {
 }
 
 /* Campo Botões */
+.campo-botoes {
+    display: flex;
+
+    margin-top: 10px;
+    gap: 10px;
+}
+
 .campo-botoes button {
     font-family: inherit;
 
@@ -272,6 +391,8 @@ form {
 
     border: 1px solid #e8e6e6;
     border-radius: 10px;
+
+    text-transform: uppercase;
 }
 
 .btn-cadastrar {
@@ -285,10 +406,12 @@ form {
 }
 
 .btn-limpar {
-    background-color: #54e37a;
+    background-color: #fef900;
 }
 
 .btn-limpar:hover {
-    background-color: #2ffa65;
+    background-color: #f5f122;
     cursor: pointer;
 }
+
+/* ========================================================================================================================= */
