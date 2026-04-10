@@ -220,6 +220,13 @@ form {
     gap: 10px;
 }
 
+.terceira-secao {
+    display: flex;
+
+    width: 100%;
+    gap: 10px;
+}
+
 /* Produto */
 .campo-produto {
     display: flex;
