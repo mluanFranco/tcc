@@ -4,6 +4,8 @@
 
 O sistema tem como objetivo entregar uma solução simples e eficiente para controle de estoque e monitoramento de equipamentos refrigerados (geladeiras e freezers) para a empresa [Nova Sorvetes](https://www.instagram.com/nova_sorvetes/), localizada em Itapira - SP. Com ele, a empresa poderá atender seus clientes com mais agilidade e manter maior controle sobre seus produtos e ativos.
 
+![Logo Nova Sorvetes](/frontend/assets/images/logo-novasorvetes.png)
+
 ---
 
 ### Controle de Estoque
