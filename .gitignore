@@ -1,0 +1,21 @@
+# Ambiente virtual
+backend/venv/
+
+# Banco de dados SQLite (caso use em testes)
+backend/banco.db
+
+# Variáveis de ambiente
+.env
+backend/.env
+
+# Cache do Python
+__pycache__/
+*.pyc
+*.pyo
+
+# VS Code
+.vscode/
+
+# Sistema operacional
+.DS_Store
+Thumbs.db
