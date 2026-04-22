@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware # Para evitar bloqueia de CORS
-from routes import usuario
+from routes import usuario, auth
 
 app = FastAPI()
 
@@ -12,3 +12,4 @@ app.add_middleware(
 )
 
 app.include_router(usuario.router)
+app.include_router(auth.router)
