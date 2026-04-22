@@ -16,3 +16,10 @@ class UsuarioResponse(BaseModel):
 
     class Config:
         from_attributes = True  # permite converter objeto SQLAlchemy para Pydantic
+
+class UsuarioUpdate(BaseModel):
+    nome: Optional[str] = None
+    email: Optional[EmailStr] = None
+    senha: Optional[str] = None
+    admin: Optional[bool] = None
+    ativo: Optional[bool] = None
