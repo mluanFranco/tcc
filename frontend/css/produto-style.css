@@ -422,3 +422,16 @@ form {
 }
 
 /* ========================================================================================================================= */
+
+/* Título Seção Grid Cadastro*/
+.titulo-grid {
+    margin-top: 10px;
+}
+
+.titulo-grid h2 {
+    font-family: inherit;
+    text-transform: uppercase;
+    font-weight: 500;
+
+    color: #21308f;
+}
