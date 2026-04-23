@@ -1,0 +1,431 @@
+/* Importação de fonte */
+.montserrat {
+    font-family: "Montserrat", sans-serif;
+    font-optical-sizing: auto;
+    font-style: normal;
+}
+
+
+/* Configurações gerais da página */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: "Montserrat";
+    font-size: 16px;
+
+    display: flex;
+}
+
+/* ========================================================================================================================= */
+
+/* Confiuração geral sidebar */
+.sidebar {
+    display: flex;
+    flex-direction: column;
+
+    margin: 5px;
+    gap: 30px;
+    padding: 30px;
+
+    height: 100vh;
+    width: 400px;
+
+    background-color: #21308f;
+
+    border-radius: 10px;
+}
+
+/* Configurações seção geral*/
+.secao-geral {
+    display: flex;
+    flex-direction: column;
+
+    gap: 10px;
+}
+
+.secao-geral h2 {
+    color: #fef900;
+    text-transform: uppercase;
+    font-weight: 500;
+}
+
+.dashboard {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.dashboard a {
+    color: white;
+    text-decoration: none;
+    text-transform: uppercase;
+}
+
+/* Configurações seção cadastro */
+.secao-cadastro {
+    display: flex;
+    flex-direction: column;
+
+    gap: 10px;
+}
+
+.secao-cadastro h2 {
+    color: #fef900;
+    text-transform: uppercase;
+    font-weight: 500;
+}
+
+.produto {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.produto a {
+    color: white;
+    text-decoration: none;
+    text-transform: uppercase;
+}
+
+.cliente {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.cliente a {
+    color: white;
+    text-decoration: none;
+    text-transform: uppercase;
+}
+
+.fornecedor {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.fornecedor a {
+    color: white;
+    text-decoration: none;
+    text-transform: uppercase;
+}
+
+/* Barra horizontal entre seções */
+.barra-horizontal {
+    height: 1px;
+    background-color: #fef900;
+}
+
+
+/* Configurações seção pedido */
+.secao-pedido {
+    display: flex;
+    flex-direction: column;
+
+    gap: 10px;
+}
+
+.secao-pedido h2 {
+    color: #fef900;
+    text-transform: uppercase;
+    font-weight: 500;
+}
+
+.pedido-compra {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.pedido-compra a {
+    color: white;
+    text-decoration: none;
+    text-transform: uppercase;
+}
+
+.pedido-venda {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.pedido-venda a {
+    color: white;
+    text-decoration: none;
+    text-transform: uppercase;
+}
+
+/* ========================================================================================================================= */
+
+/* Seção Principal*/
+main {
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+
+    flex: 1;
+}
+
+/* Título Seção Cadastro */
+.titulo-cadastro {
+    margin-top: 10px;
+}
+
+.titulo-cadastro h2 {
+    font-family: inherit;
+    text-transform: uppercase;
+    font-weight: 500;
+
+    color: #21308f;
+}
+
+/* Configurações de Cadastro */
+.campo-cadastro {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    width: 100%;
+
+    padding: 30px;
+    margin: 5px;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+
+    width: 100%;
+    gap: 10px;
+}
+
+/* Seções */
+.primeira-secao {
+    display: flex;
+
+    width: 100%;
+    gap: 10px;
+}
+
+.segunda-secao {
+    display: flex;
+
+    width: 100%;
+    gap: 10px;
+}
+
+.terceira-secao {
+    display: flex;
+
+    width: 100%;
+    gap: 10px;
+}
+
+.quarta-secao {
+    display: flex;
+
+    width: 100%;
+    gap: 10px;
+}
+
+/* Fornecedor */
+.campo-fornecedor {
+    display: flex;
+    flex-direction: column;
+
+    gap: 5px;
+    flex: 1;
+}
+
+.campo-fornecedor input {
+    font-family: inherit;
+
+    height: 40px;
+    width: 100%;
+    
+
+    padding: 5px;
+
+    border: 1px solid #e8e6e6;
+    border-radius: 10px;
+    background-color: #fcfcfc;
+}
+
+/* CNPJ */
+.campo-cnpj {
+    display: flex;
+    flex-direction: column;
+
+    gap: 5px;
+    flex: 1;
+}
+
+.campo-cnpj input {
+    font-family: inherit;
+
+    height: 40px;
+    width: 100%;
+    
+
+    padding: 5px;
+
+    border: 1px solid #e8e6e6;
+    border-radius: 10px;
+    background-color: #fcfcfc;
+}
+
+/* Telefone */
+.campo-telefone {
+    display: flex;
+    flex-direction: column;
+
+    gap: 5px;
+    flex: 1;
+}
+
+.campo-telefone input {
+    font-family: inherit;
+
+    height: 40px;
+    width: 100%;
+    
+
+    padding: 5px;
+
+    border: 1px solid #e8e6e6;
+    border-radius: 10px;
+    background-color: #fcfcfc;
+}
+
+/* E-mail */
+.campo-email {
+    display: flex;
+    flex-direction: column;
+
+    gap: 5px;
+    flex: 1;
+}
+
+.campo-email input {
+    font-family: inherit;
+
+    height: 40px;
+    width: 100%;
+    
+
+    padding: 5px;
+
+    border: 1px solid #e8e6e6;
+    border-radius: 10px;
+    background-color: #fcfcfc;
+}
+
+/* Campo Endereço */
+.campo-endereco {
+    display: flex;
+    flex-direction: column;
+    
+    gap: 5px;
+    flex: 1;
+}
+
+.campo-endereco input {
+    font-family: inherit;
+
+    height: 40px;
+    width: 100%;
+
+    padding: 5px;
+
+    border: 1px solid #e8e6e6;
+    border-radius: 10px;
+    background-color: #fcfcfc;
+}
+
+/* Campo Cidade */
+.campo-cidade {
+    display: flex;
+    flex-direction: column;
+    
+    gap: 5px;
+    flex: 1;
+}
+
+.campo-cidade input {
+    font-family: inherit;
+
+    height: 40px;
+    width: 100%;
+
+    padding: 5px;
+
+    border: 1px solid #e8e6e6;
+    border-radius: 10px;
+    background-color: #fcfcfc;
+}
+
+/* Campo Estado */
+.campo-estado {
+    display: flex;
+    flex-direction: column;
+    
+    gap: 5px;
+    flex: 1;
+}
+
+.campo-estado input {
+    font-family: inherit;
+
+    height: 40px;
+    width: 100%;
+
+    padding: 5px;
+
+    border: 1px solid #e8e6e6;
+    border-radius: 10px;
+    background-color: #fcfcfc;
+}
+
+/* Campo Botões */
+.campo-botoes {
+    display: flex;
+
+    margin-top: 10px;
+    gap: 10px;
+}
+
+.campo-botoes button {
+    font-family: inherit;
+
+    height: 40px;
+    width: 100px;
+
+    border: 1px solid #e8e6e6;
+    border-radius: 10px;
+
+    text-transform: uppercase;
+}
+
+.btn-cadastrar {
+    color: white;
+    background-color: #21308f;
+}
+
+.btn-cadastrar:hover {
+    background-color: #2640e0;
+    cursor: pointer;
+}
+
+.btn-limpar {
+    background-color: #fef900;
+}
+
+.btn-limpar:hover {
+    background-color: #f5f122;
+    cursor: pointer;
+}
