@@ -1,7 +1,7 @@
 # Ambiente virtual
 backend/venv/
 
-# Banco de dados SQLite (caso use em testes)
+# Banco de dados SQLite (caso de testes)
 backend/banco.db
 
 # Variáveis de ambiente
@@ -19,3 +19,7 @@ __pycache__/
 # Sistema operacional
 .DS_Store
 Thumbs.db
+
+# Logs e arquivos temporários
+*.log
+*.tmp

@@ -2,25 +2,25 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from database import get_db
 from models import Usuario
-from pydantic import BaseModel
-import bcrypt
+from schemas.auth import LoginRequest, TokenResponse
 from jose import jwt
 from datetime import datetime, timedelta
+from dotenv import load_dotenv
+import bcrypt, os
 
-SECRET_KEY = "sua_chave_secreta"  # mover para o .env futuramente
-ALGORITHM = "HS256"
+load_dotenv()
+
+SECRET_KEY = os.getenv("SECRET_KEY")
+ALGORITHM  = os.getenv("ALGORITHM")
+EXPIRE_HOURS = int(os.getenv("ACCESS_TOKEN_EXPIRE_HOURS", 8))
 
 router = APIRouter(prefix="/auth", tags=["Autenticação"])
 
-class LoginRequest(BaseModel):
-    email: str
-    senha: str
-
-@router.post("/login")
+@router.post("/login", response_model=TokenResponse)
 def login(dados: LoginRequest, db: Session = Depends(get_db)):
     usuario = db.query(Usuario).filter(Usuario.email == dados.email).first()
 
-    if not usuario or not bcrypt.checkpw(dados.senha.encode("utf-8"), usuario.senha.encode("utf-8")):
+    if not usuario or not bcrypt.checkpw(dados.senha.encode(), usuario.senha_hash.encode()):
         raise HTTPException(status_code=401, detail="Email ou senha inválidos")
 
     if not usuario.ativo:
@@ -30,7 +30,7 @@ def login(dados: LoginRequest, db: Session = Depends(get_db)):
         "sub": str(usuario.id),
         "nome": usuario.nome,
         "admin": usuario.admin,
-        "exp": datetime.utcnow() + timedelta(hours=8)
+        "exp": datetime.utcnow() + timedelta(hours=EXPIRE_HOURS)
     }, SECRET_KEY, algorithm=ALGORITHM)
 
     return {"access_token": token, "token_type": "bearer"}
