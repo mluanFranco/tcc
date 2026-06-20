@@ -4,28 +4,23 @@ Sistema de gestão de estoque desenvolvido para a empresa [Nova Sorvetes](https:
 
 ![Logo Nova Sorvetes](/frontend/assets/images/logo-novasorvetes.png)
 
+> **Status do projeto:** Backend completo e testado. Frontend e containerização via Docker em desenvolvimento.
+
 ---
 
 ## Sumário
 
-- [Sistema de Gestão de Estoque e Monitoramento de Equipamentos](#sistema-de-gestão-de-estoque-e-monitoramento-de-equipamentos)
-  - [Sumário](#sumário)
-  - [Visão Geral](#visão-geral)
-  - [Módulos do Sistema](#módulos-do-sistema)
-  - [Modelo de Dados](#modelo-de-dados)
-    - [Produto](#produto)
-    - [Cliente / Fornecedor](#cliente--fornecedor)
-    - [Pedido de Venda / Pedido de Compra](#pedido-de-venda--pedido-de-compra)
-    - [Item Pedido Venda / Item Pedido Compra](#item-pedido-venda--item-pedido-compra)
-    - [Cotação / Item Cotação](#cotação--item-cotação)
-    - [Forma de Pagamento](#forma-de-pagamento)
-    - [Usuário](#usuário)
-    - [Geladeira / Histórico de Manutenção](#geladeira--histórico-de-manutenção)
-  - [Arquitetura](#arquitetura)
-  - [Estrutura de Pastas](#estrutura-de-pastas)
-  - [Como Executar o Projeto](#como-executar-o-projeto)
-  - [Sobre o Projeto](#sobre-o-projeto)
-  - [Stack Utilizada](#stack-utilizada)
+- [Visão Geral](#visão-geral)
+- [Módulos do Sistema](#módulos-do-sistema)
+- [Modelo de Dados](#modelo-de-dados)
+- [Regras de Negócio](#regras-de-negócio)
+- [Arquitetura](#arquitetura)
+- [Estrutura de Pastas](#estrutura-de-pastas)
+- [Como Executar o Projeto](#como-executar-o-projeto)
+- [Migrações de Banco de Dados (Alembic)](#migrações-de-banco-de-dados-alembic)
+- [Roadmap](#roadmap)
+- [Sobre o Projeto](#sobre-o-projeto)
+- [Stack Utilizada](#stack-utilizada)
 
 ---
 
@@ -33,7 +28,7 @@ Sistema de gestão de estoque desenvolvido para a empresa [Nova Sorvetes](https:
 
 O sistema entrega uma solução simples e funcional para o controle de estoque e o monitoramento de equipamentos refrigerados (geladeiras e freezers) alocados nos clientes da empresa. Com ele, é possível:
 
-- Controlar entradas e saídas de produtos via pedidos de compra e venda;
+- Controlar entradas e saídas de produtos via pedidos de compra e venda, com reserva automática de estoque;
 - Cadastrar clientes e fornecedores com preenchimento automático de endereço via CEP;
 - Comparar cotações entre fornecedores para identificar o melhor custo-benefício;
 - Registrar formas de pagamento e prazos associados às compras;
@@ -43,56 +38,65 @@ O sistema entrega uma solução simples e funcional para o controle de estoque e
 
 ## Módulos do Sistema
 
-| Módulo | Responsabilidade |
-|---|---|
-| **Controle de Estoque** | Cadastro de produtos, clientes e fornecedores; registro de pedidos de compra e venda; atualização automática do saldo em estoque |
-| **Cotação de Produtos** | Registro de cotações recebidas de fornecedores e comparação de preços por produto |
-| **Formas de Pagamento** | Cadastro das modalidades de pagamento (à vista, parcelado, a prazo) associadas aos pedidos de compra |
-| **Monitoramento de Equipamentos** | Cadastro de geladeiras/freezers alocados a clientes e registro do histórico de manutenções realizadas |
+| Módulo | Responsabilidade | Status |
+|---|---|---|
+| **Autenticação** | Login via JWT, controle de permissões (usuário comum / admin) | ✅ Completo |
+| **Controle de Estoque** | Cadastro de produtos, clientes e fornecedores; pedidos de compra e venda; atualização automática do saldo em estoque | ✅ Completo |
+| **Cotação de Produtos** | Registro de cotações por fornecedor e comparativo de preços por produto | ✅ Completo |
+| **Formas de Pagamento** | Cadastro das modalidades de pagamento (à vista, parcelado, a prazo) | ✅ Completo |
+| **Monitoramento de Equipamentos** | Cadastro de geladeiras/freezers alocados a clientes e histórico de manutenções | ✅ Completo |
+| **Frontend** | Interface web consumindo a API | 🔄 Em desenvolvimento |
+| **Containerização** | Empacotamento via Docker e Docker Compose | 🔄 Planejado |
 
 ---
 
 ## Modelo de Dados
 
-O modelo relacional foi estruturado a partir de um Diagrama Entidade-Relacionamento (DER), contemplando as seguintes entidades:
+O modelo relacional foi estruturado a partir de um Diagrama Entidade-Relacionamento (DER):
 
 ![Diagrama Entidade-Relacionamento](/frontend/assets/images/der.png)
 
 ### Produto
-Controla os itens comercializados e seus respectivos níveis de estoque.
 | Campo | Descrição |
 |---|---|
 | `id` | Chave primária |
 | `nome`, `descricao`, `categoria`, `unidade_medida` | Identificação e categorização |
 | `preco_custo`, `preco_venda` | Precificação |
-| `estoque_atual` | Atualizado automaticamente pelo fluxo de pedidos |
+| `estoque_atual` | Quantidade física real, atualizada pelo fluxo de pedidos |
+| `estoque_reservado` | Quantidade comprometida em pedidos de venda ainda não confirmados |
 | `estoque_minimo` | Utilizado para alertas de reposição |
 | `ativo` | Soft delete |
 | `created_at`, `updated_at` | Auditoria |
 
+> O estoque disponível para venda é sempre calculado como `estoque_atual - estoque_reservado`, e exposto na API como o campo computado `estoque_disponivel`. Veja [Regras de Negócio](#regras-de-negócio) para o racional completo.
+
 ### Cliente / Fornecedor
-Armazenam os dados cadastrais e de endereço, preenchidos automaticamente via integração com a [API ViaCEP](https://viacep.com.br/).
 | Campo | Descrição |
 |---|---|
 | `id` | Chave primária |
 | `nome`, `cpf_cnpj` (ou `cnpj`), `tipo`, `telefone`, `email` | Dados cadastrais |
-| `cep`, `logradouro`, `numero`, `complemento`, `bairro`, `cidade`, `uf`, `ddd` | Endereço, preenchido via ViaCEP |
+| `cep`, `logradouro`, `numero`, `complemento`, `bairro`, `cidade`, `uf`, `ddd` | Endereço, preenchido via [API ViaCEP](https://viacep.com.br/) |
 | `ativo` | Soft delete |
 | `created_at`, `updated_at` | Auditoria |
 
-### Pedido de Venda / Pedido de Compra
-Representam, respectivamente, a saída e a entrada de produtos no estoque.
+### Pedido de Venda
 | Campo | Descrição |
 |---|---|
 | `id` | Chave primária |
-| `cliente_id` / `fornecedor_id` | Chave estrangeira |
-| `usuario_id` | Responsável pelo registro |
-| `data_pedido`, `data_entrega_prevista`* | Controle de datas (*apenas compra) |
-| `valor_total`, `status`, `observacao` | Dados da transação |
-| `forma_pagamento_id`* | Apenas pedido de compra |
+| `cliente_id`, `usuario_id` | Chaves estrangeiras |
+| `data_pedido`, `valor_total`, `status`, `forma_pagamento`, `observacao` | Dados da transação |
+| `status` | `aberto` \| `confirmado` \| `cancelado` |
+
+### Pedido de Compra
+| Campo | Descrição |
+|---|---|
+| `id` | Chave primária |
+| `fornecedor_id`, `usuario_id`, `forma_pagamento_id` | Chaves estrangeiras |
+| `data_pedido`, `data_entrega_prevista`, `valor_total`, `status`, `observacao` | Dados da transação |
+| `status` | `pendente` \| `recebido` \| `cancelado` |
 
 ### Item Pedido Venda / Item Pedido Compra
-Tabelas intermediárias que viabilizam a relação um-para-muitos entre pedidos e produtos, permitindo múltiplos itens por pedido.
+Tabelas intermediárias que viabilizam a relação um-para-muitos entre pedidos e produtos.
 | Campo | Descrição |
 |---|---|
 | `id` | Chave primária |
@@ -100,9 +104,11 @@ Tabelas intermediárias que viabilizam a relação um-para-muitos entre pedidos 
 | `produto_id` | Chave estrangeira |
 | `quantidade`, `preco_unitario`, `subtotal` | Dados do item |
 | `desconto`* | Apenas item de venda |
+| `quantidade_recebida`* | Apenas item de compra — acumulado já recebido fisicamente |
+
+> **Por que tabelas intermediárias?** Pedidos podem conter múltiplos produtos. Em vez de repetir colunas no cabeçalho do pedido, cada item é armazenado em sua própria linha, vinculado ao pedido e ao produto correspondente — garantindo normalização e evitando redundância de dados.
 
 ### Cotação / Item Cotação
-Permitem registrar e comparar preços oferecidos por diferentes fornecedores para um mesmo produto.
 | Campo | Descrição |
 |---|---|
 | `id` | Chave primária |
@@ -111,7 +117,6 @@ Permitem registrar e comparar preços oferecidos por diferentes fornecedores par
 | `produto_id`, `preco_unitario`, `quantidade_referencia` | Itens cotados |
 
 ### Forma de Pagamento
-Tabela de referência para as modalidades de pagamento usadas nos pedidos de compra.
 | Campo | Descrição |
 |---|---|
 | `id` | Chave primária |
@@ -119,7 +124,6 @@ Tabela de referência para as modalidades de pagamento usadas nos pedidos de com
 | `prazo_dias`, `taxa_percentual` | Condições da modalidade |
 
 ### Usuário
-Controla o acesso ao sistema e a rastreabilidade das operações.
 | Campo | Descrição |
 |---|---|
 | `id` | Chave primária |
@@ -128,21 +132,55 @@ Controla o acesso ao sistema e a rastreabilidade das operações.
 | `created_at`, `updated_at` | Auditoria |
 
 ### Geladeira / Histórico de Manutenção
-Compõem o módulo de monitoramento de equipamentos. O endereço da geladeira não é replicado — é sempre obtido a partir do cliente ao qual está alocada (`cliente_id`), evitando duplicidade e inconsistência de dados.
+O endereço da geladeira não é replicado — é sempre obtido a partir do cliente ao qual está alocada (`cliente_id`), evitando duplicidade e inconsistência de dados.
 | Campo | Descrição |
 |---|---|
 | `id` | Chave primária |
 | `cliente_id` | Chave estrangeira — define a localização do equipamento |
-| `tipo`, `modelo`, `marca`, `numero_serie`, `status` | Identificação do equipamento |
+| `tipo`, `modelo`, `marca`, `numero_serie`, `status` | Identificação do equipamento (`em_campo` \| `manutencao` \| `desativada`) |
 | `geladeira_id`, `usuario_id`, `data`, `tipo`, `descricao`, `custo` | Registro de manutenções (tabela `historico_manutencao`) |
 
-> **Por que tabelas intermediárias?** Pedidos de compra e venda podem conter múltiplos produtos. Em vez de repetir colunas no cabeçalho do pedido, cada item é armazenado em sua própria linha, vinculado ao pedido e ao produto correspondente — garantindo normalização e evitando redundância de dados.
+---
+
+## Regras de Negócio
+
+Estas são as decisões de design que vão além de um CRUD simples — vale documentá-las, pois representam grande parte do valor técnico do projeto.
+
+### Reserva de estoque em pedidos de venda
+
+Sem controle de concorrência, dois pedidos abertos simultaneamente para o mesmo produto poderiam, juntos, vender mais do que existe fisicamente em estoque. Para resolver isso, o produto mantém dois contadores:
+
+- `estoque_atual` — quantidade física real (só muda na efetiva entrada/saída de mercadoria);
+- `estoque_reservado` — soma das quantidades comprometidas em pedidos de venda com status `aberto`.
+
+O fluxo funciona assim:
+
+| Transição | Efeito no estoque |
+|---|---|
+| Criar pedido (`→ aberto`) | Valida `estoque_atual - estoque_reservado` (disponível); incrementa `estoque_reservado` |
+| `aberto → confirmado` | Libera a reserva (`estoque_reservado -=`) e debita o físico (`estoque_atual -=`) |
+| `aberto → cancelado` | Libera a reserva, sem afetar o físico |
+| `confirmado → cancelado` | Devolve o físico (`estoque_atual +=`) |
+
+Isso impede que um segundo pedido reserve uma quantidade que já está comprometida por outro pedido em aberto — o bloqueio ocorre já na criação, não apenas na confirmação.
+
+### Recebimento parcial e acumulativo em pedidos de compra
+
+Entregas de fornecedores raramente chegam 100% completas de uma vez — avarias, divergências e reposições parciais são comuns. Por isso, cada item de um pedido de compra rastreia `quantidade` (pedida) separadamente de `quantidade_recebida` (acumulado já recebido).
+
+O endpoint `POST /pedidos-compra/{id}/receber` pode ser chamado múltiplas vezes para o mesmo pedido, sempre informando apenas a quantidade daquela entrega específica (não o total acumulado). Cada chamada credita no estoque exatamente o que chegou naquele momento. O pedido permanece `pendente` enquanto qualquer item estiver incompleto, e muda automaticamente para `recebido` somente quando todos os itens atingem a quantidade total pedida.
+
+O cancelamento (`pendente → cancelado` ou `recebido → cancelado`) estorna do estoque exatamente o que havia sido recebido até então, com validação para impedir que o estoque fique negativo caso parte da mercadoria já tenha sido vendida.
+
+### Soft delete e auditoria
+
+Produtos, clientes, fornecedores e usuários nunca são removidos permanentemente — são marcados como `ativo = False`, preservando o histórico de pedidos, cotações e manutenções que os referenciam. Cada módulo expõe um endpoint `/inativos` e um parâmetro `?incluir_inativos=true` para consulta administrativa, permitindo reativação posterior.
+
+Cotações e registros de manutenção, por não estarem vinculados a transações já efetivadas, permitem exclusão real.
 
 ---
 
 ## Arquitetura
-
-O sistema segue uma arquitetura em camadas, com separação clara de responsabilidades:
 
 ```
 Frontend (HTML/CSS/JS)
@@ -167,16 +205,20 @@ A comunicação entre frontend e backend ocorre via requisições HTTP/JSON cons
 ```
 sist_gest_est_mon/
 ├── backend/
+│   ├── alembic/                  # Migrações de schema do banco de dados
+│   │   ├── versions/
+│   │   └── env.py
 │   ├── core/
-│   │   └── security.py       # Autenticação JWT e dependências de permissão
-│   ├── routes/                # Endpoints da API, um arquivo por entidade
-│   ├── schemas/                # Modelos Pydantic de entrada/saída
-│   ├── database.py             # Configuração de conexão com o MySQL
-│   ├── models.py                # Modelos ORM (SQLAlchemy)
-│   ├── create_tables.py         # Script de criação das tabelas
-│   ├── main.py                   # Inicialização da aplicação FastAPI
-│   └── requirements.txt           # Dependências do projeto
-├── frontend/                       # Interface web (HTML, CSS, JS)
+│   │   └── security.py           # Autenticação JWT e dependências de permissão
+│   ├── routes/                    # Endpoints da API, um arquivo por entidade
+│   ├── schemas/                    # Modelos Pydantic de entrada/saída
+│   ├── alembic.ini                  # Configuração do Alembic
+│   ├── database.py                   # Configuração de conexão com o MySQL
+│   ├── models.py                      # Modelos ORM (SQLAlchemy)
+│   ├── create_tables.py                # Script de criação inicial das tabelas
+│   ├── main.py                           # Inicialização da aplicação FastAPI
+│   └── requirements.txt                   # Dependências do projeto
+├── frontend/                                # Interface web (HTML, CSS, JS)
 ├── .gitignore
 └── README.md
 ```
@@ -222,6 +264,46 @@ uvicorn main:app --reload
 ```
 
 A documentação interativa da API estará disponível em `http://127.0.0.1:8000/docs`.
+
+---
+
+## Migrações de Banco de Dados (Alembic)
+
+A partir da estabilização do modelo de dados, alterações de schema passaram a ser versionadas via [Alembic](https://alembic.sqlalchemy.org/), em vez de comandos manuais no banco. Isso garante que qualquer pessoa do grupo (ou o ambiente de produção, futuramente) consiga aplicar exatamente as mesmas mudanças de estrutura, na ordem correta.
+
+```bash
+# Gerar uma nova migração após alterar models.py
+alembic revision --autogenerate -m "descricao da mudanca"
+
+# Revisar o arquivo gerado em alembic/versions/ antes de aplicar
+
+# Aplicar a migração ao banco
+alembic upgrade head
+```
+
+> **Nota técnica:** como a senha do banco contém o caractere `%` (proveniente de URL encoding), foi necessário escapá-lo como `%%` ao configurar a URL de conexão em `alembic/env.py`, pois o `configparser` do Python interpreta `%` como início de uma sintaxe de interpolação.
+
+---
+
+## Roadmap
+
+### Frontend (em desenvolvimento)
+- Interface web em HTML, CSS e JavaScript puro, consumindo a API REST do backend;
+- Tela de login com armazenamento do token JWT;
+- Telas de cadastro (produtos, clientes, fornecedores) com autocomplete de endereço via ViaCEP;
+- Telas de pedidos de venda e compra, incluindo visualização do progresso de recebimento parcial;
+- Dashboard com indicadores de estoque baixo e comparativo de cotações.
+
+### Containerização com Docker (planejado)
+A aplicação será empacotada em três containers independentes, orquestrados via Docker Compose:
+- **Backend** — imagem Python 3.12 rodando FastAPI/Uvicorn;
+- **Frontend** — imagem Nginx servindo os arquivos estáticos;
+- **MySQL** — imagem oficial do banco de dados.
+
+O objetivo é permitir que o sistema completo seja inicializado com um único comando (`docker-compose up`), eliminando a necessidade de configuração manual de ambiente em máquinas de desenvolvimento ou na avaliação do projeto.
+
+### Outras evoluções futuras
+Conforme indicado no artigo original do TCC: integração com módulos de fluxo de caixa e contas a pagar/receber, painel de indicadores (KPIs), acesso via aplicativo móvel, e monitoramento de temperatura das geladeiras via sensores IoT.
 
 ---
 
