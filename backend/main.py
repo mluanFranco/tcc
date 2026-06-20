@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from routes import auth, usuario, produto, cliente, fornecedor
+from routes import auth, usuario, produto, cliente, fornecedor, forma_pagamento, pedido_venda, pedido_compra
 
 app = FastAPI(
     title="Sistema de Gestão de Estoque - Nova Sorvetes",
@@ -19,3 +19,6 @@ app.include_router(usuario.router)
 app.include_router(produto.router)
 app.include_router(cliente.router)
 app.include_router(fornecedor.router)
+app.include_router(forma_pagamento.router)
+app.include_router(pedido_venda.router)
+app.include_router(pedido_compra.router)

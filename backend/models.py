@@ -35,6 +35,7 @@ class Produto(Base):
     preco_venda    = Column(Float)
     estoque_atual  = Column(Integer, default=0)
     estoque_minimo = Column(Integer, default=0)
+    estoque_reservado = Column(Integer, default=0)
     ativo          = Column(Boolean, default=True)
     created_at     = Column(DateTime, default=datetime.now)
     updated_at     = Column(DateTime, default=datetime.now, onupdate=datetime.now)
@@ -173,12 +174,13 @@ class PedidoCompra(Base):
 class ItemPedidoCompra(Base):
     __tablename__ = "item_pedido_compra"
 
-    id               = Column(Integer, primary_key=True, autoincrement=True)
-    pedido_compra_id = Column(Integer, ForeignKey("pedido_compra.id"), nullable=False)
-    produto_id       = Column(Integer, ForeignKey("produto.id"), nullable=False)
-    quantidade       = Column(Integer, nullable=False)
-    preco_unitario   = Column(Float, nullable=False)
-    subtotal         = Column(Float, nullable=False)
+    id                  = Column(Integer, primary_key=True, autoincrement=True)
+    pedido_compra_id    = Column(Integer, ForeignKey("pedido_compra.id"), nullable=False)
+    produto_id          = Column(Integer, ForeignKey("produto.id"), nullable=False)
+    quantidade          = Column(Integer, nullable=False)            # quantidade pedida
+    quantidade_recebida = Column(Integer, default=0, nullable=False) # acumulado já recebido
+    preco_unitario      = Column(Float, nullable=False)
+    subtotal            = Column(Float, nullable=False)
 
     pedido_compra = relationship("PedidoCompra", back_populates="itens")
     produto       = relationship("Produto")

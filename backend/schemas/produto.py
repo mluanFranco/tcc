@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, computed_field
 from typing import Optional
 from datetime import datetime
 
@@ -30,8 +30,14 @@ class ProdutoResponse(BaseModel):
     preco_custo: float
     preco_venda: Optional[float]
     estoque_atual: int
+    estoque_reservado: int
     estoque_minimo: int
     ativo: bool
     created_at: datetime
 
     model_config = {"from_attributes": True}
+
+    @computed_field
+    @property
+    def estoque_disponivel(self) -> int:
+        return self.estoque_atual - self.estoque_reservado
