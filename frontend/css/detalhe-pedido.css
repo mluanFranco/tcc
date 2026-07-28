@@ -1,0 +1,315 @@
+/* ============================================
+   DETALHE-PEDIDO.CSS — Estilos compartilhados das telas de
+   detalhe de pedido de venda e pedido de compra.
+   ============================================ */
+
+.detalhe-topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.detalhe-topo__titulo-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.botao-voltar {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  border: 1.5px solid var(--neutro-borda);
+  color: var(--neutro-secundario);
+}
+
+.botao-voltar:hover {
+  background: #F9FAFB;
+  color: var(--neutro-texto);
+}
+
+.detalhe-topo h1 {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--neutro-texto);
+}
+
+.badge-status-grande {
+  display: inline-flex;
+  padding: 6px 14px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.badge-status-grande--aberto,
+.badge-status-grande--pendente {
+  background: #FEF9C3;
+  color: #854D0E;
+}
+
+.badge-status-grande--confirmado,
+.badge-status-grande--recebido {
+  background: #DCFCE7;
+  color: #166534;
+}
+
+.badge-status-grande--cancelado {
+  background: #FEE2E2;
+  color: #991B1B;
+}
+
+.detalhe-acoes {
+  display: flex;
+  gap: 10px;
+}
+
+.botao-perigo {
+  height: 40px;
+  padding: 0 18px;
+  background: #FFFFFF;
+  color: var(--erro);
+  font-size: 14px;
+  font-weight: 600;
+  border: 1.5px solid #FCA5A5;
+  border-radius: var(--raio-botao);
+}
+
+.botao-perigo:hover {
+  background: var(--erro-fundo);
+}
+
+.botao-sucesso {
+  height: 40px;
+  padding: 0 18px;
+  background: #16A34A;
+  color: #FFFFFF;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: var(--raio-botao);
+}
+
+.botao-sucesso:hover {
+  background: #15803D;
+}
+
+/* ---------- Painel do formulário (cabeçalho do pedido) ---------- */
+
+.painel {
+  background: var(--neutro-fundo);
+  border: 1px solid var(--neutro-borda);
+  border-radius: 14px;
+  padding: 24px;
+  margin-bottom: 20px;
+}
+
+.painel__titulo {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--neutro-texto);
+  margin-bottom: 16px;
+}
+
+.painel-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 16px;
+}
+
+.painel-grid .campo-form {
+  min-width: 0;
+}
+
+@media (max-width: 720px) {
+  .painel-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---------- Tabela de itens ---------- */
+
+.itens-topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.tabela-itens {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.tabela-itens th {
+  text-align: left;
+  padding: 10px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--neutro-secundario);
+  border-bottom: 1px solid var(--neutro-borda);
+}
+
+.tabela-itens td {
+  padding: 10px 12px;
+  font-size: 14px;
+  border-bottom: 1px solid var(--neutro-borda);
+  vertical-align: middle;
+}
+
+.tabela-itens tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.tabela-itens select,
+.tabela-itens input {
+  width: 100%;
+  height: 38px;
+  padding: 0 10px;
+  font-size: 13.5px;
+  border: 1.5px solid var(--neutro-borda);
+  border-radius: 8px;
+  font-family: inherit;
+  box-sizing: border-box;
+}
+
+.tabela-itens select:focus,
+.tabela-itens input:focus {
+  border-color: var(--azul-acao);
+}
+
+.linha-item--invalida select,
+.linha-item--invalida input {
+  border-color: var(--erro);
+}
+
+.coluna-qtd, .coluna-preco, .coluna-desconto, .coluna-subtotal {
+  width: 110px;
+}
+
+.coluna-acao {
+  width: 44px;
+}
+
+.subtotal-exibicao {
+  font-weight: 600;
+  color: var(--neutro-texto);
+  white-space: nowrap;
+}
+
+.aviso-estoque {
+  font-size: 12px;
+  color: var(--erro);
+  margin-top: 4px;
+  display: block;
+}
+
+.botao-remover-item {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  color: var(--neutro-secundario);
+}
+
+.botao-remover-item:hover {
+  background: var(--erro-fundo);
+  color: var(--erro);
+}
+
+.linha-totais {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--neutro-borda);
+}
+
+.linha-totais__valor {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--neutro-texto);
+}
+
+.linha-totais__label {
+  font-size: 13px;
+  color: var(--neutro-secundario);
+  margin-right: 10px;
+}
+
+.itens-vazio {
+  padding: 32px;
+  text-align: center;
+  color: var(--neutro-secundario);
+  font-size: 13.5px;
+}
+
+.recebimento-progresso {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.barra-progresso {
+  width: 80px;
+  height: 6px;
+  background: #E5E7EB;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.barra-progresso__preenchimento {
+  height: 100%;
+  background: var(--azul-acao);
+  border-radius: 4px;
+}
+
+.painel-rodape-acoes {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.filtro-data {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.filtro-data input[type="date"] {
+  height: 40px;
+  padding: 0 12px;
+  font-size: 13.5px;
+  color: var(--neutro-texto);
+  border: 1.5px solid var(--neutro-borda);
+  border-radius: var(--raio-input);
+  font-family: inherit;
+}
+
+.filtro-data input[type="date"]:focus {
+  border-color: var(--azul-acao);
+}
+
+.filtro-data__separador {
+  font-size: 13px;
+  color: var(--neutro-secundario);
+}
+
+@media (max-width: 860px) {
+  .filtro-data {
+    flex-wrap: wrap;
+  }
+}

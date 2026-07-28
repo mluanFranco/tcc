@@ -1,0 +1,61 @@
+/* ============================================
+   CLIENTES.CSS — Ajustes específicos da tela de clientes
+   (estilos de listagem/modal genéricos estão em listagem-crud.css)
+   ============================================ */
+
+.secao-titulo {
+  font-size: 12.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--neutro-secundario);
+  margin-top: 4px;
+  margin-bottom: -4px;
+}
+
+.campo-cep-wrapper {
+  position: relative;
+}
+
+.campo-cep-status {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: none;
+  align-items: center;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.campo-cep-status.visivel {
+  display: flex;
+}
+
+.campo-cep-status--buscando {
+  color: var(--neutro-secundario);
+}
+
+.campo-cep-status--encontrado {
+  color: #16A34A;
+}
+
+.campo-cep-status--nao-encontrado {
+  color: var(--erro);
+}
+
+.campo-form-linha--endereco-3 {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
+  gap: 12px;
+}
+
+.campo-form-linha--endereco-3 .campo-form {
+  min-width: 0;
+}
+
+@media (max-width: 640px) {
+  .campo-form-linha--endereco-3 {
+    grid-template-columns: 1fr;
+  }
+}

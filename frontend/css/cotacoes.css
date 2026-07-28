@@ -1,0 +1,48 @@
+/* ============================================
+   COTACOES.CSS — Abas secundárias e ranking de comparativo
+   ============================================ */
+
+.abas-secundarias {
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid var(--neutro-borda);
+  margin-bottom: 20px;
+}
+
+.aba-secundaria {
+  padding: 10px 4px;
+  margin-right: 24px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--neutro-secundario);
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.aba-secundaria:hover {
+  color: var(--neutro-texto);
+}
+
+.aba-secundaria--ativa {
+  color: var(--azul-acao);
+  border-bottom-color: var(--azul-acao);
+}
+
+.posicao-ranking {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  font-size: 12.5px;
+  font-weight: 700;
+  background: #F3F4F6;
+  color: var(--neutro-secundario);
+}
+
+.posicao-ranking--melhor {
+  background: #DCFCE7;
+  color: #166534;
+}

@@ -1,0 +1,77 @@
+/* ============================================
+   BASE.CSS — Tokens de design, reset, globais
+   Sistema de Gestão Nova Sorvetes
+   ============================================ */
+
+:root {
+  /* Cores — derivadas do logo Nova Sorvetes */
+  --azul-primario: #1E3A8A;
+  --azul-primario-claro: #1E40AF;
+  --azul-acao: #2563EB;
+  --azul-acao-hover: #1D4ED8;
+  --amarelo-acento: #FACC15;
+
+  --neutro-texto: #1F2937;
+  --neutro-secundario: #6B7280;
+  --neutro-placeholder: #9CA3AF;
+  --neutro-fundo: #FFFFFF;
+  --neutro-borda: #E5E7EB;
+  --neutro-borda-foco: #C7D2FE;
+
+  --erro: #DC2626;
+  --erro-fundo: #FEF2F2;
+
+  /* Raios */
+  --raio-painel: 28px;
+  --raio-card: 12px;
+  --raio-input: 12px;
+  --raio-botao: 12px;
+
+  /* Sombra */
+  --sombra-card: 0 20px 60px -15px rgba(30, 58, 138, 0.25);
+  --sombra-input-foco: 0 0 0 4px rgba(250, 204, 21, 0.25);
+
+  /* Tipografia */
+  --fonte-base: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+}
+
+body {
+  font-family: var(--fonte-base);
+  color: var(--neutro-texto);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  background: none;
+}
+
+input {
+  font-family: inherit;
+}
+
+/* Foco visível para acessibilidade de teclado */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible {
+  outline: 2px solid var(--azul-acao);
+  outline-offset: 2px;
+}

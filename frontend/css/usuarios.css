@@ -1,0 +1,54 @@
+/* ============================================
+   USUARIOS.CSS — Checkbox de permissão e badges de papel
+   ============================================ */
+
+.campo-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.campo-checkbox input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--azul-acao);
+  cursor: pointer;
+}
+
+.campo-checkbox label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--neutro-texto);
+  cursor: pointer;
+}
+
+.campo-checkbox__ajuda {
+  font-size: 12.5px;
+  color: var(--neutro-secundario);
+  margin-top: -6px;
+  margin-left: 28px;
+}
+
+.campo-ajuda {
+  font-size: 12px;
+  color: var(--neutro-secundario);
+}
+
+.badge-permissao {
+  display: inline-flex;
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.badge-permissao--admin {
+  background: #FEF3C7;
+  color: #92400E;
+}
+
+.badge-permissao--comum {
+  background: #F3F4F6;
+  color: var(--neutro-secundario);
+}

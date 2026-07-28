@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pedidos de Compra — Nova Sorvetes</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/base.css">
+  <link rel="stylesheet" href="../css/sidebar.css">
+  <link rel="stylesheet" href="../css/listagem-crud.css">
+  <link rel="stylesheet" href="../css/detalhe-pedido.css">
+</head>
+<body>
+
+  <div class="app-layout">
+    <aside id="sidebar" class="sidebar"></aside>
+
+    <main class="conteudo-principal">
+
+      <div class="pagina-topo">
+        <h1>Pedidos de Compra</h1>
+        <button class="botao-primario" id="botao-incluir">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+          Novo pedido
+        </button>
+      </div>
+
+      <div class="barra-filtros">
+        <div class="campo-busca">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+          <input type="text" id="campo-busca" placeholder="Buscar por fornecedor ou nº do pedido...">
+        </div>
+        <div class="filtro-data">
+          <input type="date" id="campo-data-inicio" title="Data inicial">
+          <span class="filtro-data__separador">até</span>
+          <input type="date" id="campo-data-fim" title="Data final">
+        </div>
+        <div class="abas-status">
+          <button class="aba-status aba-status--ativa" data-status="todos">Todos</button>
+          <button class="aba-status" data-status="pendente">Pendentes</button>
+          <button class="aba-status" data-status="recebido">Recebidos</button>
+          <button class="aba-status" data-status="cancelado">Cancelados</button>
+        </div>
+      </div>
+
+      <div class="tabela-container">
+        <table class="tabela">
+          <thead>
+            <tr>
+              <th>Pedido</th>
+              <th>Fornecedor</th>
+              <th>Data</th>
+              <th>Entrega prevista</th>
+              <th>Total</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="tabela-pedidos-corpo"></tbody>
+        </table>
+        <div class="estado-vazio" id="estado-vazio" style="display: none;">
+          Nenhum pedido encontrado.
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <script src="../js/core/config.js"></script>
+  <script src="../js/core/api.js"></script>
+  <script src="../js/core/auth.js"></script>
+  <script src="../js/components/sidebar.js"></script>
+  <script src="../js/services/pedidoCompraService.js"></script>
+  <script src="../js/services/fornecedorService.js"></script>
+  <script src="../js/pages/pedidos-compra.js"></script>
+</body>
+</html>

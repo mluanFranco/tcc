@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard — Nova Sorvetes</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/base.css">
+  <link rel="stylesheet" href="../css/sidebar.css">
+</head>
+<body>
+
+  <div class="app-layout">
+    <aside id="sidebar" class="sidebar"></aside>
+
+    <main class="conteudo-principal">
+      <h1>Bem-vindo(a)!</h1>
+      <p style="color: var(--neutro-secundario); margin-top: 8px;">
+        Esta é uma tela provisória — o dashboard real com métricas vem a seguir.
+      </p>
+    </main>
+  </div>
+
+  <script src="../js/core/config.js"></script>
+  <script src="../js/core/api.js"></script>
+  <script src="../js/core/auth.js"></script>
+  <script>
+    if (!exigirAdmin()) {
+      // já redirecionou — interrompe a execução do restante do script
+      throw new Error("Acesso restrito");
+    }
+  </script>
+  <script src="../js/components/sidebar.js"></script>
+</body>
+</html>

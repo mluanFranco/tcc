@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Entrar — Nova Sorvetes</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/base.css">
+  <link rel="stylesheet" href="../css/login.css">
+</head>
+<body>
+
+  <main class="login-page">
+    <div class="login-container">
+
+      <!-- Painel esquerdo: marca -->
+      <section class="login-marca">
+        <div class="login-marca__conteudo">
+          <img
+            src="../assets/images/logo-novasorvetes.png"
+            alt="Nova Sorvetes"
+            class="login-marca__logo"
+          >
+          <div>
+            <p class="login-marca__titulo">Sistema de Gestão</p>
+            <p class="login-marca__subtitulo">
+              Controle de estoque, pedidos e equipamentos em um só lugar.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Painel direito: formulário -->
+      <section class="login-formulario">
+        <div class="login-formulario__inner">
+
+          <h1 class="login-formulario__saudacao">Olá!</h1>
+          <p class="login-formulario__instrucao">Entre com sua conta para continuar</p>
+
+          <div class="login-erro" id="login-erro">
+            <span id="login-erro-mensagem">Email ou senha inválidos</span>
+          </div>
+
+          <form id="form-login" novalidate>
+            <div class="campo">
+              <span class="campo__icone">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                  <polyline points="22,6 12,13 2,6"></polyline>
+                </svg>
+              </span>
+              <input
+                type="email"
+                id="email"
+                name="email"
+                class="campo__input"
+                placeholder="Email"
+                autocomplete="username"
+                required
+              >
+            </div>
+
+            <div class="campo">
+              <span class="campo__icone">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                </svg>
+              </span>
+              <input
+                type="password"
+                id="senha"
+                name="senha"
+                class="campo__input"
+                placeholder="Senha"
+                autocomplete="current-password"
+                required
+              >
+              <button type="button" class="campo__toggle-senha" id="toggle-senha" aria-label="Mostrar senha">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                  <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+              </button>
+            </div>
+
+            <button type="submit" class="botao-entrar" id="botao-entrar">
+              Entrar
+            </button>
+          </form>
+
+          <p class="login-rodape">Nova Sorvetes © 2026</p>
+
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <script src="../js/core/config.js"></script>
+  <script src="../js/core/api.js"></script>
+  <script src="../js/core/auth.js"></script>
+  <script src="../js/pages/login.js"></script>
+</body>
+</html>

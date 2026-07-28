@@ -2,9 +2,9 @@
 
 Sistema de gestão de estoque desenvolvido para a empresa [Nova Sorvetes](https://www.instagram.com/nova_sorvetes/), localizada em Itapira – SP, com o objetivo de substituir o controle manual por planilhas por uma solução informatizada, centralizada e rastreável.
 
-![Logo Nova Sorvetes](/frontend/assets/images/logo-novasorvetes.png)
+![Logo Nova Sorvetes](frontend/assets/images/logo-novasorvetes.png)
 
-> **Status do projeto:** Backend completo e testado. Frontend e containerização via Docker em desenvolvimento.
+> **Status do projeto:** Backend completo e testado. Frontend funcional em fase de revisão (CQA). Containerização via Docker planejada para após a aprovação do CQA.
 
 ---
 
@@ -45,18 +45,24 @@ O sistema entrega uma solução simples e funcional para o controle de estoque e
 | **Cotação de Produtos** | Registro de cotações por fornecedor e comparativo de preços por produto | ✅ Completo |
 | **Formas de Pagamento** | Cadastro das modalidades de pagamento (à vista, parcelado, a prazo) | ✅ Completo |
 | **Monitoramento de Equipamentos** | Cadastro de geladeiras/freezers alocados a clientes e histórico de manutenções | ✅ Completo |
-| **Frontend** | Interface web consumindo a API | 🔄 Em desenvolvimento |
-| **Containerização** | Empacotamento via Docker e Docker Compose | 🔄 Planejado |
+| **Frontend** | Interface web consumindo a API, em fase de revisão (CQA) | 🔄 Em revisão |
+| **Containerização** | Empacotamento via Docker e Docker Compose | 🕐 Aguardando CQA |
 
 ---
 
 ## Modelo de Dados
 
-O modelo relacional foi estruturado a partir de um Diagrama Entidade-Relacionamento (DER):
+O modelo relacional é composto por **13 entidades**, estruturadas a partir de um Diagrama Entidade-Relacionamento (DER) e distribuídas em quatro domínios funcionais:
 
-![Diagrama Entidade-Relacionamento](/frontend/assets/images/der.png)
+- **Cadastros base:** `usuario`, `produto`, `cliente`, `fornecedor`, `forma_pagamento`
+- **Controle de estoque:** `pedido_venda`, `item_pedido_venda`, `pedido_compra`, `item_pedido_compra`
+- **Cotação:** `cotacao`, `item_cotacao`
+- **Monitoramento:** `geladeira`, `historico_manutencao`
+
+![Diagrama Entidade-Relacionamento](frontend/assets/images/der_nova_sorvetes.png)
 
 ### Produto
+
 | Campo | Descrição |
 |---|---|
 | `id` | Chave primária |
@@ -68,9 +74,10 @@ O modelo relacional foi estruturado a partir de um Diagrama Entidade-Relacioname
 | `ativo` | Soft delete |
 | `created_at`, `updated_at` | Auditoria |
 
-> O estoque disponível para venda é sempre calculado como `estoque_atual - estoque_reservado`, e exposto na API como o campo computado `estoque_disponivel`. Veja [Regras de Negócio](#regras-de-negócio) para o racional completo.
+> O estoque disponível para venda é sempre calculado como `estoque_atual - estoque_reservado`, exposto na API como o campo computado `estoque_disponivel`. Veja [Regras de Negócio](#regras-de-negócio) para o racional completo.
 
 ### Cliente / Fornecedor
+
 | Campo | Descrição |
 |---|---|
 | `id` | Chave primária |
@@ -80,6 +87,7 @@ O modelo relacional foi estruturado a partir de um Diagrama Entidade-Relacioname
 | `created_at`, `updated_at` | Auditoria |
 
 ### Pedido de Venda
+
 | Campo | Descrição |
 |---|---|
 | `id` | Chave primária |
@@ -88,6 +96,7 @@ O modelo relacional foi estruturado a partir de um Diagrama Entidade-Relacioname
 | `status` | `aberto` \| `confirmado` \| `cancelado` |
 
 ### Pedido de Compra
+
 | Campo | Descrição |
 |---|---|
 | `id` | Chave primária |
@@ -96,7 +105,9 @@ O modelo relacional foi estruturado a partir de um Diagrama Entidade-Relacioname
 | `status` | `pendente` \| `recebido` \| `cancelado` |
 
 ### Item Pedido Venda / Item Pedido Compra
+
 Tabelas intermediárias que viabilizam a relação um-para-muitos entre pedidos e produtos.
+
 | Campo | Descrição |
 |---|---|
 | `id` | Chave primária |
@@ -109,6 +120,7 @@ Tabelas intermediárias que viabilizam a relação um-para-muitos entre pedidos 
 > **Por que tabelas intermediárias?** Pedidos podem conter múltiplos produtos. Em vez de repetir colunas no cabeçalho do pedido, cada item é armazenado em sua própria linha, vinculado ao pedido e ao produto correspondente — garantindo normalização e evitando redundância de dados.
 
 ### Cotação / Item Cotação
+
 | Campo | Descrição |
 |---|---|
 | `id` | Chave primária |
@@ -117,13 +129,16 @@ Tabelas intermediárias que viabilizam a relação um-para-muitos entre pedidos 
 | `produto_id`, `preco_unitario`, `quantidade_referencia` | Itens cotados |
 
 ### Forma de Pagamento
+
 | Campo | Descrição |
 |---|---|
 | `id` | Chave primária |
 | `descricao`, `tipo` | À vista, parcelado ou a prazo |
 | `prazo_dias`, `taxa_percentual` | Condições da modalidade |
+| `ativo` | Soft delete |
 
 ### Usuário
+
 | Campo | Descrição |
 |---|---|
 | `id` | Chave primária |
@@ -132,7 +147,9 @@ Tabelas intermediárias que viabilizam a relação um-para-muitos entre pedidos 
 | `created_at`, `updated_at` | Auditoria |
 
 ### Geladeira / Histórico de Manutenção
+
 O endereço da geladeira não é replicado — é sempre obtido a partir do cliente ao qual está alocada (`cliente_id`), evitando duplicidade e inconsistência de dados.
+
 | Campo | Descrição |
 |---|---|
 | `id` | Chave primária |
@@ -172,9 +189,18 @@ O endpoint `POST /pedidos-compra/{id}/receber` pode ser chamado múltiplas vezes
 
 O cancelamento (`pendente → cancelado` ou `recebido → cancelado`) estorna do estoque exatamente o que havia sido recebido até então, com validação para impedir que o estoque fique negativo caso parte da mercadoria já tenha sido vendida.
 
+### Controle de acesso por perfil
+
+O sistema diferencia dois perfis de usuário, controlados pelo campo `admin` no JWT gerado no login:
+
+- **Administrador** — acesso completo ao sistema, incluindo o dashboard com métricas, a gestão de usuários e todas as demais telas. Restrições de segurança: um admin não pode desativar a própria conta nem remover a própria permissão de administrador pela interface.
+- **Usuário comum** — acesso a todas as telas operacionais (produtos, clientes, fornecedores, pedidos, cotações, geladeiras, formas de pagamento), sem acesso ao dashboard e à gestão de usuários.
+
+A proteção é aplicada em dois níveis: no frontend (redirecionamento automático e ocultação de itens do menu) e no backend (endpoint `GET /usuarios/` exige `admin = True` via `get_admin_user`).
+
 ### Soft delete e auditoria
 
-Produtos, clientes, fornecedores e usuários nunca são removidos permanentemente — são marcados como `ativo = False`, preservando o histórico de pedidos, cotações e manutenções que os referenciam. Cada módulo expõe um endpoint `/inativos` e um parâmetro `?incluir_inativos=true` para consulta administrativa, permitindo reativação posterior.
+Produtos, clientes, fornecedores, usuários e formas de pagamento nunca são removidos permanentemente — são marcados como `ativo = False`, preservando o histórico de pedidos, cotações e manutenções que os referenciam. Cada módulo expõe um endpoint `/inativos` e um parâmetro `?incluir_inativos=true` para consulta administrativa, permitindo reativação posterior.
 
 Cotações e registros de manutenção, por não estarem vinculados a transações já efetivadas, permitem exclusão real.
 
@@ -205,20 +231,29 @@ A comunicação entre frontend e backend ocorre via requisições HTTP/JSON cons
 ```
 sist_gest_est_mon/
 ├── backend/
-│   ├── alembic/                  # Migrações de schema do banco de dados
+│   ├── alembic/                   # Migrações de schema do banco de dados
 │   │   ├── versions/
 │   │   └── env.py
 │   ├── core/
-│   │   └── security.py           # Autenticação JWT e dependências de permissão
+│   │   └── security.py            # Autenticação JWT e dependências de permissão
 │   ├── routes/                    # Endpoints da API, um arquivo por entidade
-│   ├── schemas/                    # Modelos Pydantic de entrada/saída
-│   ├── alembic.ini                  # Configuração do Alembic
-│   ├── database.py                   # Configuração de conexão com o MySQL
-│   ├── models.py                      # Modelos ORM (SQLAlchemy)
-│   ├── create_tables.py                # Script de criação inicial das tabelas
-│   ├── main.py                           # Inicialização da aplicação FastAPI
-│   └── requirements.txt                   # Dependências do projeto
-├── frontend/                                # Interface web (HTML, CSS, JS)
+│   ├── schemas/                   # Modelos Pydantic de entrada/saída
+│   ├── alembic.ini                # Configuração do Alembic
+│   ├── database.py                # Configuração de conexão com o MySQL
+│   ├── models.py                  # Modelos ORM (SQLAlchemy)
+│   ├── create_tables.py           # Script de criação inicial das tabelas
+│   ├── main.py                    # Inicialização da aplicação FastAPI
+│   └── requirements.txt           # Dependências do projeto
+├── frontend/
+│   ├── assets/
+│   │   └── images/                # Logotipo e imagens do projeto
+│   ├── css/                       # Folhas de estilo (base, sidebar, módulos)
+│   ├── js/
+│   │   ├── core/                  # Infraestrutura: api.js, auth.js, config.js, mascaras.js
+│   │   ├── components/            # sidebar.js (navegação colapsável)
+│   │   ├── pages/                 # Lógica específica de cada tela
+│   │   └── services/              # Camada de comunicação com a API (um arquivo por entidade)
+│   └── pages/                     # Arquivos HTML de cada tela do sistema
 ├── .gitignore
 └── README.md
 ```
@@ -265,11 +300,13 @@ uvicorn main:app --reload
 
 A documentação interativa da API estará disponível em `http://127.0.0.1:8000/docs`.
 
+Para acessar o frontend, abra `frontend/pages/login.html` no navegador (via Live Server do VS Code ou qualquer servidor HTTP estático).
+
 ---
 
 ## Migrações de Banco de Dados (Alembic)
 
-A partir da estabilização do modelo de dados, alterações de schema passaram a ser versionadas via [Alembic](https://alembic.sqlalchemy.org/), em vez de comandos manuais no banco. Isso garante que qualquer pessoa do grupo (ou o ambiente de produção, futuramente) consiga aplicar exatamente as mesmas mudanças de estrutura, na ordem correta.
+A partir da estabilização do modelo de dados, alterações de schema passaram a ser versionadas via [Alembic](https://alembic.sqlalchemy.org/), em vez de comandos manuais no banco. Isso garante que qualquer pessoa do grupo consiga aplicar exatamente as mesmas mudanças de estrutura, na ordem correta.
 
 ```bash
 # Gerar uma nova migração após alterar models.py
@@ -287,15 +324,14 @@ alembic upgrade head
 
 ## Roadmap
 
-### Frontend (em desenvolvimento)
-- Interface web em HTML, CSS e JavaScript puro, consumindo a API REST do backend;
-- Tela de login com armazenamento do token JWT;
-- Telas de cadastro (produtos, clientes, fornecedores) com autocomplete de endereço via ViaCEP;
-- Telas de pedidos de venda e compra, incluindo visualização do progresso de recebimento parcial;
-- Dashboard com indicadores de estoque baixo e comparativo de cotações.
+### CQA — Revisão geral em andamento
 
-### Containerização com Docker (planejado)
+O grupo está realizando uma revisão completa (CQA) do sistema para identificar pontos de melhoria, ajustes de regras de negócio e possíveis novas funcionalidades antes da versão final. Alterações decorrentes do CQA poderão envolver mudanças no modelo de dados, endpoints e telas.
+
+### Containerização com Docker (aguardando CQA)
+
 A aplicação será empacotada em três containers independentes, orquestrados via Docker Compose:
+
 - **Backend** — imagem Python 3.12 rodando FastAPI/Uvicorn;
 - **Frontend** — imagem Nginx servindo os arquivos estáticos;
 - **MySQL** — imagem oficial do banco de dados.
@@ -303,7 +339,8 @@ A aplicação será empacotada em três containers independentes, orquestrados v
 O objetivo é permitir que o sistema completo seja inicializado com um único comando (`docker-compose up`), eliminando a necessidade de configuração manual de ambiente em máquinas de desenvolvimento ou na avaliação do projeto.
 
 ### Outras evoluções futuras
-Conforme indicado no artigo original do TCC: integração com módulos de fluxo de caixa e contas a pagar/receber, painel de indicadores (KPIs), acesso via aplicativo móvel, e monitoramento de temperatura das geladeiras via sensores IoT.
+
+Conforme indicado no artigo original do TCC e nas discussões de desenvolvimento: integração com módulos de fluxo de caixa e contas a pagar/receber, painel de indicadores (KPIs/dashboard), acesso via aplicativo móvel, e monitoramento de temperatura das geladeiras via sensores IoT.
 
 ---
 

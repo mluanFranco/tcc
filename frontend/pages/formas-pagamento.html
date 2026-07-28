@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Formas de Pagamento — Nova Sorvetes</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/base.css">
+  <link rel="stylesheet" href="../css/sidebar.css">
+  <link rel="stylesheet" href="../css/listagem-crud.css">
+</head>
+<body>
+
+  <div class="app-layout">
+    <aside id="sidebar" class="sidebar"></aside>
+
+    <main class="conteudo-principal">
+
+      <div class="pagina-topo">
+        <h1>Formas de Pagamento</h1>
+        <button class="botao-primario" id="botao-incluir">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+          Incluir
+        </button>
+      </div>
+
+      <div class="barra-filtros">
+        <div class="campo-busca">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+          <input type="text" id="campo-busca" placeholder="Buscar por descrição...">
+        </div>
+        <div class="abas-status">
+          <button class="aba-status aba-status--ativa" id="aba-ativos">Ativas</button>
+          <button class="aba-status" id="aba-inativos">Inativas</button>
+        </div>
+      </div>
+
+      <div class="tabela-container">
+        <table class="tabela">
+          <thead>
+            <tr>
+              <th>Descrição</th>
+              <th>Tipo</th>
+              <th>Prazo (dias)</th>
+              <th>Taxa (%)</th>
+              <th>Status</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody id="tabela-formas-corpo"></tbody>
+        </table>
+        <div class="estado-vazio" id="estado-vazio" style="display: none;">
+          Nenhuma forma de pagamento encontrada.
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- Modal de criação/edição -->
+  <div class="modal-overlay" id="modal-forma">
+    <div class="modal">
+      <div class="modal__topo">
+        <span class="modal__titulo" id="modal-titulo">Nova forma de pagamento</span>
+        <button class="modal__fechar" id="modal-fechar" aria-label="Fechar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+
+      <form id="form-forma">
+        <div class="modal__corpo">
+
+          <div class="campo-form">
+            <label for="campo-descricao">Descrição *</label>
+            <input type="text" id="campo-descricao" placeholder="Ex: À vista, 30 dias, Parcelado 3x..." required>
+            <span class="campo-erro-msg">Informe a descrição.</span>
+          </div>
+
+          <div class="campo-form">
+            <label for="campo-tipo">Tipo *</label>
+            <select id="campo-tipo" required>
+              <option value="">Selecione...</option>
+              <option value="vista">À vista</option>
+              <option value="parcelado">Parcelado</option>
+              <option value="prazo">A prazo</option>
+            </select>
+            <span class="campo-erro-msg">Selecione o tipo.</span>
+          </div>
+
+          <div class="campo-form-linha">
+            <div class="campo-form">
+              <label for="campo-prazo">Prazo (dias)</label>
+              <input type="number" id="campo-prazo" min="0" value="0">
+            </div>
+            <div class="campo-form">
+              <label for="campo-taxa">Taxa (%)</label>
+              <input type="number" id="campo-taxa" min="0" step="0.01" value="0">
+            </div>
+          </div>
+
+        </div>
+
+        <div class="modal__rodape">
+          <button type="button" class="botao-secundario" id="modal-cancelar">Cancelar</button>
+          <button type="submit" class="botao-primario" id="modal-salvar">Salvar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal de visualização (somente leitura) -->
+  <div class="modal-overlay" id="modal-visualizar-forma">
+    <div class="modal">
+      <div class="modal__topo">
+        <span class="modal__titulo">Detalhes da forma de pagamento</span>
+        <button class="modal__fechar" id="modal-visualizar-fechar" aria-label="Fechar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+
+      <div class="modal__corpo">
+        <div class="visualizacao-grid">
+          <div class="visualizacao-item">
+            <span class="visualizacao-label">Descrição</span>
+            <span class="visualizacao-valor" id="vis-descricao">—</span>
+          </div>
+          <div class="visualizacao-item">
+            <span class="visualizacao-label">Status</span>
+            <span class="visualizacao-valor" id="vis-status">—</span>
+          </div>
+          <div class="visualizacao-item">
+            <span class="visualizacao-label">Tipo</span>
+            <span class="visualizacao-valor" id="vis-tipo">—</span>
+          </div>
+          <div class="visualizacao-item">
+            <span class="visualizacao-label">Prazo</span>
+            <span class="visualizacao-valor" id="vis-prazo">—</span>
+          </div>
+          <div class="visualizacao-item">
+            <span class="visualizacao-label">Taxa</span>
+            <span class="visualizacao-valor" id="vis-taxa">—</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal__rodape">
+        <button type="button" class="botao-secundario" id="modal-visualizar-fechar-rodape">Fechar</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/core/config.js"></script>
+  <script src="../js/core/api.js"></script>
+  <script src="../js/core/auth.js"></script>
+  <script src="../js/components/sidebar.js"></script>
+  <script src="../js/services/formaPagamentoService.js"></script>
+  <script src="../js/pages/formas-pagamento.js"></script>
+</body>
+</html>

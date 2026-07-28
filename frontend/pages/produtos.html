@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Produtos — Nova Sorvetes</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/base.css">
+  <link rel="stylesheet" href="../css/sidebar.css">
+  <link rel="stylesheet" href="../css/listagem-crud.css">
+</head>
+<body>
+
+  <div class="app-layout">
+    <aside id="sidebar" class="sidebar"></aside>
+
+    <main class="conteudo-principal">
+
+      <div class="pagina-topo">
+        <h1>Produtos</h1>
+        <button class="botao-primario" id="botao-incluir">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+          Incluir
+        </button>
+      </div>
+
+      <div class="barra-filtros">
+        <div class="campo-busca">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+          <input type="text" id="campo-busca" placeholder="Buscar por nome ou categoria...">
+        </div>
+        <div class="abas-status">
+          <button class="aba-status aba-status--ativa" id="aba-ativos">Ativos</button>
+          <button class="aba-status" id="aba-inativos">Inativos</button>
+        </div>
+      </div>
+
+      <div class="tabela-container">
+        <table class="tabela">
+          <thead>
+            <tr>
+              <th>Nome</th>
+              <th>Categoria</th>
+              <th>Preço de venda</th>
+              <th>Estoque (atual/mín.)</th>
+              <th>Status</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody id="tabela-produtos-corpo"></tbody>
+        </table>
+        <div class="estado-vazio" id="estado-vazio" style="display: none;">
+          Nenhum produto encontrado.
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- Modal de criação/edição -->
+  <div class="modal-overlay" id="modal-produto">
+    <div class="modal">
+      <div class="modal__topo">
+        <span class="modal__titulo" id="modal-titulo">Novo produto</span>
+        <button class="modal__fechar" id="modal-fechar" aria-label="Fechar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+
+      <form id="form-produto">
+        <div class="modal__corpo">
+
+          <div class="campo-form">
+            <label for="campo-nome">Nome *</label>
+            <input type="text" id="campo-nome" required>
+            <span class="campo-erro-msg">Informe o nome do produto.</span>
+          </div>
+
+          <div class="campo-form-linha">
+            <div class="campo-form">
+              <label for="campo-categoria">Categoria</label>
+              <select id="campo-categoria">
+                <option value="">Selecione...</option>
+                <option value="Sorvete">Sorvete</option>
+                <option value="Picolé">Picolé</option>
+                <option value="Açaí">Açaí</option>
+                <option value="Sobremesa">Sobremesa</option>
+                <option value="Casquinha">Casquinha</option>
+                <option value="Cobertura">Cobertura</option>
+                <option value="Insumo">Insumo</option>
+                <option value="Embalagem">Embalagem</option>
+                <option value="Outro">Outro</option>
+              </select>
+            </div>
+            <div class="campo-form">
+              <label for="campo-unidade">Unidade de medida</label>
+              <select id="campo-unidade">
+                <option value="">Selecione...</option>
+                <option value="un">Unidade (un)</option>
+                <option value="kg">Quilograma (kg)</option>
+                <option value="g">Grama (g)</option>
+                <option value="L">Litro (L)</option>
+                <option value="ml">Mililitro (ml)</option>
+                <option value="cx">Caixa (cx)</option>
+                <option value="pct">Pacote (pct)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="campo-form">
+            <label for="campo-descricao">Descrição</label>
+            <textarea id="campo-descricao"></textarea>
+          </div>
+
+          <div class="campo-form-linha">
+            <div class="campo-form">
+              <label for="campo-preco-custo">Preço de custo *</label>
+              <div class="campo-moeda">
+                <input type="text" id="campo-preco-custo" inputmode="numeric" placeholder="0,00" required>
+              </div>
+              <span class="campo-erro-msg">Informe um valor válido.</span>
+            </div>
+            <div class="campo-form">
+              <label for="campo-preco-venda">Preço de venda</label>
+              <div class="campo-moeda">
+                <input type="text" id="campo-preco-venda" inputmode="numeric" placeholder="0,00">
+              </div>
+            </div>
+          </div>
+
+          <div class="campo-form">
+            <label for="campo-estoque-minimo">Estoque mínimo</label>
+            <input type="number" id="campo-estoque-minimo" step="1" min="0" value="0">
+          </div>
+
+        </div>
+
+        <div class="modal__rodape">
+          <button type="button" class="botao-secundario" id="modal-cancelar">Cancelar</button>
+          <button type="submit" class="botao-primario" id="modal-salvar">Salvar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal de visualização (somente leitura) -->
+  <div class="modal-overlay" id="modal-visualizar-produto">
+    <div class="modal">
+      <div class="modal__topo">
+        <span class="modal__titulo">Detalhes do produto</span>
+        <button class="modal__fechar" id="modal-visualizar-fechar" aria-label="Fechar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+
+      <div class="modal__corpo">
+        <div class="visualizacao-grid">
+          <div class="visualizacao-item">
+            <span class="visualizacao-label">Nome</span>
+            <span class="visualizacao-valor" id="vis-nome">—</span>
+          </div>
+          <div class="visualizacao-item">
+            <span class="visualizacao-label">Status</span>
+            <span class="visualizacao-valor" id="vis-status">—</span>
+          </div>
+          <div class="visualizacao-item">
+            <span class="visualizacao-label">Categoria</span>
+            <span class="visualizacao-valor" id="vis-categoria">—</span>
+          </div>
+          <div class="visualizacao-item">
+            <span class="visualizacao-label">Unidade de medida</span>
+            <span class="visualizacao-valor" id="vis-unidade">—</span>
+          </div>
+        </div>
+
+        <div class="visualizacao-item visualizacao-item--full">
+          <span class="visualizacao-label">Descrição</span>
+          <span class="visualizacao-valor" id="vis-descricao">—</span>
+        </div>
+
+        <div class="visualizacao-grid">
+          <div class="visualizacao-item">
+            <span class="visualizacao-label">Preço de custo</span>
+            <span class="visualizacao-valor" id="vis-preco-custo">—</span>
+          </div>
+          <div class="visualizacao-item">
+            <span class="visualizacao-label">Preço de venda</span>
+            <span class="visualizacao-valor" id="vis-preco-venda">—</span>
+          </div>
+          <div class="visualizacao-item">
+            <span class="visualizacao-label">Estoque atual</span>
+            <span class="visualizacao-valor" id="vis-estoque-atual">—</span>
+          </div>
+          <div class="visualizacao-item">
+            <span class="visualizacao-label">Estoque mínimo</span>
+            <span class="visualizacao-valor" id="vis-estoque-minimo">—</span>
+          </div>
+          <div class="visualizacao-item">
+            <span class="visualizacao-label">Reservado</span>
+            <span class="visualizacao-valor" id="vis-estoque-reservado">—</span>
+          </div>
+          <div class="visualizacao-item">
+            <span class="visualizacao-label">Disponível</span>
+            <span class="visualizacao-valor" id="vis-estoque-disponivel">—</span>
+          </div>
+          <div class="visualizacao-item">
+            <span class="visualizacao-label">Cadastrado em</span>
+            <span class="visualizacao-valor" id="vis-criado-em">—</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal__rodape">
+        <button type="button" class="botao-secundario" id="modal-visualizar-fechar-rodape">Fechar</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/core/config.js"></script>
+  <script src="../js/core/api.js"></script>
+  <script src="../js/core/auth.js"></script>
+  <script src="../js/core/mascaras.js"></script>
+  <script src="../js/components/sidebar.js"></script>
+  <script src="../js/services/produtoService.js"></script>
+  <script src="../js/pages/produtos.js"></script>
+</body>
+</html>

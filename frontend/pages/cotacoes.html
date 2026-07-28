@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cotações — Nova Sorvetes</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/base.css">
+  <link rel="stylesheet" href="../css/sidebar.css">
+  <link rel="stylesheet" href="../css/listagem-crud.css">
+  <link rel="stylesheet" href="../css/detalhe-pedido.css">
+  <link rel="stylesheet" href="../css/cotacoes.css">
+</head>
+<body>
+
+  <div class="app-layout">
+    <aside id="sidebar" class="sidebar"></aside>
+
+    <main class="conteudo-principal">
+
+      <div class="pagina-topo">
+        <h1>Cotações</h1>
+        <button class="botao-primario" id="botao-incluir">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+          Nova cotação
+        </button>
+      </div>
+
+      <div class="abas-secundarias">
+        <button class="aba-secundaria aba-secundaria--ativa" id="aba-lista">Lista de Cotações</button>
+        <button class="aba-secundaria" id="aba-comparativo">Comparativo de Preços</button>
+      </div>
+
+      <!-- Aba: Lista de Cotações -->
+      <div id="painel-lista">
+        <div class="barra-filtros">
+          <div class="campo-busca">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            <input type="text" id="campo-busca" placeholder="Buscar por fornecedor...">
+          </div>
+          <div class="abas-status">
+            <button class="aba-status aba-status--ativa" data-status="todos">Todos</button>
+            <button class="aba-status" data-status="rascunho">Rascunho</button>
+            <button class="aba-status" data-status="enviada">Enviada</button>
+            <button class="aba-status" data-status="recebida">Recebida</button>
+            <button class="aba-status" data-status="aprovada">Aprovada</button>
+          </div>
+        </div>
+
+        <div class="tabela-container">
+          <table class="tabela">
+            <thead>
+              <tr>
+                <th>Cotação</th>
+                <th>Fornecedor</th>
+                <th>Data</th>
+                <th>Itens</th>
+                <th>Status</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody id="tabela-cotacoes-corpo"></tbody>
+          </table>
+          <div class="estado-vazio" id="estado-vazio-lista" style="display: none;">
+            Nenhuma cotação encontrada.
+          </div>
+        </div>
+      </div>
+
+      <!-- Aba: Comparativo de Preços -->
+      <div id="painel-comparativo" style="display: none;">
+        <div class="painel">
+          <p class="painel__titulo">Selecione um produto</p>
+          <div class="campo-form" style="max-width: 420px;">
+            <select id="campo-produto-comparativo">
+              <option value="">Selecione um produto...</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="tabela-container" id="container-comparativo" style="display: none;">
+          <table class="tabela">
+            <thead>
+              <tr>
+                <th>Posição</th>
+                <th>Fornecedor</th>
+                <th>Preço unitário</th>
+                <th>Qtd. de referência</th>
+                <th>Data da cotação</th>
+              </tr>
+            </thead>
+            <tbody id="tabela-comparativo-corpo"></tbody>
+          </table>
+        </div>
+        <div class="estado-vazio" id="estado-vazio-comparativo" style="display: none;">
+          Nenhuma cotação registrada para este produto ainda.
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <script src="../js/core/config.js"></script>
+  <script src="../js/core/api.js"></script>
+  <script src="../js/core/auth.js"></script>
+  <script src="../js/components/sidebar.js"></script>
+  <script src="../js/services/cotacaoService.js"></script>
+  <script src="../js/services/fornecedorService.js"></script>
+  <script src="../js/services/produtoService.js"></script>
+  <script src="../js/pages/cotacoes.js"></script>
+</body>
+</html>
