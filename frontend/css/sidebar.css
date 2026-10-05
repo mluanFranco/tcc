@@ -185,3 +185,82 @@
     padding: 24px;
   }
 }
+
+/* ---------- Grupo expansível (Cadastros) ---------- */
+
+.sidebar__grupo-cabecalho {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 10px;
+  color: var(--neutro-secundario);
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.sidebar__grupo-cabecalho:hover {
+  background: #F3F4F6;
+  color: var(--neutro-texto);
+}
+
+.sidebar__grupo-cabecalho--ativo {
+  color: var(--azul-acao);
+}
+
+.sidebar__grupo-seta {
+  margin-left: auto;
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  transition: transform 0.15s ease;
+}
+
+.sidebar__grupo--aberto .sidebar__grupo-seta {
+  transform: rotate(180deg);
+}
+
+.sidebar__subitens {
+  display: none;
+  flex-direction: column;
+  gap: 2px;
+  padding: 4px 0 4px 32px;
+}
+
+.sidebar__grupo--aberto .sidebar__subitens {
+  display: flex;
+}
+
+.sidebar__subitem {
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--neutro-secundario);
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.sidebar__subitem:hover {
+  background: #F3F4F6;
+  color: var(--neutro-texto);
+}
+
+.sidebar__subitem--ativo {
+  background: #EFF6FF;
+  color: var(--azul-acao);
+  font-weight: 600;
+}
+
+/* Sidebar colapsada: esconde os grupos (evita menu ilegível) */
+.sidebar.colapsado .sidebar__grupo-seta,
+.sidebar.colapsado .sidebar__subitens {
+  display: none;
+}
+
+.sidebar.colapsado .sidebar__grupo-cabecalho {
+  justify-content: center;
+  padding: 10px;
+}

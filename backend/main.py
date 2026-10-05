@@ -3,7 +3,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from routes import (
     auth, usuario, produto, cliente, fornecedor,
     forma_pagamento, pedido_venda, pedido_compra,
-    cotacao, geladeira, historico_manutencao
+    cotacao, geladeira, historico_manutencao,
+    categoria, subcategoria, unidade_medida
 )
 
 app = FastAPI(
@@ -29,3 +30,6 @@ app.include_router(pedido_compra.router)
 app.include_router(cotacao.router)
 app.include_router(geladeira.router)
 app.include_router(historico_manutencao.router)
+app.include_router(categoria.router)
+app.include_router(subcategoria.router)
+app.include_router(unidade_medida.router)

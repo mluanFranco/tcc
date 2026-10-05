@@ -17,6 +17,8 @@
 
     <main class="conteudo-principal">
 
+      <div class="breadcrumb"><span>Cadastros</span> / <span>Produtos</span></div>
+
       <div class="pagina-topo">
         <h1>Produtos</h1>
         <button class="botao-primario" id="botao-incluir">
@@ -42,8 +44,12 @@
             <tr>
               <th>Nome</th>
               <th>Categoria</th>
+              <th>Subcategoria</th>
+              <th>Tipo</th>
               <th>Preço de venda</th>
-              <th>Estoque (atual/mín.)</th>
+              <th>Estoque atual</th>
+              <th>Estoque reservado</th>
+              <th>Estoque mínimo</th>
               <th>Status</th>
               <th>Ações</th>
             </tr>
@@ -79,38 +85,47 @@
 
           <div class="campo-form-linha">
             <div class="campo-form">
-              <label for="campo-categoria">Categoria</label>
-              <select id="campo-categoria">
+              <label for="campo-categoria">Categoria *</label>
+              <select id="campo-categoria" required>
                 <option value="">Selecione...</option>
-                <option value="Sorvete">Sorvete</option>
-                <option value="Picolé">Picolé</option>
-                <option value="Açaí">Açaí</option>
-                <option value="Sobremesa">Sobremesa</option>
-                <option value="Casquinha">Casquinha</option>
-                <option value="Cobertura">Cobertura</option>
-                <option value="Insumo">Insumo</option>
-                <option value="Embalagem">Embalagem</option>
-                <option value="Outro">Outro</option>
               </select>
+              <span class="campo-erro-msg">Selecione a categoria.</span>
             </div>
             <div class="campo-form">
-              <label for="campo-unidade">Unidade de medida</label>
-              <select id="campo-unidade">
-                <option value="">Selecione...</option>
-                <option value="un">Unidade (un)</option>
-                <option value="kg">Quilograma (kg)</option>
-                <option value="g">Grama (g)</option>
-                <option value="L">Litro (L)</option>
-                <option value="ml">Mililitro (ml)</option>
-                <option value="cx">Caixa (cx)</option>
-                <option value="pct">Pacote (pct)</option>
+              <label for="campo-subcategoria">Subcategoria *</label>
+              <select id="campo-subcategoria" required disabled>
+                <option value="">Selecione a categoria primeiro...</option>
               </select>
+              <span class="campo-erro-msg">Selecione a subcategoria.</span>
             </div>
+          </div>
+
+          <div class="campo-form">
+            <label for="campo-unidade">Unidade de medida *</label>
+            <select id="campo-unidade" required>
+              <option value="">Selecione...</option>
+            </select>
+            <span class="campo-erro-msg">Selecione a unidade de medida.</span>
           </div>
 
           <div class="campo-form">
             <label for="campo-descricao">Descrição</label>
             <textarea id="campo-descricao"></textarea>
+          </div>
+
+          <div class="campo-form">
+            <label>Tipo de produto *</label>
+            <div class="campo-checkbox-grupo">
+              <label class="campo-checkbox">
+                <input type="checkbox" id="campo-e-insumo">
+                <span>É insumo (usado na produção)</span>
+              </label>
+              <label class="campo-checkbox">
+                <input type="checkbox" id="campo-e-vendavel">
+                <span>É vendável (aparece em pedidos de venda)</span>
+              </label>
+            </div>
+            <span class="campo-erro-msg" id="erro-tipo-produto">Marque ao menos uma opção acima.</span>
           </div>
 
           <div class="campo-form-linha">
@@ -121,11 +136,17 @@
               </div>
               <span class="campo-erro-msg">Informe um valor válido.</span>
             </div>
-            <div class="campo-form">
-              <label for="campo-preco-venda">Preço de venda</label>
-              <div class="campo-moeda">
-                <input type="text" id="campo-preco-venda" inputmode="numeric" placeholder="0,00">
-              </div>
+            <div class="campo-form" id="bloco-porcentagem" style="display: none;">
+              <label for="campo-porcentagem">Margem (%) *</label>
+              <input type="number" id="campo-porcentagem" min="0" step="0.01" placeholder="Ex: 80">
+              <span class="campo-erro-msg">Informe a margem de lucro.</span>
+            </div>
+          </div>
+
+          <div class="campo-form" id="bloco-preco-venda" style="display: none;">
+            <label for="campo-preco-venda">Preço de venda (calculado)</label>
+            <div class="campo-moeda">
+              <input type="text" id="campo-preco-venda" readonly tabindex="-1">
             </div>
           </div>
 
@@ -169,8 +190,16 @@
             <span class="visualizacao-valor" id="vis-categoria">—</span>
           </div>
           <div class="visualizacao-item">
+            <span class="visualizacao-label">Subcategoria</span>
+            <span class="visualizacao-valor" id="vis-subcategoria">—</span>
+          </div>
+          <div class="visualizacao-item">
             <span class="visualizacao-label">Unidade de medida</span>
             <span class="visualizacao-valor" id="vis-unidade">—</span>
+          </div>
+          <div class="visualizacao-item">
+            <span class="visualizacao-label">Tipo</span>
+            <span class="visualizacao-valor" id="vis-tipo">—</span>
           </div>
         </div>
 
@@ -183,6 +212,10 @@
           <div class="visualizacao-item">
             <span class="visualizacao-label">Preço de custo</span>
             <span class="visualizacao-valor" id="vis-preco-custo">—</span>
+          </div>
+          <div class="visualizacao-item">
+            <span class="visualizacao-label">Margem</span>
+            <span class="visualizacao-valor" id="vis-porcentagem">—</span>
           </div>
           <div class="visualizacao-item">
             <span class="visualizacao-label">Preço de venda</span>
@@ -222,6 +255,9 @@
   <script src="../js/core/auth.js"></script>
   <script src="../js/core/mascaras.js"></script>
   <script src="../js/components/sidebar.js"></script>
+  <script src="../js/services/categoriaService.js"></script>
+  <script src="../js/services/subcategoriaService.js"></script>
+  <script src="../js/services/unidadeMedidaService.js"></script>
   <script src="../js/services/produtoService.js"></script>
   <script src="../js/pages/produtos.js"></script>
 </body>

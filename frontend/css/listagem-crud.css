@@ -482,3 +482,38 @@
     grid-template-columns: 1fr;
   }
 }
+
+.breadcrumb {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--neutro-secundario);
+  margin-bottom: 8px;
+}
+
+.breadcrumb span:last-child {
+  color: var(--neutro-texto);
+  font-weight: 600;
+}
+
+.campo-checkbox-grupo {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.campo-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--neutro-texto);
+  cursor: pointer;
+}
+
+.campo-checkbox input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  cursor: pointer;
+}

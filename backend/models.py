@@ -21,24 +21,86 @@ class Usuario(Base):
 
 
 # ─────────────────────────────────────────
+#  CATEGORIA
+# ─────────────────────────────────────────
+class Categoria(Base):
+    __tablename__ = "categoria"
+
+    id         = Column(Integer, primary_key=True, autoincrement=True)
+    nome       = Column(String(80), nullable=False, unique=True)
+    ativo      = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.now)
+    updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
+
+    subcategorias = relationship("Subcategoria", back_populates="categoria")
+    produtos      = relationship("Produto", back_populates="categoria")
+
+
+# ─────────────────────────────────────────
+#  SUBCATEGORIA
+# ─────────────────────────────────────────
+class Subcategoria(Base):
+    __tablename__ = "subcategoria"
+
+    id           = Column(Integer, primary_key=True, autoincrement=True)
+    categoria_id = Column(Integer, ForeignKey("categoria.id"), nullable=False)
+    nome         = Column(String(80), nullable=False)
+    ativo        = Column(Boolean, default=True)
+    created_at   = Column(DateTime, default=datetime.now)
+    updated_at   = Column(DateTime, default=datetime.now, onupdate=datetime.now)
+
+    categoria = relationship("Categoria", back_populates="subcategorias")
+    produtos  = relationship("Produto", back_populates="subcategoria")
+
+
+# ─────────────────────────────────────────
+#  UNIDADE DE MEDIDA
+# ─────────────────────────────────────────
+class UnidadeMedida(Base):
+    __tablename__ = "unidade_medida"
+
+    id         = Column(Integer, primary_key=True, autoincrement=True)
+    nome       = Column(String(50), nullable=False)   # ex: "Quilograma"
+    sigla      = Column(String(10), nullable=False, unique=True)  # ex: "kg"
+    ativo      = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.now)
+    updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
+
+    produtos = relationship("Produto", back_populates="unidade_medida")
+
+
+# ─────────────────────────────────────────
 #  PRODUTO
 # ─────────────────────────────────────────
 class Produto(Base):
     __tablename__ = "produto"
 
-    id             = Column(Integer, primary_key=True, autoincrement=True)
-    nome           = Column(String(100), nullable=False)
-    descricao      = Column(String(255))
-    categoria      = Column(String(50))
-    unidade_medida = Column(String(20))
-    preco_custo    = Column(Float, nullable=False)
-    preco_venda    = Column(Float)
-    estoque_atual  = Column(Integer, default=0)
-    estoque_minimo = Column(Integer, default=0)
-    estoque_reservado = Column(Integer, default=0)
-    ativo          = Column(Boolean, default=True)
-    created_at     = Column(DateTime, default=datetime.now)
-    updated_at     = Column(DateTime, default=datetime.now, onupdate=datetime.now)
+    id                 = Column(Integer, primary_key=True, autoincrement=True)
+    nome               = Column(String(100), nullable=False)
+    descricao          = Column(String(255))
+
+    categoria_id       = Column(Integer, ForeignKey("categoria.id"), nullable=False)
+    subcategoria_id    = Column(Integer, ForeignKey("subcategoria.id"), nullable=False)
+    unidade_medida_id  = Column(Integer, ForeignKey("unidade_medida.id"), nullable=False)
+
+    e_insumo           = Column(Boolean, default=False, nullable=False)
+    e_vendavel         = Column(Boolean, default=False, nullable=False)
+
+    preco_custo        = Column(Float, nullable=False)
+    porcentagem        = Column(Float, nullable=True)   # só relevante se e_vendavel=True
+    preco_venda        = Column(Float, nullable=True)   # calculado e gravado pelo backend
+
+    estoque_atual      = Column(Integer, default=0)
+    estoque_reservado  = Column(Integer, default=0)
+    estoque_minimo     = Column(Integer, default=0)
+
+    ativo              = Column(Boolean, default=True)
+    created_at         = Column(DateTime, default=datetime.now)
+    updated_at         = Column(DateTime, default=datetime.now, onupdate=datetime.now)
+
+    categoria       = relationship("Categoria", back_populates="produtos")
+    subcategoria    = relationship("Subcategoria", back_populates="produtos")
+    unidade_medida  = relationship("UnidadeMedida", back_populates="produtos")
 
 
 # ─────────────────────────────────────────

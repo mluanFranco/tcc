@@ -1,7 +1,10 @@
-// Lógica da tela de Produtos: busca dados via produtoService, renderiza a tabela,
-// controla o modal de criação/edição e os filtros de busca e status.
+// Lógica da tela de Produtos: cadastro/subcategoria/unidade dependentes,
+// tipo de produto (insumo/vendável) e cálculo somente-leitura de preço de venda.
 
 let produtosCache = [];
+let categoriasCache = [];
+let subcategoriasCacheGlobal = [];
+let unidadesCache = [];
 let abaAtiva = "ativos";
 let produtoEmEdicaoId = null;
 
@@ -9,7 +12,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (!exigirAutenticacao()) return;
 
   aplicarMascaraMoeda(document.getElementById("campo-preco-custo"));
-  aplicarMascaraMoeda(document.getElementById("campo-preco-venda"));
 
   const elementos = {
     tabelaCorpo: document.getElementById("tabela-produtos-corpo"),
@@ -18,6 +20,16 @@ document.addEventListener("DOMContentLoaded", async () => {
     abaAtivos: document.getElementById("aba-ativos"),
     abaInativos: document.getElementById("aba-inativos"),
     botaoIncluir: document.getElementById("botao-incluir"),
+    campoCategoria: document.getElementById("campo-categoria"),
+    campoSubcategoria: document.getElementById("campo-subcategoria"),
+    campoUnidade: document.getElementById("campo-unidade"),
+    campoEInsumo: document.getElementById("campo-e-insumo"),
+    campoEVendavel: document.getElementById("campo-e-vendavel"),
+    blocoPorcentagem: document.getElementById("bloco-porcentagem"),
+    campoPorcentagem: document.getElementById("campo-porcentagem"),
+    blocoPrecoVenda: document.getElementById("bloco-preco-venda"),
+    campoPrecoCusto: document.getElementById("campo-preco-custo"),
+    campoPrecoVenda: document.getElementById("campo-preco-venda"),
     modalOverlay: document.getElementById("modal-produto"),
     modalTitulo: document.getElementById("modal-titulo"),
     modalFechar: document.getElementById("modal-fechar"),
@@ -27,6 +39,103 @@ document.addEventListener("DOMContentLoaded", async () => {
     modalVisualizarFechar: document.getElementById("modal-visualizar-fechar"),
     modalVisualizarFecharRodape: document.getElementById("modal-visualizar-fechar-rodape")
   };
+
+  // ---------- Resolução de nomes (categoria/subcategoria/unidade) ----------
+
+  function nomeCategoria(id) {
+    const c = categoriasCache.find(c => c.id === id);
+    return c ? c.nome : "—";
+  }
+
+  function nomeSubcategoria(id) {
+    const s = subcategoriasCacheGlobal.find(s => s.id === id);
+    return s ? s.nome : "—";
+  }
+
+  function nomeUnidade(id) {
+    const u = unidadesCache.find(u => u.id === id);
+    return u ? `${u.nome} (${u.sigla})` : "—";
+  }
+
+  function rotuloTipo(produto) {
+    if (produto.e_insumo && produto.e_vendavel) return "Insumo + Vendável";
+    if (produto.e_insumo) return "Insumo";
+    if (produto.e_vendavel) return "Vendável";
+    return "—";
+  }
+
+  // ---------- Carregamento dos selects de apoio ----------
+
+  async function carregarListasDeApoio() {
+    try {
+      [categoriasCache, unidadesCache, subcategoriasCacheGlobal] = await Promise.all([
+        categoriaService.listar(),
+        unidadeMedidaService.listar(),
+        subcategoriaService.listar()
+      ]);
+
+      elementos.campoCategoria.innerHTML =
+        `<option value="">Selecione...</option>` +
+        categoriasCache.map(c => `<option value="${c.id}">${c.nome}</option>`).join("");
+
+      elementos.campoUnidade.innerHTML =
+        `<option value="">Selecione...</option>` +
+        unidadesCache.map(u => `<option value="${u.id}">${u.nome} (${u.sigla})</option>`).join("");
+    } catch (erro) {
+      alert("Não foi possível carregar categorias/unidades: " + erro.message);
+    }
+  }
+
+  async function atualizarSubcategoriasPorCategoria(categoriaId, subcategoriaSelecionadaId = null) {
+    if (!categoriaId) {
+      elementos.campoSubcategoria.innerHTML = `<option value="">Selecione a categoria primeiro...</option>`;
+      elementos.campoSubcategoria.disabled = true;
+      return;
+    }
+
+    try {
+      const subcategorias = await subcategoriaService.listar({ categoriaId });
+      elementos.campoSubcategoria.innerHTML =
+        `<option value="">Selecione...</option>` +
+        subcategorias.map(s => `<option value="${s.id}">${s.nome}</option>`).join("");
+      elementos.campoSubcategoria.disabled = false;
+
+      if (subcategoriaSelecionadaId) {
+        elementos.campoSubcategoria.value = subcategoriaSelecionadaId;
+      }
+    } catch (erro) {
+      alert("Não foi possível carregar as subcategorias: " + erro.message);
+    }
+  }
+
+  // ---------- Visibilidade condicional (tipo vendável) ----------
+
+  function atualizarVisibilidadeCamposVenda() {
+    const vendavel = elementos.campoEVendavel.checked;
+    elementos.blocoPorcentagem.style.display = vendavel ? "flex" : "none";
+    elementos.blocoPrecoVenda.style.display = vendavel ? "flex" : "none";
+    elementos.campoPorcentagem.required = vendavel;
+    if (!vendavel) {
+      elementos.campoPorcentagem.value = "";
+      elementos.campoPrecoVenda.value = "";
+    }
+    atualizarPreviewPrecoVenda();
+  }
+
+  // Preview local, só para feedback visual — o valor real vem do backend na resposta.
+  function atualizarPreviewPrecoVenda() {
+    if (!elementos.campoEVendavel.checked) return;
+    const custo = moedaParaNumero(elementos.campoPrecoCusto.value);
+    const porcentagem = parseFloat(elementos.campoPorcentagem.value);
+    if (custo == null || isNaN(porcentagem)) {
+      elementos.campoPrecoVenda.value = "";
+      return;
+    }
+    const precoVenda = custo + (custo * porcentagem / 100);
+    elementos.campoPrecoVenda.value = numeroParaMoeda(precoVenda);
+  }
+
+  // ---------- Tabela ----------
 
   async function carregarProdutos() {
     try {
@@ -46,7 +155,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (!termoBusca) return true;
       return (
         produto.nome.toLowerCase().includes(termoBusca) ||
-        (produto.categoria ?? "").toLowerCase().includes(termoBusca)
+        nomeCategoria(produto.categoria_id).toLowerCase().includes(termoBusca)
       );
     });
 
@@ -63,7 +172,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       const badgeEstoqueClasse = estoqueBaixo ? "badge-estoque--baixo" : "badge-estoque--ok";
       const badgeStatusClasse = produto.ativo ? "badge-status--ativo" : "badge-status--inativo";
       const precoFormatado = produto.preco_venda != null
-        ? `R$ ${produto.preco_venda.toFixed(2).replace(".", ",")}`
+        ? `R$ ${Number(produto.preco_venda).toFixed(2).replace(".", ",")}`
         : "—";
 
       const botaoAcao = produto.ativo
@@ -77,13 +186,13 @@ document.addEventListener("DOMContentLoaded", async () => {
       return `
         <tr>
           <td class="celula-nome">${produto.nome}</td>
-          <td>${produto.categoria ?? "—"}</td>
+          <td>${nomeCategoria(produto.categoria_id)}</td>
+          <td>${nomeSubcategoria(produto.subcategoria_id)}</td>
+          <td>${rotuloTipo(produto)}</td>
           <td>${precoFormatado}</td>
-          <td>
-            <span class="badge-estoque ${badgeEstoqueClasse}">
-              ${produto.estoque_atual} / ${produto.estoque_minimo}
-            </span>
-          </td>
+          <td><span class="badge-estoque ${badgeEstoqueClasse}">${produto.estoque_atual}</span></td>
+          <td>${produto.estoque_reservado ?? 0}</td>
+          <td>${produto.estoque_minimo}</td>
           <td><span class="badge-status ${badgeStatusClasse}">${produto.ativo ? "Ativo" : "Inativo"}</span></td>
           <td class="celula-acoes">
             <button class="botao-icone" data-acao="visualizar" data-id="${produto.id}" title="Visualizar" aria-label="Visualizar">
@@ -99,24 +208,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }).join("");
   }
 
-  // Preenche um <select> com o valor salvo. Se o valor não existir entre as opções
-  // pré-definidas (ex: dado cadastrado antes da lista existir), cria a opção dinamicamente
-  // para não perder a informação já salva no produto.
-  function definirValorSelectComFallback(idSelect, valor) {
-    const select = document.getElementById(idSelect);
-    if (!valor) {
-      select.value = "";
-      return;
-    }
-    const existe = Array.from(select.options).some(opt => opt.value === valor);
-    if (!existe) {
-      const novaOpcao = document.createElement("option");
-      novaOpcao.value = valor;
-      novaOpcao.textContent = valor;
-      select.appendChild(novaOpcao);
-    }
-    select.value = valor;
-  }
+  // ---------- Modal de visualização ----------
 
   function formatarMoeda(numero) {
     return numero != null ? `R$ ${Number(numero).toFixed(2).replace(".", ",")}` : "—";
@@ -130,15 +222,20 @@ document.addEventListener("DOMContentLoaded", async () => {
   function abrirModalVisualizacao(produto) {
     document.getElementById("vis-nome").textContent = produto.nome;
     document.getElementById("vis-status").textContent = produto.ativo ? "Ativo" : "Inativo";
-    document.getElementById("vis-categoria").textContent = produto.categoria ?? "—";
-    document.getElementById("vis-unidade").textContent = produto.unidade_medida ?? "—";
+    document.getElementById("vis-categoria").textContent = nomeCategoria(produto.categoria_id);
+    document.getElementById("vis-subcategoria").textContent = nomeSubcategoria(produto.subcategoria_id);
+    document.getElementById("vis-unidade").textContent = nomeUnidade(produto.unidade_medida_id);
+    document.getElementById("vis-tipo").textContent = rotuloTipo(produto);
     document.getElementById("vis-descricao").textContent = produto.descricao ?? "—";
     document.getElementById("vis-preco-custo").textContent = formatarMoeda(produto.preco_custo);
+    document.getElementById("vis-porcentagem").textContent =
+      produto.porcentagem != null ? `${produto.porcentagem}%` : "—";
     document.getElementById("vis-preco-venda").textContent = formatarMoeda(produto.preco_venda);
     document.getElementById("vis-estoque-atual").textContent = produto.estoque_atual;
     document.getElementById("vis-estoque-minimo").textContent = produto.estoque_minimo;
     document.getElementById("vis-estoque-reservado").textContent = produto.estoque_reservado ?? 0;
-    document.getElementById("vis-estoque-disponivel").textContent = produto.estoque_disponivel ?? (produto.estoque_atual - (produto.estoque_reservado ?? 0));
+    document.getElementById("vis-estoque-disponivel").textContent =
+      produto.estoque_disponivel ?? (produto.estoque_atual - (produto.estoque_reservado ?? 0));
     document.getElementById("vis-criado-em").textContent = formatarData(produto.created_at);
 
     elementos.modalVisualizarOverlay.classList.add("aberto");
@@ -148,23 +245,34 @@ document.addEventListener("DOMContentLoaded", async () => {
     elementos.modalVisualizarOverlay.classList.remove("aberto");
   }
 
-  function abrirModal(produto = null) {
+  // ---------- Modal de criação/edição ----------
+
+  async function abrirModal(produto = null) {
     elementos.form.reset();
     limparErrosForm();
+    elementos.campoSubcategoria.innerHTML = `<option value="">Selecione a categoria primeiro...</option>`;
+    elementos.campoSubcategoria.disabled = true;
 
     if (produto) {
       produtoEmEdicaoId = produto.id;
       elementos.modalTitulo.textContent = "Editar produto";
       document.getElementById("campo-nome").value = produto.nome;
-      definirValorSelectComFallback("campo-categoria", produto.categoria);
-      definirValorSelectComFallback("campo-unidade", produto.unidade_medida);
+      elementos.campoCategoria.value = produto.categoria_id;
+      await atualizarSubcategoriasPorCategoria(produto.categoria_id, produto.subcategoria_id);
+      elementos.campoUnidade.value = produto.unidade_medida_id;
       document.getElementById("campo-descricao").value = produto.descricao ?? "";
-      document.getElementById("campo-preco-custo").value = numeroParaMoeda(produto.preco_custo);
-      document.getElementById("campo-preco-venda").value = numeroParaMoeda(produto.preco_venda);
+      elementos.campoEInsumo.checked = produto.e_insumo;
+      elementos.campoEVendavel.checked = produto.e_vendavel;
+      elementos.campoPrecoCusto.value = numeroParaMoeda(produto.preco_custo);
+      if (produto.e_vendavel) {
+        elementos.campoPorcentagem.value = produto.porcentagem ?? "";
+      }
       document.getElementById("campo-estoque-minimo").value = produto.estoque_minimo;
+      atualizarVisibilidadeCamposVenda();
     } else {
       produtoEmEdicaoId = null;
       elementos.modalTitulo.textContent = "Novo produto";
+      atualizarVisibilidadeCamposVenda();
     }
 
     elementos.modalOverlay.classList.add("aberto");
@@ -188,8 +296,35 @@ document.addEventListener("DOMContentLoaded", async () => {
       valido = false;
     }
 
+    if (!dados.categoria_id) {
+      elementos.campoCategoria.closest(".campo-form").classList.add("invalido");
+      valido = false;
+    }
+
+    if (!dados.subcategoria_id) {
+      elementos.campoSubcategoria.closest(".campo-form").classList.add("invalido");
+      valido = false;
+    }
+
+    if (!dados.unidade_medida_id) {
+      elementos.campoUnidade.closest(".campo-form").classList.add("invalido");
+      valido = false;
+    }
+
+    if (!dados.e_insumo && !dados.e_vendavel) {
+      document.getElementById("erro-tipo-produto").style.display = "block";
+      valido = false;
+    } else {
+      document.getElementById("erro-tipo-produto").style.display = "none";
+    }
+
     if (dados.preco_custo == null || dados.preco_custo < 0) {
-      document.getElementById("campo-preco-custo").closest(".campo-form").classList.add("invalido");
+      elementos.campoPrecoCusto.closest(".campo-form").classList.add("invalido");
+      valido = false;
+    }
+
+    if (dados.e_vendavel && (dados.porcentagem == null || isNaN(dados.porcentagem))) {
+      elementos.blocoPorcentagem.classList.add("invalido");
       valido = false;
     }
 
@@ -199,13 +334,17 @@ document.addEventListener("DOMContentLoaded", async () => {
   async function salvarProduto(evento) {
     evento.preventDefault();
 
+    const eVendavel = elementos.campoEVendavel.checked;
+
     const dados = {
       nome: document.getElementById("campo-nome").value,
-      categoria: document.getElementById("campo-categoria").value || null,
-      unidade_medida: document.getElementById("campo-unidade").value || null,
-      descricao: document.getElementById("campo-descricao").value || null,
-      preco_custo: moedaParaNumero(document.getElementById("campo-preco-custo").value),
-      preco_venda: moedaParaNumero(document.getElementById("campo-preco-venda").value),
+      categoria_id: parseInt(elementos.campoCategoria.value, 10) || null,
+      subcategoria_id: parseInt(elementos.campoSubcategoria.value, 10) || null,
+      unidade_medida_id: parseInt(elementos.campoUnidade.value, 10) || null,
+      e_insumo: elementos.campoEInsumo.checked,
+      e_vendavel: eVendavel,
+      preco_custo: moedaParaNumero(elementos.campoPrecoCusto.value),
+      porcentagem: eVendavel ? parseFloat(elementos.campoPorcentagem.value) : null,
       estoque_minimo: parseInt(document.getElementById("campo-estoque-minimo").value || "0", 10)
     };
 
@@ -231,6 +370,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   }
 
+  // ---------- Ações da tabela e abas ----------
+
   async function tratarAcaoTabela(evento) {
     const botao = evento.target.closest("button[data-acao]");
     if (!botao) return;
@@ -245,7 +386,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     if (acao === "editar") {
       const produto = produtosCache.find(p => p.id === id);
-      if (produto) abrirModal(produto);
+      if (produto) await abrirModal(produto);
     }
 
     if (acao === "desativar") {
@@ -275,6 +416,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     carregarProdutos();
   }
 
+  // ---------- Listeners ----------
+
   elementos.botaoIncluir.addEventListener("click", () => abrirModal());
   elementos.modalFechar.addEventListener("click", fecharModal);
   elementos.modalCancelar.addEventListener("click", fecharModal);
@@ -292,5 +435,13 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (e.target === elementos.modalVisualizarOverlay) fecharModalVisualizacao();
   });
 
+  elementos.campoCategoria.addEventListener("change", () => {
+    atualizarSubcategoriasPorCategoria(elementos.campoCategoria.value || null);
+  });
+  elementos.campoEVendavel.addEventListener("change", atualizarVisibilidadeCamposVenda);
+  elementos.campoPrecoCusto.addEventListener("input", atualizarPreviewPrecoVenda);
+  elementos.campoPorcentagem.addEventListener("input", atualizarPreviewPrecoVenda);
+
+  await carregarListasDeApoio();
   await carregarProdutos();
 });

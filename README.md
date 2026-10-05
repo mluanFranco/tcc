@@ -292,7 +292,7 @@ pip install -r requirements.txt
 # CREATE DATABASE sist_gest_est_mon CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 # 6. Criar as tabelas
-python create_tables.py
+alembic upgrade head
 
 # 7. Subir o servidor
 uvicorn main:app --reload
