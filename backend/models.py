@@ -112,9 +112,29 @@ class Cliente(Base):
     id          = Column(Integer, primary_key=True, autoincrement=True)
     nome        = Column(String(100), nullable=False)
     cpf_cnpj    = Column(String(20), nullable=False, unique=True)
-    tipo        = Column(String(2))        # PF ou PJ
+    tipo        = Column(String(2))        # PF ou PJ (definido a partir do documento)
     telefone    = Column(String(20))
     email       = Column(String(100))
+    ativo       = Column(Boolean, default=True)
+    created_at  = Column(DateTime, default=datetime.now)
+    updated_at  = Column(DateTime, default=datetime.now, onupdate=datetime.now)
+
+    enderecos      = relationship("ClienteEndereco", back_populates="cliente", order_by="ClienteEndereco.id")
+    geladeiras     = relationship("Geladeira", back_populates="cliente")
+    pedidos_venda  = relationship("PedidoVenda", back_populates="cliente")
+
+
+# ─────────────────────────────────────────
+#  ENDEREÇO DO CLIENTE
+# ─────────────────────────────────────────
+class ClienteEndereco(Base):
+    __tablename__ = "cliente_endereco"
+
+    id          = Column(Integer, primary_key=True, autoincrement=True)
+    cliente_id  = Column(Integer, ForeignKey("cliente.id"), nullable=False)
+    tipo        = Column(String(10), nullable=False)   # principal | entrega
+    # As colunas abaixo aceitam nulo no banco só para comportar endereços antigos
+    # incompletos; a obrigatoriedade para novos cadastros é validada na API.
     cep         = Column(String(9))
     logradouro  = Column(String(150))
     numero      = Column(String(10))
@@ -127,8 +147,7 @@ class Cliente(Base):
     created_at  = Column(DateTime, default=datetime.now)
     updated_at  = Column(DateTime, default=datetime.now, onupdate=datetime.now)
 
-    geladeiras     = relationship("Geladeira", back_populates="cliente")
-    pedidos_venda  = relationship("PedidoVenda", back_populates="cliente")
+    cliente = relationship("Cliente", back_populates="enderecos")
 
 
 # ─────────────────────────────────────────
@@ -288,6 +307,7 @@ class Geladeira(Base):
 
     id            = Column(Integer, primary_key=True, autoincrement=True)
     cliente_id    = Column(Integer, ForeignKey("cliente.id"), nullable=False)
+    endereco_id   = Column(Integer, ForeignKey("cliente_endereco.id"), nullable=True)
     tipo          = Column(String(50), nullable=False)
     modelo        = Column(String(100))
     marca         = Column(String(50))
@@ -296,6 +316,7 @@ class Geladeira(Base):
     status        = Column(String(20), default="em_campo")  # em_campo | manutencao | desativada
 
     cliente              = relationship("Cliente", back_populates="geladeiras")
+    endereco             = relationship("ClienteEndereco")
     historico_manutencao = relationship("HistoricoManutencao", back_populates="geladeira")
 
 
