@@ -1,22 +1,22 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import Optional, List
 from datetime import datetime
 from schemas.tipos import Quantidade, QuantidadeSaida
 
 class ItemPedidoCompraCreate(BaseModel):
-    produto_id: int
+    produto_id: int = Field(gt=0)
     quantidade: Quantidade
-    preco_unitario: float
+    preco_unitario: float = Field(ge=0)
 
 class PedidoCompraCreate(BaseModel):
-    fornecedor_id: int
-    forma_pagamento_id: Optional[int] = None
+    fornecedor_id: int = Field(gt=0)
+    forma_pagamento_id: Optional[int] = Field(default=None, gt=0)
     data_entrega_prevista: Optional[datetime] = None
-    observacao: Optional[str] = None
+    observacao: Optional[str] = Field(default=None, max_length=255)
     itens: List[ItemPedidoCompraCreate]
 
 class RecebimentoItem(BaseModel):
-    item_id: int
+    item_id: int = Field(gt=0)
     quantidade_recebida_agora: Quantidade   # quantidade chegando NESTA entrega, não o acumulado
 
 class RegistrarRecebimento(BaseModel):

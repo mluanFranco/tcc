@@ -1,13 +1,16 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from database import get_db
-from models import PedidoCompra, ItemPedidoCompra, Produto, Usuario
+from models import PedidoCompra, ItemPedidoCompra, Fornecedor, FormaPagamento, Usuario
 from schemas.pedido_compra import (
     PedidoCompraCreate, PedidoCompraStatusUpdate,
     PedidoCompraResponse, RegistrarRecebimento
 )
 from core.security import get_current_user
+from core.estoque import travar_produtos
 from typing import List
+from collections import defaultdict
+from decimal import Decimal
 from datetime import datetime
 
 router = APIRouter(prefix="/pedidos-compra", tags=["Pedidos de Compra"])
@@ -22,15 +25,33 @@ def criar_pedido_compra(
     if not dados.itens:
         raise HTTPException(status_code=400, detail="O pedido deve conter ao menos um item")
 
+    fornecedor = db.query(Fornecedor).filter(Fornecedor.id == dados.fornecedor_id).first()
+    if not fornecedor:
+        raise HTTPException(status_code=404, detail="Fornecedor não encontrado")
+    if not fornecedor.ativo:
+        raise HTTPException(status_code=400, detail="O fornecedor selecionado está inativo")
+
+    if dados.forma_pagamento_id is not None:
+        forma = db.query(FormaPagamento).filter(FormaPagamento.id == dados.forma_pagamento_id).first()
+        if not forma:
+            raise HTTPException(status_code=404, detail="Forma de pagamento não encontrada")
+        if not forma.ativo:
+            raise HTTPException(status_code=400, detail="A forma de pagamento selecionada está inativa")
+
+    # Mesma ordem de travamento das demais rotas de estoque (ids crescentes), o que evita deadlock
+    produtos = travar_produtos(db, [item.produto_id for item in dados.itens])
+
     valor_total = 0.0
     itens_para_criar = []
 
     for item in dados.itens:
-        produto = db.query(Produto).filter(Produto.id == item.produto_id).first()
+        produto = produtos.get(item.produto_id)
         if not produto:
             raise HTTPException(status_code=404, detail=f"Produto {item.produto_id} não encontrado")
+        if not produto.ativo:
+            raise HTTPException(status_code=400, detail=f"O produto '{produto.nome}' está inativo")
 
-        subtotal = item.preco_unitario * float(item.quantidade)
+        subtotal = round(item.preco_unitario * float(item.quantidade), 2)
         valor_total += subtotal
         itens_para_criar.append((item, subtotal))
 
@@ -40,7 +61,7 @@ def criar_pedido_compra(
         forma_pagamento_id=dados.forma_pagamento_id,
         data_pedido=datetime.now(),
         data_entrega_prevista=dados.data_entrega_prevista,
-        valor_total=valor_total,
+        valor_total=round(valor_total, 2),
         status="pendente",
         observacao=dados.observacao
     )
@@ -96,7 +117,14 @@ def registrar_recebimento(
     Quando todos os itens atingem a quantidade pedida, o pedido passa automaticamente
     para 'recebido'.
     """
-    pedido = db.query(PedidoCompra).filter(PedidoCompra.id == pedido_id).first()
+    # Trava o pedido: recebimentos e cancelamentos simultâneos do mesmo pedido passam um de cada vez
+    pedido = (
+        db.query(PedidoCompra)
+        .filter(PedidoCompra.id == pedido_id)
+        .with_for_update()
+        .populate_existing()
+        .first()
+    )
     if not pedido:
         raise HTTPException(status_code=404, detail="Pedido de compra não encontrado")
 
@@ -109,36 +137,34 @@ def registrar_recebimento(
     if not dados.itens:
         raise HTTPException(status_code=400, detail="Informe ao menos um item recebido")
 
-    itens_map = {}
+    todos_itens = db.query(ItemPedidoCompra).filter(ItemPedidoCompra.pedido_compra_id == pedido.id).all()
+    itens_do_pedido = {item.id: item for item in todos_itens}
+
+    # Se o mesmo item vier mais de uma vez na requisição, as quantidades são somadas
+    recebido_agora = defaultdict(Decimal)
     for entrada in dados.itens:
-        item = db.query(ItemPedidoCompra).filter(
-            ItemPedidoCompra.id == entrada.item_id,
-            ItemPedidoCompra.pedido_compra_id == pedido.id
-        ).first()
-
-        if not item:
+        if entrada.item_id not in itens_do_pedido:
             raise HTTPException(status_code=404, detail=f"Item {entrada.item_id} não pertence a este pedido")
+        recebido_agora[entrada.item_id] += entrada.quantidade_recebida_agora
 
-        if entrada.quantidade_recebida_agora <= 0:
-            raise HTTPException(status_code=400, detail="A quantidade recebida deve ser maior que zero")
+    produtos = travar_produtos(db, [itens_do_pedido[i].produto_id for i in recebido_agora])
 
+    for item_id, quantidade in recebido_agora.items():
+        item = itens_do_pedido[item_id]
         restante = item.quantidade - item.quantidade_recebida
-        if entrada.quantidade_recebida_agora > restante:
-            produto = db.query(Produto).filter(Produto.id == item.produto_id).first()
+        if quantidade > restante:
+            produto = produtos[item.produto_id]
             raise HTTPException(
                 status_code=400,
                 detail=f"Quantidade recebida excede o restante para '{produto.nome}'. "
-                       f"Restante a receber: {restante}, informado: {entrada.quantidade_recebida_agora}"
+                       f"Restante a receber: {restante:.3f}, informado: {quantidade:.3f}"
             )
 
-        itens_map[item.id] = (item, entrada.quantidade_recebida_agora)
+    for item_id, quantidade in recebido_agora.items():
+        item = itens_do_pedido[item_id]
+        produtos[item.produto_id].estoque_atual += quantidade
+        item.quantidade_recebida += quantidade
 
-    for item, qtd_agora in itens_map.values():
-        produto = db.query(Produto).filter(Produto.id == item.produto_id).first()
-        produto.estoque_atual += qtd_agora
-        item.quantidade_recebida += qtd_agora
-
-    todos_itens = db.query(ItemPedidoCompra).filter(ItemPedidoCompra.pedido_compra_id == pedido.id).all()
     if all(i.quantidade_recebida >= i.quantidade for i in todos_itens):
         pedido.status = "recebido"
 
@@ -158,7 +184,13 @@ def atualizar_status_pedido_compra(
     Usado apenas para cancelamento. A transição para 'recebido' é automática
     e ocorre via /receber quando todos os itens são completados.
     """
-    pedido = db.query(PedidoCompra).filter(PedidoCompra.id == pedido_id).first()
+    pedido = (
+        db.query(PedidoCompra)
+        .filter(PedidoCompra.id == pedido_id)
+        .with_for_update()
+        .populate_existing()
+        .first()
+    )
     if not pedido:
         raise HTTPException(status_code=404, detail="Pedido de compra não encontrado")
 
@@ -169,23 +201,34 @@ def atualizar_status_pedido_compra(
             detail="Use este endpoint apenas para cancelar. O status 'recebido' é definido automaticamente via /receber."
         )
 
-    status_atual = pedido.status
-    itens = db.query(ItemPedidoCompra).filter(ItemPedidoCompra.pedido_compra_id == pedido.id).all()
-
-    if status_atual == "cancelado":
+    if pedido.status == "cancelado":
         raise HTTPException(status_code=400, detail="Pedido já está cancelado")
 
-    # Estorna qualquer quantidade já recebida (parcial ou total) antes de cancelar
+    itens = db.query(ItemPedidoCompra).filter(ItemPedidoCompra.pedido_compra_id == pedido.id).all()
+
+    # Total já recebido (parcial ou total) por produto, a ser estornado do estoque
+    a_estornar = defaultdict(Decimal)
     for item in itens:
         if item.quantidade_recebida > 0:
-            produto = db.query(Produto).filter(Produto.id == item.produto_id).first()
-            if produto.estoque_atual < item.quantidade_recebida:
-                raise HTTPException(
-                    status_code=400,
-                    detail=f"Não é possível cancelar: estoque de '{produto.nome}' "
-                           f"já foi consumido por vendas posteriores ao recebimento."
-                )
-            produto.estoque_atual -= item.quantidade_recebida
+            a_estornar[item.produto_id] += item.quantidade_recebida
+
+    produtos = travar_produtos(db, a_estornar.keys())
+
+    # O estorno só pode sair do que está LIVRE: o que já foi vendido ou está reservado
+    # em pedidos de venda abertos não pode ser tirado do estoque.
+    for produto_id, quantidade in a_estornar.items():
+        produto = produtos[produto_id]
+        disponivel = produto.estoque_atual - produto.estoque_reservado
+        if disponivel < quantidade:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Não é possível cancelar: '{produto.nome}' tem {disponivel:.3f} disponível e este pedido "
+                       f"recebeu {quantidade:.3f}. Parte da mercadoria já foi vendida ou está reservada em "
+                       f"pedidos de venda."
+            )
+
+    for produto_id, quantidade in a_estornar.items():
+        produtos[produto_id].estoque_atual -= quantidade
 
     pedido.status = "cancelado"
 

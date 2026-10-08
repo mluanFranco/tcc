@@ -209,7 +209,7 @@ class PedidoVenda(Base):
     usuario_id     = Column(Integer, ForeignKey("usuario.id"), nullable=False)
     data_pedido    = Column(DateTime, default=datetime.now)
     valor_total    = Column(Float, default=0.0)
-    status         = Column(String(20), default="aberto")  # aberto | concluido | cancelado
+    status         = Column(String(20), default="aberto")  # aberto | confirmado | cancelado
     forma_pagamento = Column(String(30))
     observacao     = Column(String(255))
     created_at     = Column(DateTime, default=datetime.now)

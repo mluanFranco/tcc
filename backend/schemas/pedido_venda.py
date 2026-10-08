@@ -1,18 +1,28 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, model_validator
 from typing import Optional, List
 from datetime import datetime
 from schemas.tipos import Quantidade, QuantidadeSaida
 
+
 class ItemPedidoVendaCreate(BaseModel):
-    produto_id: int
+    produto_id: int = Field(gt=0)
     quantidade: Quantidade
-    preco_unitario: float
-    desconto: Optional[float] = 0.0
+    preco_unitario: float = Field(ge=0)
+    desconto: float = Field(default=0.0, ge=0)   # valor em reais, não percentual
+
+    @model_validator(mode="after")
+    def desconto_nao_excede_o_valor_bruto(self):
+        bruto = self.preco_unitario * float(self.quantidade)
+        # tolerância de 0,5 centavo para absorver erro de arredondamento de ponto flutuante
+        if self.desconto > bruto + 0.005:
+            raise ValueError("O desconto não pode ser maior que o valor bruto do item (preço × quantidade).")
+        return self
+
 
 class PedidoVendaCreate(BaseModel):
-    cliente_id: int
-    forma_pagamento: Optional[str] = None
-    observacao: Optional[str] = None
+    cliente_id: int = Field(gt=0)
+    forma_pagamento: Optional[str] = Field(default=None, max_length=30)
+    observacao: Optional[str] = Field(default=None, max_length=255)
     itens: List[ItemPedidoVendaCreate]
 
 class PedidoVendaStatusUpdate(BaseModel):

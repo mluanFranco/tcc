@@ -1,10 +1,13 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from database import get_db
-from models import PedidoVenda, ItemPedidoVenda, Produto, Usuario
+from models import PedidoVenda, ItemPedidoVenda, Cliente, Usuario
 from schemas.pedido_venda import PedidoVendaCreate, PedidoVendaStatusUpdate, PedidoVendaResponse
 from core.security import get_current_user
+from core.estoque import travar_produtos
 from typing import List
+from collections import defaultdict
+from decimal import Decimal
 from datetime import datetime
 
 router = APIRouter(prefix="/pedidos-venda", tags=["Pedidos de Venda"])
@@ -19,33 +22,54 @@ def criar_pedido_venda(
     if not dados.itens:
         raise HTTPException(status_code=400, detail="O pedido deve conter ao menos um item")
 
-    valor_total = 0.0
-    itens_para_criar = []
+    cliente = db.query(Cliente).filter(Cliente.id == dados.cliente_id).first()
+    if not cliente:
+        raise HTTPException(status_code=404, detail="Cliente não encontrado")
+    if not cliente.ativo:
+        raise HTTPException(status_code=400, detail="O cliente selecionado está inativo")
 
-    # 1ª passada: valida disponibilidade de TODOS os itens antes de reservar qualquer um
+    # Trava os produtos envolvidos até o fim da transação: se outro pedido estiver
+    # reservando o mesmo produto neste instante, esta requisição espera e depois
+    # enxerga o saldo já atualizado.
+    produtos = travar_produtos(db, [item.produto_id for item in dados.itens])
+
+    # Existência e situação dos produtos
+    # (vender produto que é apenas insumo é permitido: pode haver revenda)
     for item in dados.itens:
-        produto = db.query(Produto).filter(Produto.id == item.produto_id).first()
+        produto = produtos.get(item.produto_id)
         if not produto:
             raise HTTPException(status_code=404, detail=f"Produto {item.produto_id} não encontrado")
+        if not produto.ativo:
+            raise HTTPException(status_code=400, detail=f"O produto '{produto.nome}' está inativo")
 
+    # Disponibilidade: soma as linhas do mesmo produto antes de comparar com o saldo,
+    # senão duas linhas do mesmo produto passariam, cada uma, sozinha.
+    solicitado = defaultdict(Decimal)
+    for item in dados.itens:
+        solicitado[item.produto_id] += item.quantidade
+
+    for produto_id, quantidade in solicitado.items():
+        produto = produtos[produto_id]
         disponivel = produto.estoque_atual - produto.estoque_reservado
-        if item.quantidade > disponivel:
+        if quantidade > disponivel:
             raise HTTPException(
                 status_code=400,
                 detail=f"Estoque disponível insuficiente para '{produto.nome}'. "
-                       f"Disponível: {disponivel}, solicitado: {item.quantidade}"
+                       f"Disponível: {disponivel:.3f}, solicitado: {quantidade:.3f}"
             )
 
-        subtotal = (item.preco_unitario * float(item.quantidade)) - item.desconto
+    valor_total = 0.0
+    itens_para_criar = []
+    for item in dados.itens:
+        subtotal = max(0.0, round(item.preco_unitario * float(item.quantidade) - item.desconto, 2))
         valor_total += subtotal
-        itens_para_criar.append((produto, item, subtotal))
+        itens_para_criar.append((item, subtotal))
 
-    # 2ª passada: reserva o estoque e cria o pedido
     pedido = PedidoVenda(
         cliente_id=dados.cliente_id,
         usuario_id=usuario.id,
         data_pedido=datetime.now(),
-        valor_total=valor_total,
+        valor_total=round(valor_total, 2),
         status="aberto",
         forma_pagamento=dados.forma_pagamento,
         observacao=dados.observacao
@@ -53,7 +77,7 @@ def criar_pedido_venda(
     db.add(pedido)
     db.flush()  # garante pedido.id disponível sem commitar ainda
 
-    for produto, item, subtotal in itens_para_criar:
+    for item, subtotal in itens_para_criar:
         db.add(ItemPedidoVenda(
             pedido_venda_id=pedido.id,
             produto_id=item.produto_id,
@@ -62,7 +86,7 @@ def criar_pedido_venda(
             desconto=item.desconto,
             subtotal=subtotal
         ))
-        produto.estoque_reservado += item.quantidade  # reserva, não debita ainda
+        produtos[item.produto_id].estoque_reservado += item.quantidade  # reserva, não debita ainda
 
     db.commit()
     db.refresh(pedido)
@@ -96,7 +120,15 @@ def atualizar_status_pedido_venda(
     db: Session = Depends(get_db),
     _=Depends(get_current_user)
 ):
-    pedido = db.query(PedidoVenda).filter(PedidoVenda.id == pedido_id).first()
+    # Trava o pedido: duas requisições mudando o status do mesmo pedido ao mesmo tempo
+    # passam uma de cada vez, e a segunda já enxerga o status novo.
+    pedido = (
+        db.query(PedidoVenda)
+        .filter(PedidoVenda.id == pedido_id)
+        .with_for_update()
+        .populate_existing()
+        .first()
+    )
     if not pedido:
         raise HTTPException(status_code=404, detail="Pedido de venda não encontrado")
 
@@ -105,41 +137,55 @@ def atualizar_status_pedido_venda(
         raise HTTPException(status_code=400, detail="Status inválido")
 
     status_atual = pedido.status
-    itens = db.query(ItemPedidoVenda).filter(ItemPedidoVenda.pedido_venda_id == pedido.id).all()
 
-    # ABERTO -> CONFIRMADO: libera a reserva e debita o estoque físico
-    if status_atual == "aberto" and novo_status == "confirmado":
-        for item in itens:
-            produto = db.query(Produto).filter(Produto.id == item.produto_id).first()
-            produto.estoque_reservado -= item.quantidade
-            produto.estoque_atual -= item.quantidade
-
-        pedido.status = "confirmado"
-
-    # ABERTO -> CANCELADO: apenas libera a reserva, nada saiu do físico
-    elif status_atual == "aberto" and novo_status == "cancelado":
-        for item in itens:
-            produto = db.query(Produto).filter(Produto.id == item.produto_id).first()
-            produto.estoque_reservado -= item.quantidade
-
-        pedido.status = "cancelado"
-
-    # CONFIRMADO -> CANCELADO: devolve o estoque físico (já não está mais reservado)
-    elif status_atual == "confirmado" and novo_status == "cancelado":
-        for item in itens:
-            produto = db.query(Produto).filter(Produto.id == item.produto_id).first()
-            produto.estoque_atual += item.quantidade
-
-        pedido.status = "cancelado"
-
-    elif status_atual == novo_status:
+    if status_atual == novo_status:
         raise HTTPException(status_code=400, detail=f"Pedido já está com status '{novo_status}'")
 
-    else:
+    transicoes_validas = {
+        ("aberto", "confirmado"),
+        ("aberto", "cancelado"),
+        ("confirmado", "cancelado"),
+    }
+    if (status_atual, novo_status) not in transicoes_validas:
         raise HTTPException(
             status_code=400,
             detail=f"Transição de status inválida: '{status_atual}' → '{novo_status}'"
         )
+
+    itens = db.query(ItemPedidoVenda).filter(ItemPedidoVenda.pedido_venda_id == pedido.id).all()
+
+    quantidade_por_produto = defaultdict(Decimal)
+    for item in itens:
+        quantidade_por_produto[item.produto_id] += item.quantidade
+
+    produtos = travar_produtos(db, quantidade_por_produto.keys())
+
+    # ABERTO -> CONFIRMADO: libera a reserva e debita o estoque físico
+    if status_atual == "aberto" and novo_status == "confirmado":
+        for produto_id, quantidade in quantidade_por_produto.items():
+            produto = produtos[produto_id]
+            if produto.estoque_atual < quantidade:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Estoque físico insuficiente para confirmar: '{produto.nome}' tem "
+                           f"{produto.estoque_atual:.3f} e o pedido precisa de {quantidade:.3f}"
+                )
+        for produto_id, quantidade in quantidade_por_produto.items():
+            produto = produtos[produto_id]
+            produto.estoque_reservado -= quantidade
+            produto.estoque_atual -= quantidade
+
+    # ABERTO -> CANCELADO: apenas libera a reserva, nada saiu do físico
+    elif status_atual == "aberto" and novo_status == "cancelado":
+        for produto_id, quantidade in quantidade_por_produto.items():
+            produtos[produto_id].estoque_reservado -= quantidade
+
+    # CONFIRMADO -> CANCELADO: devolve o estoque físico (já não está mais reservado)
+    else:
+        for produto_id, quantidade in quantidade_por_produto.items():
+            produtos[produto_id].estoque_atual += quantidade
+
+    pedido.status = novo_status
 
     db.commit()
     db.refresh(pedido)

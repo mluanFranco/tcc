@@ -1,18 +1,19 @@
-from pydantic import BaseModel
-from typing import Optional, List
+from decimal import Decimal
+from pydantic import BaseModel, Field
+from typing import Optional, List, Literal
 from datetime import datetime
 from schemas.tipos import Quantidade, QuantidadeSaida
 
 class ItemCotacaoCreate(BaseModel):
-    produto_id: int
-    preco_unitario: float
-    quantidade_referencia: Optional[Quantidade] = 1
-    observacao: Optional[str] = None
+    produto_id: int = Field(gt=0)
+    preco_unitario: float = Field(ge=0)
+    quantidade_referencia: Quantidade = Decimal("1")
+    observacao: Optional[str] = Field(default=None, max_length=255)
 
 class CotacaoCreate(BaseModel):
-    fornecedor_id: int
-    status: Optional[str] = "rascunho"   # rascunho | enviada | recebida | aprovada
-    observacao: Optional[str] = None
+    fornecedor_id: int = Field(gt=0)
+    status: Literal["rascunho", "enviada", "recebida", "aprovada"] = "rascunho"
+    observacao: Optional[str] = Field(default=None, max_length=255)
     itens: List[ItemCotacaoCreate]
 
 class CotacaoUpdateStatus(BaseModel):

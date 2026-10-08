@@ -6,6 +6,7 @@ from schemas.cotacao import (
     CotacaoCreate, CotacaoUpdateStatus, CotacaoResponse, ComparativoFornecedor
 )
 from core.security import get_current_user
+from core.estoque import travar_produtos
 from typing import List
 from datetime import datetime
 
@@ -24,10 +25,16 @@ def criar_cotacao(
     fornecedor = db.query(Fornecedor).filter(Fornecedor.id == dados.fornecedor_id).first()
     if not fornecedor:
         raise HTTPException(status_code=404, detail="Fornecedor não encontrado")
+    if not fornecedor.ativo:
+        raise HTTPException(status_code=400, detail="O fornecedor selecionado está inativo")
 
+    produtos = travar_produtos(db, [item.produto_id for item in dados.itens])
     for item in dados.itens:
-        if not db.query(Produto).filter(Produto.id == item.produto_id).first():
+        produto = produtos.get(item.produto_id)
+        if not produto:
             raise HTTPException(status_code=404, detail=f"Produto {item.produto_id} não encontrado")
+        if not produto.ativo:
+            raise HTTPException(status_code=400, detail=f"O produto '{produto.nome}' está inativo")
 
     cotacao = Cotacao(
         fornecedor_id=dados.fornecedor_id,
