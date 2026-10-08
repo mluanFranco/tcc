@@ -1,10 +1,11 @@
 from pydantic import BaseModel
 from typing import Optional, List
 from datetime import datetime
+from schemas.tipos import Quantidade, QuantidadeSaida
 
 class ItemPedidoVendaCreate(BaseModel):
     produto_id: int
-    quantidade: int
+    quantidade: Quantidade
     preco_unitario: float
     desconto: Optional[float] = 0.0
 
@@ -20,7 +21,7 @@ class PedidoVendaStatusUpdate(BaseModel):
 class ItemPedidoVendaResponse(BaseModel):
     id: int
     produto_id: int
-    quantidade: int
+    quantidade: QuantidadeSaida
     preco_unitario: float
     desconto: float
     subtotal: float

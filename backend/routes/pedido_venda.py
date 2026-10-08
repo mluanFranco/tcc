@@ -36,7 +36,7 @@ def criar_pedido_venda(
                        f"Disponível: {disponivel}, solicitado: {item.quantidade}"
             )
 
-        subtotal = (item.preco_unitario * item.quantidade) - item.desconto
+        subtotal = (item.preco_unitario * float(item.quantidade)) - item.desconto
         valor_total += subtotal
         itens_para_criar.append((produto, item, subtotal))
 

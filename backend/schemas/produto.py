@@ -1,6 +1,8 @@
 from pydantic import BaseModel, Field, field_validator, model_validator, computed_field
+from decimal import Decimal
 from typing import Optional
 from datetime import datetime
+from schemas.tipos import QuantidadeZeroOk, QuantidadeSaida
 
 
 def _limpar_texto(valor):
@@ -17,7 +19,7 @@ class ProdutoCreate(BaseModel):
     e_vendavel: bool = False
     preco_custo: float = Field(ge=0)
     porcentagem: Optional[float] = Field(default=None, ge=0)
-    estoque_minimo: int = Field(default=0, ge=0)
+    estoque_minimo: QuantidadeZeroOk = Decimal("0")
 
     @field_validator("nome", mode="before")
     @classmethod
@@ -47,7 +49,7 @@ class ProdutoUpdate(BaseModel):
     e_vendavel: Optional[bool] = None
     preco_custo: Optional[float] = Field(default=None, ge=0)
     porcentagem: Optional[float] = Field(default=None, ge=0)
-    estoque_minimo: Optional[int] = Field(default=None, ge=0)
+    estoque_minimo: Optional[QuantidadeZeroOk] = None
     ativo: Optional[bool] = None
 
     @field_validator("nome", mode="before")
@@ -71,9 +73,9 @@ class ProdutoResponse(BaseModel):
     preco_custo: float
     porcentagem: Optional[float]
     preco_venda: Optional[float]
-    estoque_atual: int
-    estoque_reservado: int
-    estoque_minimo: int
+    estoque_atual: QuantidadeSaida
+    estoque_reservado: QuantidadeSaida
+    estoque_minimo: QuantidadeSaida
     ativo: bool
     created_at: datetime
     updated_at: datetime
@@ -82,5 +84,5 @@ class ProdutoResponse(BaseModel):
 
     @computed_field
     @property
-    def estoque_disponivel(self) -> int:
+    def estoque_disponivel(self) -> QuantidadeSaida:
         return self.estoque_atual - self.estoque_reservado

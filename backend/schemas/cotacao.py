@@ -1,11 +1,12 @@
 from pydantic import BaseModel
 from typing import Optional, List
 from datetime import datetime
+from schemas.tipos import Quantidade, QuantidadeSaida
 
 class ItemCotacaoCreate(BaseModel):
     produto_id: int
     preco_unitario: float
-    quantidade_referencia: Optional[int] = 1
+    quantidade_referencia: Optional[Quantidade] = 1
     observacao: Optional[str] = None
 
 class CotacaoCreate(BaseModel):
@@ -21,7 +22,7 @@ class ItemCotacaoResponse(BaseModel):
     id: int
     produto_id: int
     preco_unitario: Optional[float]
-    quantidade_referencia: int
+    quantidade_referencia: QuantidadeSaida
     observacao: Optional[str]
 
     model_config = {"from_attributes": True}
@@ -42,7 +43,7 @@ class ComparativoFornecedor(BaseModel):
     fornecedor_nome: str
     cotacao_id: int
     preco_unitario: float
-    quantidade_referencia: int
+    quantidade_referencia: QuantidadeSaida
     data_cotacao: datetime
 
     model_config = {"from_attributes": True}

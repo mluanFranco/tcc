@@ -1,10 +1,11 @@
 from pydantic import BaseModel
 from typing import Optional, List
 from datetime import datetime
+from schemas.tipos import Quantidade, QuantidadeSaida
 
 class ItemPedidoCompraCreate(BaseModel):
     produto_id: int
-    quantidade: int
+    quantidade: Quantidade
     preco_unitario: float
 
 class PedidoCompraCreate(BaseModel):
@@ -16,7 +17,7 @@ class PedidoCompraCreate(BaseModel):
 
 class RecebimentoItem(BaseModel):
     item_id: int
-    quantidade_recebida_agora: int   # quantidade chegando NESTA entrega, não o acumulado
+    quantidade_recebida_agora: Quantidade   # quantidade chegando NESTA entrega, não o acumulado
 
 class RegistrarRecebimento(BaseModel):
     itens: List[RecebimentoItem]
@@ -27,8 +28,8 @@ class PedidoCompraStatusUpdate(BaseModel):
 class ItemPedidoCompraResponse(BaseModel):
     id: int
     produto_id: int
-    quantidade: int
-    quantidade_recebida: int
+    quantidade: QuantidadeSaida
+    quantidade_recebida: QuantidadeSaida
     preco_unitario: float
     subtotal: float
 

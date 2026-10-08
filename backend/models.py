@@ -1,8 +1,10 @@
-from sqlalchemy import Column, Integer, Float, String, Boolean, ForeignKey, DateTime, Text
+from sqlalchemy import Column, Integer, Float, String, Boolean, ForeignKey, DateTime, Text, Numeric, UniqueConstraint
+from decimal import Decimal
 from sqlalchemy.orm import relationship
 from database import Base
 from datetime import datetime
 
+QTD = Numeric(12, 3)
 
 # ─────────────────────────────────────────
 #  USUÁRIO
@@ -41,6 +43,9 @@ class Categoria(Base):
 # ─────────────────────────────────────────
 class Subcategoria(Base):
     __tablename__ = "subcategoria"
+    __table_args__ = (
+        UniqueConstraint("categoria_id", "nome", name="uq_subcategoria_categoria_nome"),
+    )
 
     id           = Column(Integer, primary_key=True, autoincrement=True)
     categoria_id = Column(Integer, ForeignKey("categoria.id"), nullable=False)
@@ -90,9 +95,9 @@ class Produto(Base):
     porcentagem        = Column(Float, nullable=True)   # só relevante se e_vendavel=True
     preco_venda        = Column(Float, nullable=True)   # calculado e gravado pelo backend
 
-    estoque_atual      = Column(Integer, default=0)
-    estoque_reservado  = Column(Integer, default=0)
-    estoque_minimo     = Column(Integer, default=0)
+    estoque_atual      = Column(QTD, default=Decimal("0"))
+    estoque_reservado  = Column(QTD, default=Decimal("0"))
+    estoque_minimo     = Column(QTD, default=Decimal("0"))
 
     ativo              = Column(Boolean, default=True)
     created_at         = Column(DateTime, default=datetime.now)
@@ -220,7 +225,7 @@ class ItemPedidoVenda(Base):
     id              = Column(Integer, primary_key=True, autoincrement=True)
     pedido_venda_id = Column(Integer, ForeignKey("pedido_venda.id"), nullable=False)
     produto_id      = Column(Integer, ForeignKey("produto.id"), nullable=False)
-    quantidade      = Column(Integer, nullable=False)
+    quantidade      = Column(QTD, nullable=False)
     preco_unitario  = Column(Float, nullable=False)
     desconto        = Column(Float, default=0.0)
     subtotal        = Column(Float, nullable=False)
@@ -258,8 +263,8 @@ class ItemPedidoCompra(Base):
     id                  = Column(Integer, primary_key=True, autoincrement=True)
     pedido_compra_id    = Column(Integer, ForeignKey("pedido_compra.id"), nullable=False)
     produto_id          = Column(Integer, ForeignKey("produto.id"), nullable=False)
-    quantidade          = Column(Integer, nullable=False)            # quantidade pedida
-    quantidade_recebida = Column(Integer, default=0, nullable=False) # acumulado já recebido
+    quantidade          = Column(QTD, nullable=False)            # quantidade pedida
+    quantidade_recebida = Column(QTD, default=Decimal("0"), nullable=False) # acumulado já recebido
     preco_unitario      = Column(Float, nullable=False)
     subtotal            = Column(Float, nullable=False)
 
@@ -292,7 +297,7 @@ class ItemCotacao(Base):
     cotacao_id           = Column(Integer, ForeignKey("cotacao.id"), nullable=False)
     produto_id           = Column(Integer, ForeignKey("produto.id"), nullable=False)
     preco_unitario       = Column(Float)
-    quantidade_referencia = Column(Integer, default=1)
+    quantidade_referencia = Column(QTD, default=Decimal("1"))
     observacao           = Column(String(255))
 
     cotacao = relationship("Cotacao", back_populates="itens")

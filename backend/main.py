@@ -9,7 +9,7 @@ from routes import (
 
 app = FastAPI(
     title="Sistema de Gestão de Estoque - Nova Sorvetes",
-    version="1.0.0"
+    version="1.0.1"
 )
 
 app.add_middleware(

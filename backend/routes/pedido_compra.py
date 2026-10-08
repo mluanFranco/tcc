@@ -30,7 +30,7 @@ def criar_pedido_compra(
         if not produto:
             raise HTTPException(status_code=404, detail=f"Produto {item.produto_id} não encontrado")
 
-        subtotal = item.preco_unitario * item.quantidade
+        subtotal = item.preco_unitario * float(item.quantidade)
         valor_total += subtotal
         itens_para_criar.append((item, subtotal))
 
