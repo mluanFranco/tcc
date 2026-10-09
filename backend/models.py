@@ -337,3 +337,31 @@ class HistoricoManutencao(Base):
     custo        = Column(Float, default=0.0)
 
     geladeira = relationship("Geladeira", back_populates="historico_manutencao")
+
+
+# ─────────────────────────────────────────
+#  RECEITA
+# ─────────────────────────────────────────
+class Receita(Base):
+    __tablename__ = "receita"
+    id         = Column(Integer, primary_key=True, autoincrement=True)
+    produto_id = Column(Integer, ForeignKey("produto.id"), nullable=False, unique=True)
+    rendimento = Column(QTD, nullable=False)
+    observacao = Column(String(255))
+    ativo      = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.now)
+    updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
+    produto = relationship("Produto")
+    itens   = relationship("ReceitaItem", back_populates="receita",
+                           cascade="all, delete-orphan", order_by="ReceitaItem.id")
+
+
+class ReceitaItem(Base):
+    __tablename__ = "receita_item"
+    __table_args__ = (UniqueConstraint("receita_id", "produto_id", name="uq_receita_item_receita_produto"),)
+    id         = Column(Integer, primary_key=True, autoincrement=True)
+    receita_id = Column(Integer, ForeignKey("receita.id", ondelete="CASCADE"), nullable=False)
+    produto_id = Column(Integer, ForeignKey("produto.id"), nullable=False)
+    quantidade = Column(QTD, nullable=False)
+    receita = relationship("Receita", back_populates="itens")
+    produto = relationship("Produto")
