@@ -365,3 +365,39 @@ class ReceitaItem(Base):
     quantidade = Column(QTD, nullable=False)
     receita = relationship("Receita", back_populates="itens")
     produto = relationship("Produto")
+
+
+# ─────────────────────────────────────────
+#  ORDEM DE PRODUÇÃO
+# ─────────────────────────────────────────
+class OrdemProducao(Base):
+    __tablename__ = "ordem_producao"
+    id             = Column(Integer, primary_key=True, autoincrement=True)
+    receita_id     = Column(Integer, ForeignKey("receita.id"), nullable=False)
+    produto_id     = Column(Integer, ForeignKey("produto.id"), nullable=False)   # produto fabricado
+    quantidade     = Column(QTD, nullable=False)
+    status         = Column(String(20), nullable=False, default="aberta")        # aberta | confirmada | cancelada
+    usuario_id     = Column(Integer, ForeignKey("usuario.id"), nullable=False)
+    observacao     = Column(String(255))
+    custo_total    = Column(Float)      # preenchidos só na confirmação
+    custo_unitario = Column(Float)
+    confirmada_em  = Column(DateTime)
+    cancelada_em   = Column(DateTime)
+    created_at     = Column(DateTime, default=datetime.now)
+    updated_at     = Column(DateTime, default=datetime.now, onupdate=datetime.now)
+    receita = relationship("Receita")
+    produto = relationship("Produto")
+    itens   = relationship("OrdemProducaoItem", back_populates="ordem",
+                           cascade="all, delete-orphan", order_by="OrdemProducaoItem.id")
+
+
+class OrdemProducaoItem(Base):
+    __tablename__ = "ordem_producao_item"
+    id             = Column(Integer, primary_key=True, autoincrement=True)
+    ordem_id       = Column(Integer, ForeignKey("ordem_producao.id", ondelete="CASCADE"), nullable=False)
+    produto_id     = Column(Integer, ForeignKey("produto.id"), nullable=False)   # insumo consumido
+    quantidade     = Column(QTD, nullable=False)
+    custo_unitario = Column(Float, nullable=False)
+    subtotal       = Column(Float, nullable=False)
+    ordem   = relationship("OrdemProducao", back_populates="itens")
+    produto = relationship("Produto")
