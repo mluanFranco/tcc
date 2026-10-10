@@ -21,7 +21,7 @@ class ItemPedidoVendaCreate(BaseModel):
 
 class PedidoVendaCreate(BaseModel):
     cliente_id: int = Field(gt=0)
-    forma_pagamento: Optional[str] = Field(default=None, max_length=30)
+    forma_pagamento_id: Optional[int] = Field(default=None, gt=0)
     observacao: Optional[str] = Field(default=None, max_length=255)
     itens: List[ItemPedidoVendaCreate]
 
@@ -45,7 +45,7 @@ class PedidoVendaResponse(BaseModel):
     data_pedido: datetime
     valor_total: float
     status: str
-    forma_pagamento: Optional[str]
+    forma_pagamento_id: Optional[int]
     observacao: Optional[str]
     itens: List[ItemPedidoVendaResponse]
 

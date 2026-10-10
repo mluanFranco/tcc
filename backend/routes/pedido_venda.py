@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from database import get_db
-from models import PedidoVenda, ItemPedidoVenda, Cliente, Usuario
+from models import PedidoVenda, ItemPedidoVenda, Cliente, FormaPagamento, Usuario
 from schemas.pedido_venda import PedidoVendaCreate, PedidoVendaStatusUpdate, PedidoVendaResponse
 from core.security import get_current_user
 from core.estoque import travar_produtos
@@ -27,6 +27,13 @@ def criar_pedido_venda(
         raise HTTPException(status_code=404, detail="Cliente não encontrado")
     if not cliente.ativo:
         raise HTTPException(status_code=400, detail="O cliente selecionado está inativo")
+
+    if dados.forma_pagamento_id is not None:
+        forma = db.query(FormaPagamento).filter(FormaPagamento.id == dados.forma_pagamento_id).first()
+        if not forma:
+            raise HTTPException(status_code=404, detail="Forma de pagamento não encontrada")
+        if not forma.ativo:
+            raise HTTPException(status_code=400, detail="A forma de pagamento selecionada está inativa")
 
     # Trava os produtos envolvidos até o fim da transação: se outro pedido estiver
     # reservando o mesmo produto neste instante, esta requisição espera e depois
@@ -71,7 +78,7 @@ def criar_pedido_venda(
         data_pedido=datetime.now(),
         valor_total=round(valor_total, 2),
         status="aberto",
-        forma_pagamento=dados.forma_pagamento,
+        forma_pagamento_id=dados.forma_pagamento_id,
         observacao=dados.observacao
     )
     db.add(pedido)

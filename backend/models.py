@@ -187,15 +187,26 @@ class Fornecedor(Base):
 # ─────────────────────────────────────────
 class FormaPagamento(Base):
     __tablename__ = "forma_pagamento"
-
+    __table_args__ = (UniqueConstraint("descricao", name="uq_forma_pagamento_descricao"),)
     id              = Column(Integer, primary_key=True, autoincrement=True)
     descricao       = Column(String(100), nullable=False)
-    tipo            = Column(String(20), nullable=False)  # vista | parcelado | prazo
-    prazo_dias      = Column(Integer, default=0)
     taxa_percentual = Column(Float, default=0.0)
     ativo           = Column(Boolean, default=True)
-
+    parcelas       = relationship("FormaPagamentoParcela", back_populates="forma",
+                                  cascade="all, delete-orphan", order_by="FormaPagamentoParcela.numero")
     pedidos_compra = relationship("PedidoCompra", back_populates="forma_pagamento")
+    pedidos_venda  = relationship("PedidoVenda", back_populates="forma_pagamento")
+ 
+ 
+class FormaPagamentoParcela(Base):
+    __tablename__ = "forma_pagamento_parcela"
+    __table_args__ = (UniqueConstraint("forma_pagamento_id", "numero", name="uq_forma_parcela_numero"),)
+    id                 = Column(Integer, primary_key=True, autoincrement=True)
+    forma_pagamento_id = Column(Integer, ForeignKey("forma_pagamento.id", ondelete="CASCADE"), nullable=False)
+    numero             = Column(Integer, nullable=False)
+    prazo_dias         = Column(Integer, nullable=False, default=0)
+    percentual         = Column(Numeric(5, 2), nullable=False)
+    forma = relationship("FormaPagamento", back_populates="parcelas")
 
 
 # ─────────────────────────────────────────
@@ -210,12 +221,13 @@ class PedidoVenda(Base):
     data_pedido    = Column(DateTime, default=datetime.now)
     valor_total    = Column(Float, default=0.0)
     status         = Column(String(20), default="aberto")  # aberto | confirmado | cancelado
-    forma_pagamento = Column(String(30))
+    forma_pagamento_id = Column(Integer, ForeignKey("forma_pagamento.id"))
     observacao     = Column(String(255))
     created_at     = Column(DateTime, default=datetime.now)
     updated_at     = Column(DateTime, default=datetime.now, onupdate=datetime.now)
 
     cliente = relationship("Cliente", back_populates="pedidos_venda")
+    forma_pagamento = relationship("FormaPagamento", back_populates="pedidos_venda")
     itens   = relationship("ItemPedidoVenda", back_populates="pedido_venda")
 
 
