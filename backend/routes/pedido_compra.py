@@ -1,13 +1,14 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from database import get_db
-from models import PedidoCompra, ItemPedidoCompra, Fornecedor, FormaPagamento, Usuario
+from models import PedidoCompra, ItemPedidoCompra, Usuario
 from schemas.pedido_compra import (
     PedidoCompraCreate, PedidoCompraStatusUpdate,
     PedidoCompraResponse, RegistrarRecebimento
 )
 from core.security import get_current_user
 from core.estoque import travar_produtos
+from core.pedidos import registrar_pedido_compra
 from typing import List
 from collections import defaultdict
 from decimal import Decimal
@@ -22,62 +23,9 @@ def criar_pedido_compra(
     db: Session = Depends(get_db),
     usuario: Usuario = Depends(get_current_user)
 ):
-    if not dados.itens:
-        raise HTTPException(status_code=400, detail="O pedido deve conter ao menos um item")
-
-    fornecedor = db.query(Fornecedor).filter(Fornecedor.id == dados.fornecedor_id).first()
-    if not fornecedor:
-        raise HTTPException(status_code=404, detail="Fornecedor não encontrado")
-    if not fornecedor.ativo:
-        raise HTTPException(status_code=400, detail="O fornecedor selecionado está inativo")
-
-    if dados.forma_pagamento_id is not None:
-        forma = db.query(FormaPagamento).filter(FormaPagamento.id == dados.forma_pagamento_id).first()
-        if not forma:
-            raise HTTPException(status_code=404, detail="Forma de pagamento não encontrada")
-        if not forma.ativo:
-            raise HTTPException(status_code=400, detail="A forma de pagamento selecionada está inativa")
-
-    # Mesma ordem de travamento das demais rotas de estoque (ids crescentes), o que evita deadlock
-    produtos = travar_produtos(db, [item.produto_id for item in dados.itens])
-
-    valor_total = 0.0
-    itens_para_criar = []
-
-    for item in dados.itens:
-        produto = produtos.get(item.produto_id)
-        if not produto:
-            raise HTTPException(status_code=404, detail=f"Produto {item.produto_id} não encontrado")
-        if not produto.ativo:
-            raise HTTPException(status_code=400, detail=f"O produto '{produto.nome}' está inativo")
-
-        subtotal = round(item.preco_unitario * float(item.quantidade), 2)
-        valor_total += subtotal
-        itens_para_criar.append((item, subtotal))
-
-    pedido = PedidoCompra(
-        fornecedor_id=dados.fornecedor_id,
-        usuario_id=usuario.id,
-        forma_pagamento_id=dados.forma_pagamento_id,
-        data_pedido=datetime.now(),
-        data_entrega_prevista=dados.data_entrega_prevista,
-        valor_total=round(valor_total, 2),
-        status="pendente",
-        observacao=dados.observacao
-    )
-    db.add(pedido)
-    db.flush()
-
-    for item, subtotal in itens_para_criar:
-        db.add(ItemPedidoCompra(
-            pedido_compra_id=pedido.id,
-            produto_id=item.produto_id,
-            quantidade=item.quantidade,
-            quantidade_recebida=0,
-            preco_unitario=item.preco_unitario,
-            subtotal=subtotal
-        ))
-
+    # As regras de criação (validações e travamento de produtos) ficam em core/pedidos.py,
+    # compartilhadas com a aprovação de cotação.
+    pedido = registrar_pedido_compra(db, usuario.id, dados)
     db.commit()
     db.refresh(pedido)
     return pedido

@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, Float, String, Boolean, ForeignKey, DateTime, Text, Numeric, UniqueConstraint
+from sqlalchemy import Column, Integer, Float, String, Boolean, ForeignKey, DateTime, Date, Text, Numeric, UniqueConstraint, CheckConstraint
 from decimal import Decimal
 from sqlalchemy.orm import relationship
 from database import Base
@@ -127,6 +127,7 @@ class Cliente(Base):
     enderecos      = relationship("ClienteEndereco", back_populates="cliente", order_by="ClienteEndereco.id")
     geladeiras     = relationship("Geladeira", back_populates="cliente")
     pedidos_venda  = relationship("PedidoVenda", back_populates="cliente")
+    cotacoes       = relationship("Cotacao", back_populates="cliente")
 
 
 # ─────────────────────────────────────────
@@ -289,29 +290,41 @@ class ItemPedidoCompra(Base):
 # ─────────────────────────────────────────
 class Cotacao(Base):
     __tablename__ = "cotacao"
-
-    id           = Column(Integer, primary_key=True, autoincrement=True)
-    fornecedor_id = Column(Integer, ForeignKey("fornecedor.id"), nullable=False)
-    usuario_id   = Column(Integer, ForeignKey("usuario.id"), nullable=False)
-    data_cotacao = Column(DateTime, default=datetime.now)
-    status       = Column(String(20), default="rascunho")  # rascunho | enviada | recebida | aprovada
-    observacao   = Column(String(255))
-    created_at   = Column(DateTime, default=datetime.now)
-
+    __table_args__ = (
+        CheckConstraint(
+            "(tipo = 'compra' AND fornecedor_id IS NOT NULL AND cliente_id IS NULL) OR "
+            "(tipo = 'venda' AND cliente_id IS NOT NULL AND fornecedor_id IS NULL)",
+            name="ck_cotacao_tipo_parte",
+        ),
+    )
+    id                 = Column(Integer, primary_key=True, autoincrement=True)
+    tipo               = Column(String(10), nullable=False)   # compra | venda
+    fornecedor_id      = Column(Integer, ForeignKey("fornecedor.id"), nullable=True)   # só em cotação de compra
+    cliente_id         = Column(Integer, ForeignKey("cliente.id"), nullable=True)      # só em cotação de venda
+    usuario_id         = Column(Integer, ForeignKey("usuario.id"), nullable=False)
+    forma_pagamento_id = Column(Integer, ForeignKey("forma_pagamento.id"))
+    data_cotacao       = Column(DateTime, default=datetime.now)
+    validade           = Column(Date)
+    status             = Column(String(20), default="rascunho")   # rascunho | enviada | recebida | aprovada | recusada
+    observacao         = Column(String(255))
+    pedido_venda_id    = Column(Integer, ForeignKey("pedido_venda.id"))    # preenchidos na aprovação
+    pedido_compra_id   = Column(Integer, ForeignKey("pedido_compra.id"))
+    created_at         = Column(DateTime, default=datetime.now)
+    updated_at         = Column(DateTime, default=datetime.now, onupdate=datetime.now)
     fornecedor = relationship("Fornecedor", back_populates="cotacoes")
-    itens      = relationship("ItemCotacao", back_populates="cotacao")
-
-
+    cliente    = relationship("Cliente", back_populates="cotacoes")
+    itens      = relationship("ItemCotacao", back_populates="cotacao",
+                              cascade="all, delete-orphan", order_by="ItemCotacao.id")
+ 
 class ItemCotacao(Base):
     __tablename__ = "item_cotacao"
-
-    id                   = Column(Integer, primary_key=True, autoincrement=True)
-    cotacao_id           = Column(Integer, ForeignKey("cotacao.id"), nullable=False)
-    produto_id           = Column(Integer, ForeignKey("produto.id"), nullable=False)
-    preco_unitario       = Column(Float)
-    quantidade_referencia = Column(QTD, default=Decimal("1"))
-    observacao           = Column(String(255))
-
+    id             = Column(Integer, primary_key=True, autoincrement=True)
+    cotacao_id     = Column(Integer, ForeignKey("cotacao.id"), nullable=False)
+    produto_id     = Column(Integer, ForeignKey("produto.id"), nullable=False)
+    quantidade     = Column(QTD, nullable=False, default=Decimal("1"))
+    preco_unitario = Column(Float)          # pode ficar nulo em cotação de compra que aguarda o fornecedor
+    desconto       = Column(Float, nullable=False, default=0.0)   # em reais; só em cotação de venda
+    observacao     = Column(String(255))
     cotacao = relationship("Cotacao", back_populates="itens")
     produto = relationship("Produto")
 
