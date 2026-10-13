@@ -61,7 +61,7 @@ def titulos_do_pedido_compra(pedido_id: int, db: Session = Depends(get_db), _=De
         raise HTTPException(status_code=404, detail="Pedido de compra não encontrado")
     return (
         db.query(TituloFinanceiro)
-        .options(joinedload(TituloFinanceiro.cliente), joinedload(TituloFinanceiro.fornecedor))
+        .options(joinedload(TituloFinanceiro.cliente), joinedload(TituloFinanceiro.fornecedor), joinedload(TituloFinanceiro.categoria))
         .filter(TituloFinanceiro.pedido_compra_id == pedido_id)
         .order_by(TituloFinanceiro.numero_parcela)
         .all()

@@ -431,6 +431,17 @@ class OrdemProducaoItem(Base):
 # ─────────────────────────────────────────
 #  TÍTULO FINANCEIRO
 # ─────────────────────────────────────────
+class CategoriaFinanceira(Base):
+    """Classifica os títulos (Vendas, Aluguel, Energia...). As categorias 'sistema' são usadas pelos pedidos e não mudam."""
+    __tablename__ = "categoria_financeira"
+    __table_args__ = (UniqueConstraint("nome", "tipo", name="uq_categoria_financeira_nome_tipo"),)
+    id      = Column(Integer, primary_key=True, autoincrement=True)
+    nome    = Column(String(100), nullable=False)
+    tipo    = Column(String(10), nullable=False)      # pagar | receber
+    sistema = Column(Boolean, nullable=False, default=False)
+    ativo   = Column(Boolean, nullable=False, default=True)
+
+
 class TituloFinanceiro(Base):
     """Uma parcela a pagar (compra) ou a receber (venda). Nasce das parcelas da forma de pagamento do pedido."""
     __tablename__ = "titulo_financeiro"
@@ -443,6 +454,10 @@ class TituloFinanceiro(Base):
             name="ck_titulo_tipo_origem",
         ),
         CheckConstraint("valor > 0", name="ck_titulo_valor_positivo"),
+        CheckConstraint(
+            "pedido_venda_id IS NOT NULL OR pedido_compra_id IS NOT NULL OR descricao IS NOT NULL",
+            name="ck_titulo_avulso_descricao",
+        ),
         Index("ix_titulo_tipo_status_vencimento", "tipo", "status", "vencimento"),
     )
     id               = Column(Integer, primary_key=True, autoincrement=True)
@@ -451,6 +466,8 @@ class TituloFinanceiro(Base):
     pedido_compra_id = Column(Integer, ForeignKey("pedido_compra.id"))
     cliente_id       = Column(Integer, ForeignKey("cliente.id"))
     fornecedor_id    = Column(Integer, ForeignKey("fornecedor.id"))
+    categoria_id     = Column(Integer, ForeignKey("categoria_financeira.id"), nullable=False)
+    descricao        = Column(String(255))                   # obrigatória no lançamento avulso
     numero_parcela   = Column(Integer, nullable=False)
     total_parcelas   = Column(Integer, nullable=False)
     vencimento       = Column(Date, nullable=False)
@@ -462,6 +479,7 @@ class TituloFinanceiro(Base):
     updated_at       = Column(DateTime, default=datetime.now, onupdate=datetime.now)
     cliente    = relationship("Cliente")
     fornecedor = relationship("Fornecedor")
+    categoria  = relationship("CategoriaFinanceira")
     baixas     = relationship("BaixaTitulo", back_populates="titulo", order_by="BaixaTitulo.id")
 
     @property
@@ -471,6 +489,14 @@ class TituloFinanceiro(Base):
     @property
     def fornecedor_nome(self):
         return self.fornecedor.nome if self.fornecedor else None
+
+    @property
+    def categoria_nome(self):
+        return self.categoria.nome if self.categoria else None
+
+    @property
+    def avulso(self):
+        return self.pedido_venda_id is None and self.pedido_compra_id is None
 
 
 class BaixaTitulo(Base):

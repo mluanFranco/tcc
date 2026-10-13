@@ -9,6 +9,7 @@ Como em core/pedidos.py, as funções NÃO fazem commit: quem chama decide quand
 Títulos e baixas sempre são alterados com a linha do título TRAVADA (SELECT ... FOR UPDATE), então
 duas baixas simultâneas nunca passam do saldo e uma baixa nunca atravessa o cancelamento do pedido.
 """
+import calendar
 from datetime import date, datetime
 from decimal import Decimal
 from types import SimpleNamespace
@@ -18,7 +19,7 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from core.pagamento import gerar_parcelas
-from models import TituloFinanceiro, BaixaTitulo
+from models import TituloFinanceiro, BaixaTitulo, CategoriaFinanceira, Cliente, Fornecedor
 
 _CENTAVO = Decimal("0.01")
 _A_VISTA = SimpleNamespace(numero=1, prazo_dias=0, percentual=Decimal("100"))
@@ -28,6 +29,19 @@ STATUS_EM_ABERTO = ("aberto", "parcial")
 
 def _decimal(valor) -> Decimal:
     return Decimal(str(valor)).quantize(_CENTAVO)
+
+
+def categoria_padrao(db: Session, tipo: str) -> CategoriaFinanceira:
+    """Categoria 'sistema' dos títulos que nascem de pedidos (Vendas para receber, Compra de insumos para pagar)."""
+    categoria = db.query(CategoriaFinanceira).filter(
+        CategoriaFinanceira.sistema.is_(True), CategoriaFinanceira.tipo == tipo
+    ).first()
+    if not categoria:   # a migração cria; isto só protege um banco sem as categorias iniciais
+        categoria = CategoriaFinanceira(nome="Vendas" if tipo == "receber" else "Compra de insumos",
+                                        tipo=tipo, sistema=True, ativo=True)
+        db.add(categoria)
+        db.flush()
+    return categoria
 
 
 def gerar_titulos(db: Session, *, tipo: str, pedido, forma, data_base: date) -> List[TituloFinanceiro]:
@@ -48,10 +62,12 @@ def gerar_titulos(db: Session, *, tipo: str, pedido, forma, data_base: date) -> 
     parcelas = gerar_parcelas(moldes, total, data_base)
     taxa = _decimal(forma.taxa_percentual or 0) if (tipo == "receber" and forma is not None) else Decimal("0.00")
 
+    categoria = categoria_padrao(db, tipo)
     titulos = []
     for parcela in parcelas:
         titulo = TituloFinanceiro(
             tipo=tipo,
+            categoria_id=categoria.id,
             numero_parcela=parcela["numero"],
             total_parcelas=len(parcelas),
             vencimento=parcela["vencimento"],
@@ -158,4 +174,123 @@ def estornar_baixa(db: Session, titulo_id: int, baixa_id: int, usuario_id: int) 
     baixa.estornada_em = datetime.now()
     baixa.estornada_por_id = usuario_id
     recalcular_titulo(db, titulo)
+    return titulo
+
+
+# ---------------------------------------------------------------- lançamentos avulsos
+
+def somar_meses(base: date, meses: int) -> date:
+    """Soma meses mantendo o dia; se o mês de destino for mais curto, vai para o último dia dele (31/01 + 1 = 28/02)."""
+    indice = base.year * 12 + (base.month - 1) + meses
+    ano, mes = divmod(indice, 12)
+    mes += 1
+    return date(ano, mes, min(base.day, calendar.monthrange(ano, mes)[1]))
+
+
+def _validar_categoria(db: Session, categoria_id: int, tipo: str) -> CategoriaFinanceira:
+    categoria = db.query(CategoriaFinanceira).filter(CategoriaFinanceira.id == categoria_id).first()
+    if not categoria:
+        raise HTTPException(status_code=404, detail="Categoria financeira não encontrada")
+    if not categoria.ativo:
+        raise HTTPException(status_code=400, detail=f"A categoria '{categoria.nome}' está inativa")
+    if categoria.tipo != tipo:
+        raise HTTPException(
+            status_code=400,
+            detail=f"A categoria '{categoria.nome}' é de '{categoria.tipo}' e o lançamento é '{tipo}'",
+        )
+    return categoria
+
+
+def _validar_parte(db: Session, tipo: str, cliente_id, fornecedor_id) -> None:
+    if tipo == "pagar" and cliente_id is not None:
+        raise HTTPException(status_code=400, detail="Título a pagar não tem cliente: informe um fornecedor (ou nenhum)")
+    if tipo == "receber" and fornecedor_id is not None:
+        raise HTTPException(status_code=400, detail="Título a receber não tem fornecedor: informe um cliente (ou nenhum)")
+    if cliente_id is not None:
+        cliente = db.query(Cliente).filter(Cliente.id == cliente_id).first()
+        if not cliente:
+            raise HTTPException(status_code=404, detail="Cliente não encontrado")
+        if not cliente.ativo:
+            raise HTTPException(status_code=400, detail="O cliente selecionado está inativo")
+    if fornecedor_id is not None:
+        fornecedor = db.query(Fornecedor).filter(Fornecedor.id == fornecedor_id).first()
+        if not fornecedor:
+            raise HTTPException(status_code=404, detail="Fornecedor não encontrado")
+        if not fornecedor.ativo:
+            raise HTTPException(status_code=400, detail="O fornecedor selecionado está inativo")
+
+
+def criar_titulos_avulsos(db: Session, *, tipo: str, descricao: str, categoria_id: int, valor: Decimal,
+                          vencimento: date, cliente_id=None, fornecedor_id=None,
+                          repetir_meses=None) -> List[TituloFinanceiro]:
+    """Lançamento sem pedido (aluguel, energia...). Com `repetir_meses`, cria um título por mês."""
+    _validar_categoria(db, categoria_id, tipo)
+    _validar_parte(db, tipo, cliente_id, fornecedor_id)
+
+    quantidade = repetir_meses or 1
+    titulos = []
+    for indice in range(quantidade):
+        titulo = TituloFinanceiro(
+            tipo=tipo,
+            categoria_id=categoria_id,
+            descricao=descricao,
+            cliente_id=cliente_id,
+            fornecedor_id=fornecedor_id,
+            numero_parcela=indice + 1,
+            total_parcelas=quantidade,
+            vencimento=somar_meses(vencimento, indice),
+            valor=valor,
+            taxa_percentual=Decimal("0.00"),
+            valor_pago=Decimal("0.00"),
+            status="aberto",
+        )
+        db.add(titulo)
+        titulos.append(titulo)
+    db.flush()
+    return titulos
+
+
+def _travar_avulso(db: Session, titulo_id: int, acao: str) -> TituloFinanceiro:
+    titulo = _travar_titulo(db, titulo_id)
+    if not titulo.avulso:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Título de pedido não pode ser {acao} isoladamente: ele acompanha o pedido de origem",
+        )
+    if titulo.status == "cancelado":
+        raise HTTPException(status_code=400, detail="O título está cancelado")
+    if titulo.valor_pago > 0 or titulo.status != "aberto":
+        raise HTTPException(
+            status_code=400,
+            detail=f"Só é possível {acao} título 'aberto' e sem baixa. Estorne as baixas primeiro (status atual: '{titulo.status}')",
+        )
+    return titulo
+
+
+def editar_titulo_avulso(db: Session, titulo_id: int, campos: dict) -> TituloFinanceiro:
+    """Altera só os campos presentes em `campos`. Cliente/fornecedor aceitam None (remove a parte)."""
+    titulo = _travar_avulso(db, titulo_id, "editar")
+
+    if "categoria_id" in campos:
+        _validar_categoria(db, campos["categoria_id"], titulo.tipo)
+    novo_cliente = campos.get("cliente_id", titulo.cliente_id)
+    novo_fornecedor = campos.get("fornecedor_id", titulo.fornecedor_id)
+    if "cliente_id" in campos or "fornecedor_id" in campos:
+        _validar_parte(db, titulo.tipo,
+                       campos["cliente_id"] if "cliente_id" in campos else None,
+                       campos["fornecedor_id"] if "fornecedor_id" in campos else None)
+
+    for nome in ("descricao", "categoria_id", "valor", "vencimento"):
+        if nome in campos:
+            setattr(titulo, nome, campos[nome])
+    titulo.cliente_id = novo_cliente
+    titulo.fornecedor_id = novo_fornecedor
+    db.flush()
+    return titulo
+
+
+def cancelar_titulo_avulso(db: Session, titulo_id: int) -> TituloFinanceiro:
+    titulo = _travar_avulso(db, titulo_id, "cancelar")
+    titulo.status = "cancelado"
+    db.flush()
     return titulo
