@@ -215,6 +215,7 @@ class FormaPagamentoParcela(Base):
 # ─────────────────────────────────────────
 class PedidoVenda(Base):
     __tablename__ = "pedido_venda"
+    __table_args__ = (Index("ix_pedido_venda_status_data", "status", "data_pedido"),)
 
     id             = Column(Integer, primary_key=True, autoincrement=True)
     cliente_id     = Column(Integer, ForeignKey("cliente.id"), nullable=False)
@@ -224,6 +225,7 @@ class PedidoVenda(Base):
     status         = Column(String(20), default="aberto")  # aberto | confirmado | cancelado
     forma_pagamento_id = Column(Integer, ForeignKey("forma_pagamento.id"))
     observacao     = Column(String(255))
+    confirmado_em  = Column(DateTime)   # preenchido na confirmação: é a data em que a venda se concretiza
     created_at     = Column(DateTime, default=datetime.now)
     updated_at     = Column(DateTime, default=datetime.now, onupdate=datetime.now)
 
@@ -242,6 +244,7 @@ class ItemPedidoVenda(Base):
     preco_unitario  = Column(Float, nullable=False)
     desconto        = Column(Float, default=0.0)
     subtotal        = Column(Float, nullable=False)
+    custo_unitario  = Column(Numeric(12, 4))   # custo do produto na confirmação (base da margem); nulo antes disso
 
     pedido_venda = relationship("PedidoVenda", back_populates="itens")
     produto      = relationship("Produto")
@@ -252,6 +255,7 @@ class ItemPedidoVenda(Base):
 # ─────────────────────────────────────────
 class PedidoCompra(Base):
     __tablename__ = "pedido_compra"
+    __table_args__ = (Index("ix_pedido_compra_status_data", "status", "data_pedido"),)
 
     id                   = Column(Integer, primary_key=True, autoincrement=True)
     fornecedor_id        = Column(Integer, ForeignKey("fornecedor.id"), nullable=False)
@@ -502,7 +506,10 @@ class TituloFinanceiro(Base):
 class BaixaTitulo(Base):
     """Pagamento/recebimento (total ou parcial) de um título. Estorno não apaga: marca a baixa como estornada."""
     __tablename__ = "baixa_titulo"
-    __table_args__ = (CheckConstraint("valor > 0", name="ck_baixa_valor_positivo"),)
+    __table_args__ = (
+        CheckConstraint("valor > 0", name="ck_baixa_valor_positivo"),
+        Index("ix_baixa_titulo_data_pagamento", "data_pagamento"),
+    )
     id               = Column(Integer, primary_key=True, autoincrement=True)
     titulo_id        = Column(Integer, ForeignKey("titulo_financeiro.id"), nullable=False)
     valor            = Column(Numeric(12, 2), nullable=False)

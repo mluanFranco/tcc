@@ -131,6 +131,11 @@ def atualizar_status_pedido_venda(
             produto = produtos[produto_id]
             produto.estoque_reservado -= quantidade
             produto.estoque_atual -= quantidade
+        # Congela o custo de cada item e a data da confirmação (base dos relatórios de margem)
+        for item in itens:
+            custo = produtos[item.produto_id].preco_custo
+            item.custo_unitario = Decimal(str(custo or 0)).quantize(Decimal("0.0001"))
+        pedido.confirmado_em = datetime.now()
         # Contas a receber: nascem na confirmação (a venda se concretiza aqui), vencendo a partir de hoje
         gerar_titulos(db, tipo="receber", pedido=pedido, forma=pedido.forma_pagamento, data_base=date.today())
 
