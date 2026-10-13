@@ -310,6 +310,12 @@ def aprovar_cotacao(
     if cotacao.validade is not None and cotacao.validade < date.today():
         raise HTTPException(status_code=400, detail=f"A cotação venceu em {cotacao.validade.isoformat()}")
     _exigir_todos_os_precos(cotacao)
+    if cotacao.forma_pagamento_id is None:
+        raise HTTPException(
+            status_code=400,
+            detail="Defina a forma de pagamento da cotação (PUT /cotacoes/{id}) antes de aprovar: "
+                   "é dela que saem as parcelas do financeiro",
+        )
 
     try:
         if cotacao.tipo == "compra":

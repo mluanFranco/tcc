@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from database import get_db
-from models import PedidoCompra, ItemPedidoCompra, Usuario
+from models import PedidoCompra, ItemPedidoCompra, Usuario, TituloFinanceiro
 from schemas.pedido_compra import (
     PedidoCompraCreate, PedidoCompraStatusUpdate,
     PedidoCompraResponse, RegistrarRecebimento
@@ -9,10 +9,13 @@ from schemas.pedido_compra import (
 from core.security import get_current_user
 from core.estoque import travar_produtos
 from core.pedidos import registrar_pedido_compra
+from core.financeiro import cancelar_titulos_do_pedido
+from schemas.financeiro import TituloResponse
 from typing import List
 from collections import defaultdict
 from decimal import Decimal
 from datetime import datetime
+from sqlalchemy.orm import joinedload
 
 router = APIRouter(prefix="/pedidos-compra", tags=["Pedidos de Compra"])
 
@@ -49,6 +52,20 @@ def buscar_pedido_compra(pedido_id: int, db: Session = Depends(get_db), _=Depend
     if not pedido:
         raise HTTPException(status_code=404, detail="Pedido de compra não encontrado")
     return pedido
+
+
+@router.get("/{pedido_id}/titulos", response_model=List[TituloResponse])
+def titulos_do_pedido_compra(pedido_id: int, db: Session = Depends(get_db), _=Depends(get_current_user)):
+    """Contas a pagar geradas por este pedido (nascem junto com o pedido)."""
+    if not db.query(PedidoCompra.id).filter(PedidoCompra.id == pedido_id).first():
+        raise HTTPException(status_code=404, detail="Pedido de compra não encontrado")
+    return (
+        db.query(TituloFinanceiro)
+        .options(joinedload(TituloFinanceiro.cliente), joinedload(TituloFinanceiro.fornecedor))
+        .filter(TituloFinanceiro.pedido_compra_id == pedido_id)
+        .order_by(TituloFinanceiro.numero_parcela)
+        .all()
+    )
 
 
 @router.post("/{pedido_id}/receber", response_model=PedidoCompraResponse)
@@ -151,6 +168,9 @@ def atualizar_status_pedido_compra(
 
     if pedido.status == "cancelado":
         raise HTTPException(status_code=400, detail="Pedido já está cancelado")
+
+    # Cancela as contas a pagar antes de mexer em estoque (barra se algum título já tiver pagamento lançado)
+    cancelar_titulos_do_pedido(db, tipo="pagar", pedido_id=pedido.id)
 
     itens = db.query(ItemPedidoCompra).filter(ItemPedidoCompra.pedido_compra_id == pedido.id).all()
 

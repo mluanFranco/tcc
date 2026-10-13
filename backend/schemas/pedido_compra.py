@@ -10,7 +10,7 @@ class ItemPedidoCompraCreate(BaseModel):
 
 class PedidoCompraCreate(BaseModel):
     fornecedor_id: int = Field(gt=0)
-    forma_pagamento_id: Optional[int] = Field(default=None, gt=0)
+    forma_pagamento_id: int = Field(gt=0)   # obrigatória: é dela que saem as parcelas (contas a pagar)
     data_entrega_prevista: Optional[datetime] = None
     observacao: Optional[str] = Field(default=None, max_length=255)
     itens: List[ItemPedidoCompraCreate]

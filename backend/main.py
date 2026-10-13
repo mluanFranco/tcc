@@ -4,7 +4,7 @@ from routes import (
     auth, usuario, produto, cliente, fornecedor,
     forma_pagamento, pedido_venda, pedido_compra,
     cotacao, geladeira, historico_manutencao,
-    categoria, subcategoria, unidade_medida, receita, ordem_producao
+    categoria, subcategoria, unidade_medida, receita, ordem_producao, financeiro
 )
 
 app = FastAPI(
@@ -35,3 +35,4 @@ app.include_router(subcategoria.router)
 app.include_router(unidade_medida.router)
 app.include_router(receita.router)
 app.include_router(ordem_producao.router)
+app.include_router(financeiro.router)

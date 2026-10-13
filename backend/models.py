@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, Float, String, Boolean, ForeignKey, DateTime, Date, Text, Numeric, UniqueConstraint, CheckConstraint
+from sqlalchemy import Column, Integer, Float, String, Boolean, ForeignKey, DateTime, Date, Text, Numeric, UniqueConstraint, CheckConstraint, Index
 from decimal import Decimal
 from sqlalchemy.orm import relationship
 from database import Base
@@ -426,3 +426,65 @@ class OrdemProducaoItem(Base):
     subtotal       = Column(Float, nullable=False)
     ordem   = relationship("OrdemProducao", back_populates="itens")
     produto = relationship("Produto")
+
+
+# ─────────────────────────────────────────
+#  TÍTULO FINANCEIRO
+# ─────────────────────────────────────────
+class TituloFinanceiro(Base):
+    """Uma parcela a pagar (compra) ou a receber (venda). Nasce das parcelas da forma de pagamento do pedido."""
+    __tablename__ = "titulo_financeiro"
+    __table_args__ = (
+        UniqueConstraint("pedido_venda_id", "numero_parcela", name="uq_titulo_pedido_venda_parcela"),
+        UniqueConstraint("pedido_compra_id", "numero_parcela", name="uq_titulo_pedido_compra_parcela"),
+        CheckConstraint(
+            "(tipo = 'receber' AND pedido_compra_id IS NULL AND fornecedor_id IS NULL) OR "
+            "(tipo = 'pagar' AND pedido_venda_id IS NULL AND cliente_id IS NULL)",
+            name="ck_titulo_tipo_origem",
+        ),
+        CheckConstraint("valor > 0", name="ck_titulo_valor_positivo"),
+        Index("ix_titulo_tipo_status_vencimento", "tipo", "status", "vencimento"),
+    )
+    id               = Column(Integer, primary_key=True, autoincrement=True)
+    tipo             = Column(String(10), nullable=False)    # pagar | receber
+    pedido_venda_id  = Column(Integer, ForeignKey("pedido_venda.id"))
+    pedido_compra_id = Column(Integer, ForeignKey("pedido_compra.id"))
+    cliente_id       = Column(Integer, ForeignKey("cliente.id"))
+    fornecedor_id    = Column(Integer, ForeignKey("fornecedor.id"))
+    numero_parcela   = Column(Integer, nullable=False)
+    total_parcelas   = Column(Integer, nullable=False)
+    vencimento       = Column(Date, nullable=False)
+    valor            = Column(Numeric(12, 2), nullable=False)
+    taxa_percentual  = Column(Numeric(5, 2), nullable=False, default=Decimal("0"))   # cópia da forma, só em 'receber'
+    valor_pago       = Column(Numeric(12, 2), nullable=False, default=Decimal("0"))
+    status           = Column(String(20), nullable=False, default="aberto")           # aberto | parcial | pago | cancelado
+    created_at       = Column(DateTime, default=datetime.now)
+    updated_at       = Column(DateTime, default=datetime.now, onupdate=datetime.now)
+    cliente    = relationship("Cliente")
+    fornecedor = relationship("Fornecedor")
+    baixas     = relationship("BaixaTitulo", back_populates="titulo", order_by="BaixaTitulo.id")
+
+    @property
+    def cliente_nome(self):
+        return self.cliente.nome if self.cliente else None
+
+    @property
+    def fornecedor_nome(self):
+        return self.fornecedor.nome if self.fornecedor else None
+
+
+class BaixaTitulo(Base):
+    """Pagamento/recebimento (total ou parcial) de um título. Estorno não apaga: marca a baixa como estornada."""
+    __tablename__ = "baixa_titulo"
+    __table_args__ = (CheckConstraint("valor > 0", name="ck_baixa_valor_positivo"),)
+    id               = Column(Integer, primary_key=True, autoincrement=True)
+    titulo_id        = Column(Integer, ForeignKey("titulo_financeiro.id"), nullable=False)
+    valor            = Column(Numeric(12, 2), nullable=False)
+    data_pagamento   = Column(Date, nullable=False)
+    usuario_id       = Column(Integer, ForeignKey("usuario.id"), nullable=False)
+    observacao       = Column(String(255))
+    estornada        = Column(Boolean, nullable=False, default=False)
+    estornada_em     = Column(DateTime)
+    estornada_por_id = Column(Integer, ForeignKey("usuario.id"))
+    created_at       = Column(DateTime, default=datetime.now)
+    titulo = relationship("TituloFinanceiro", back_populates="baixas")

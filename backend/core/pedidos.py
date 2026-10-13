@@ -16,6 +16,7 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from core.estoque import travar_produtos
+from core.financeiro import gerar_titulos
 from models import (
     PedidoVenda, ItemPedidoVenda, PedidoCompra, ItemPedidoCompra,
     Cliente, Fornecedor, FormaPagamento,
@@ -24,14 +25,15 @@ from schemas.pedido_venda import PedidoVendaCreate
 from schemas.pedido_compra import PedidoCompraCreate
 
 
-def _validar_forma_pagamento(db: Session, forma_pagamento_id) -> None:
+def _validar_forma_pagamento(db: Session, forma_pagamento_id) -> FormaPagamento:
     if forma_pagamento_id is None:
-        return
+        raise HTTPException(status_code=400, detail="Informe a forma de pagamento: é dela que saem as parcelas do financeiro")
     forma = db.query(FormaPagamento).filter(FormaPagamento.id == forma_pagamento_id).first()
     if not forma:
         raise HTTPException(status_code=404, detail="Forma de pagamento não encontrada")
     if not forma.ativo:
         raise HTTPException(status_code=400, detail="A forma de pagamento selecionada está inativa")
+    return forma
 
 
 def registrar_pedido_venda(db: Session, usuario_id: int, dados: PedidoVendaCreate) -> PedidoVenda:
@@ -44,7 +46,7 @@ def registrar_pedido_venda(db: Session, usuario_id: int, dados: PedidoVendaCreat
     if not cliente.ativo:
         raise HTTPException(status_code=400, detail="O cliente selecionado está inativo")
 
-    _validar_forma_pagamento(db, dados.forma_pagamento_id)
+    _validar_forma_pagamento(db, dados.forma_pagamento_id)   # na venda, os títulos nascem na confirmação
 
     # Trava os produtos envolvidos até o fim da transação: se outro pedido estiver
     # reservando o mesmo produto neste instante, esta requisição espera e depois
@@ -120,7 +122,7 @@ def registrar_pedido_compra(db: Session, usuario_id: int, dados: PedidoCompraCre
     if not fornecedor.ativo:
         raise HTTPException(status_code=400, detail="O fornecedor selecionado está inativo")
 
-    _validar_forma_pagamento(db, dados.forma_pagamento_id)
+    forma = _validar_forma_pagamento(db, dados.forma_pagamento_id)
 
     # Mesma ordem de travamento das demais rotas de estoque (ids crescentes), o que evita deadlock
     produtos = travar_produtos(db, [item.produto_id for item in dados.itens])
@@ -163,4 +165,6 @@ def registrar_pedido_compra(db: Session, usuario_id: int, dados: PedidoCompraCre
         ))
 
     db.flush()
+    # Contas a pagar: nascem junto com o pedido, vencendo a partir da data do pedido
+    gerar_titulos(db, tipo="pagar", pedido=pedido, forma=forma, data_base=pedido.data_pedido.date())
     return pedido
