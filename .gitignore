@@ -23,3 +23,6 @@ Thumbs.db
 # Logs e arquivos temporários
 *.log
 *.tmp
+
+# Fotos de usuários enviadas pelo sistema (dados, não código)
+backend/uploads/

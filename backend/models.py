@@ -18,8 +18,55 @@ class Usuario(Base):
     senha_hash = Column(String(255), nullable=False)
     ativo      = Column(Boolean, default=True)
     admin      = Column(Boolean, default=False)
+    grupo_id   = Column(Integer, ForeignKey("grupo_acesso.id", name="fk_usuario_grupo_acesso"), index=True)   # um grupo por usuario (opcional)
+    foto       = Column(String(80))   # nome do arquivo em uploads/usuarios/; nulo = sem foto
     created_at = Column(DateTime, default=datetime.now)
     updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
+
+    grupo = relationship("GrupoAcesso", back_populates="usuarios")
+
+    @property
+    def foto_url(self):
+        return f"/usuarios/{self.id}/foto" if self.foto else None
+
+
+# ─────────────────────────────────────────
+#  GRUPOS DE ACESSO
+# ─────────────────────────────────────────
+class Permissao(Base):
+    """Catálogo fixo (criado pela migration): "<modulo>.<ver|editar>"."""
+    __tablename__ = "permissao"
+    id        = Column(Integer, primary_key=True, autoincrement=True)
+    codigo    = Column(String(40), nullable=False, unique=True)
+    modulo    = Column(String(30), nullable=False)
+    acao      = Column(String(10), nullable=False)
+    descricao = Column(String(200), nullable=False)
+
+
+class GrupoAcesso(Base):
+    __tablename__ = "grupo_acesso"
+    id         = Column(Integer, primary_key=True, autoincrement=True)
+    nome       = Column(String(60), nullable=False, unique=True)
+    descricao  = Column(String(255))
+    ativo      = Column(Boolean, nullable=False, default=True)
+    created_at = Column(DateTime, default=datetime.now)
+    updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
+
+    usuarios   = relationship("Usuario", back_populates="grupo")
+    permissoes = relationship("Permissao", secondary="grupo_permissao", order_by="Permissao.id")
+
+
+class GrupoPermissao(Base):
+    __tablename__ = "grupo_permissao"
+    grupo_id     = Column(Integer, ForeignKey("grupo_acesso.id", ondelete="CASCADE"), primary_key=True)
+    permissao_id = Column(Integer, ForeignKey("permissao.id"), primary_key=True)
+
+
+class UsuarioPermissao(Base):
+    """Permissão extra de um usuário específico, além das do grupo (só concede, nunca nega)."""
+    __tablename__ = "usuario_permissao"
+    usuario_id   = Column(Integer, ForeignKey("usuario.id", ondelete="CASCADE"), primary_key=True)
+    permissao_id = Column(Integer, ForeignKey("permissao.id"), primary_key=True)
 
 
 # ─────────────────────────────────────────

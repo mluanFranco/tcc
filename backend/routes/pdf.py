@@ -3,6 +3,7 @@ from fastapi.responses import Response
 from sqlalchemy.orm import Session
 
 from core import pdf
+from core.permissoes import exigir
 from core.security import get_current_user
 from database import get_db
 
@@ -17,19 +18,19 @@ def _resposta(conteudo: bytes, nome_arquivo: str) -> Response:
     )
 
 
-@router.get("/cotacoes/{cotacao_id}/pdf", response_class=Response, responses={200: {"content": {"application/pdf": {}}}})
+@router.get("/cotacoes/{cotacao_id}/pdf", dependencies=[Depends(exigir("cotacoes.ver"))], response_class=Response, responses={200: {"content": {"application/pdf": {}}}})
 def pdf_da_cotacao(cotacao_id: int, db: Session = Depends(get_db), usuario=Depends(get_current_user)):
     """Cotação em PDF (venda ou compra): partes, itens, total e condição de pagamento. Não altera nada."""
     return _resposta(*pdf.pdf_cotacao(db, cotacao_id, usuario.nome))
 
 
-@router.get("/pedidos-venda/{pedido_id}/pdf", response_class=Response, responses={200: {"content": {"application/pdf": {}}}})
+@router.get("/pedidos-venda/{pedido_id}/pdf", dependencies=[Depends(exigir("vendas.ver"))], response_class=Response, responses={200: {"content": {"application/pdf": {}}}})
 def pdf_do_pedido_venda(pedido_id: int, db: Session = Depends(get_db), usuario=Depends(get_current_user)):
     """Pedido de venda em PDF. Pedido cancelado sai com a faixa CANCELADO. Não altera nada."""
     return _resposta(*pdf.pdf_pedido_venda(db, pedido_id, usuario.nome))
 
 
-@router.get("/pedidos-compra/{pedido_id}/pdf", response_class=Response, responses={200: {"content": {"application/pdf": {}}}})
+@router.get("/pedidos-compra/{pedido_id}/pdf", dependencies=[Depends(exigir("compras.ver"))], response_class=Response, responses={200: {"content": {"application/pdf": {}}}})
 def pdf_do_pedido_compra(pedido_id: int, db: Session = Depends(get_db), usuario=Depends(get_current_user)):
     """Pedido de compra em PDF, com o que já foi recebido por item. Pedido cancelado sai com a faixa CANCELADO. Não altera nada."""
     return _resposta(*pdf.pdf_pedido_compra(db, pedido_id, usuario.nome))

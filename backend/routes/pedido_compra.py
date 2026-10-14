@@ -10,6 +10,7 @@ from core.security import get_current_user
 from core.estoque import travar_produtos
 from core.pedidos import registrar_pedido_compra
 from core.financeiro import cancelar_titulos_do_pedido
+from core.permissoes import exigir
 from schemas.financeiro import TituloResponse
 from typing import List
 from collections import defaultdict
@@ -54,7 +55,7 @@ def buscar_pedido_compra(pedido_id: int, db: Session = Depends(get_db), _=Depend
     return pedido
 
 
-@router.get("/{pedido_id}/titulos", response_model=List[TituloResponse])
+@router.get("/{pedido_id}/titulos", response_model=List[TituloResponse], dependencies=[Depends(exigir("financeiro.ver"))])
 def titulos_do_pedido_compra(pedido_id: int, db: Session = Depends(get_db), _=Depends(get_current_user)):
     """Contas a pagar geradas por este pedido (nascem junto com o pedido)."""
     if not db.query(PedidoCompra.id).filter(PedidoCompra.id == pedido_id).first():
