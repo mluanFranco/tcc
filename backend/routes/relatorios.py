@@ -4,7 +4,11 @@ from database import get_db
 from schemas.relatorios import ResumoResponse, SerieResponse, ComparativoResponse
 from schemas.relatorios_financeiro import FluxoCaixaResponse, FluxoPrevistoResponse, VencidosResponse
 from core.security import get_current_user
-from core import relatorios, relatorios_financeiro
+from core import relatorios, relatorios_financeiro, relatorios_rankings
+from schemas.relatorios_rankings import (
+    ComprasPorFornecedorResponse, ComprasPorProdutoResponse, PorFormaPagamentoResponse,
+    VendasPorClienteResponse, VendasPorProdutoResponse,
+)
 from typing import Optional
 from datetime import date
 
@@ -109,3 +113,76 @@ def titulos_vencidos(
     separado em a receber e a pagar, com o detalhe por cliente ou fornecedor (maior saldo primeiro).
     """
     return relatorios_financeiro.vencidos(db, data_referencia or date.today(), tipo)
+
+
+_LIMITE = Query(default=10, ge=1, le=100, description="Quantos itens exibir (os totais continuam sendo do período inteiro).")
+
+
+@router.get("/compras/por-fornecedor", response_model=ComprasPorFornecedorResponse)
+def compras_por_fornecedor(
+    data_inicio: Optional[date] = Query(default=None, description=_DESC_INICIO),
+    data_fim: Optional[date] = Query(default=None, description=_DESC_FIM),
+    limite: int = _LIMITE,
+    db: Session = Depends(get_db),
+    _=Depends(get_current_user),
+):
+    """Ranking de fornecedores pelo valor comprado (pedidos não cancelados, pela data do pedido), com participação e última compra."""
+    inicio, fim = relatorios.resolver_periodo(data_inicio, data_fim)
+    return relatorios_rankings.compras_por_fornecedor(db, inicio, fim, limite)
+
+
+@router.get("/compras/por-produto", response_model=ComprasPorProdutoResponse)
+def compras_por_produto(
+    data_inicio: Optional[date] = Query(default=None, description=_DESC_INICIO),
+    data_fim: Optional[date] = Query(default=None, description=_DESC_FIM),
+    limite: int = _LIMITE,
+    ordenar_por: str = Query(default="total", pattern="^(total|quantidade)$", description="total (valor) ou quantidade."),
+    db: Session = Depends(get_db),
+    _=Depends(get_current_user),
+):
+    """Ranking de produtos/insumos comprados, com preço médio ponderado, mínimo, máximo e o último preço pago."""
+    inicio, fim = relatorios.resolver_periodo(data_inicio, data_fim)
+    return relatorios_rankings.compras_por_produto(db, inicio, fim, limite, ordenar_por)
+
+
+@router.get("/vendas/por-produto", response_model=VendasPorProdutoResponse)
+def vendas_por_produto(
+    data_inicio: Optional[date] = Query(default=None, description=_DESC_INICIO),
+    data_fim: Optional[date] = Query(default=None, description=_DESC_FIM),
+    limite: int = _LIMITE,
+    ordenar_por: str = Query(default="receita", pattern="^(receita|quantidade|margem)$", description="receita, quantidade ou margem (margem bruta)."),
+    db: Session = Depends(get_db),
+    _=Depends(get_current_user),
+):
+    """Ranking de produtos vendidos (vendas confirmadas): quantidade, receita, CMV, margem e participação na receita."""
+    inicio, fim = relatorios.resolver_periodo(data_inicio, data_fim)
+    return relatorios_rankings.vendas_por_produto(db, inicio, fim, limite, ordenar_por)
+
+
+@router.get("/vendas/por-cliente", response_model=VendasPorClienteResponse)
+def vendas_por_cliente(
+    data_inicio: Optional[date] = Query(default=None, description=_DESC_INICIO),
+    data_fim: Optional[date] = Query(default=None, description=_DESC_FIM),
+    limite: int = _LIMITE,
+    db: Session = Depends(get_db),
+    _=Depends(get_current_user),
+):
+    """Ranking de clientes pela receita (vendas confirmadas): pedidos, ticket médio, margem e última compra."""
+    inicio, fim = relatorios.resolver_periodo(data_inicio, data_fim)
+    return relatorios_rankings.vendas_por_cliente(db, inicio, fim, limite)
+
+
+@router.get("/por-forma-pagamento", response_model=PorFormaPagamentoResponse)
+def por_forma_pagamento(
+    data_inicio: Optional[date] = Query(default=None, description=_DESC_INICIO),
+    data_fim: Optional[date] = Query(default=None, description=_DESC_FIM),
+    origem: str = Query(default="venda", pattern="^(venda|compra)$", description="venda (clientes) ou compra (fornecedores)."),
+    db: Session = Depends(get_db),
+    _=Depends(get_current_user),
+):
+    """
+    Uso de cada forma de pagamento: pedidos, valor, participação, prazo médio (dias do pedido até cada vencimento,
+    ponderado pelo valor da parcela) e, nas vendas, a taxa estimada sobre as parcelas.
+    """
+    inicio, fim = relatorios.resolver_periodo(data_inicio, data_fim)
+    return relatorios_rankings.por_forma_pagamento(db, inicio, fim, origem)
