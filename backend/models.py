@@ -568,3 +568,51 @@ class BaixaTitulo(Base):
     estornada_por_id = Column(Integer, ForeignKey("usuario.id"))
     created_at       = Column(DateTime, default=datetime.now)
     titulo = relationship("TituloFinanceiro", back_populates="baixas")
+
+
+# ─────────────────────────────────────────
+#  ASSISTENTE DE IA
+# ─────────────────────────────────────────
+class AssistenteConversa(Base):
+    """Uma conversa do usuário com o assistente. 'Excluir' só marca ativa=False (o histórico continua valendo para o limite por hora e a auditoria)."""
+    __tablename__ = "assistente_conversa"
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    usuario_id = Column(Integer, ForeignKey("usuario.id"), nullable=False, index=True)
+    titulo = Column(String(120), nullable=False)
+    ativa = Column(Boolean, nullable=False, default=True)
+    created_at = Column(DateTime, default=datetime.now)
+    updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
+    mensagens = relationship("AssistenteMensagem", back_populates="conversa", order_by="AssistenteMensagem.id")
+
+
+class AssistenteMensagem(Base):
+    __tablename__ = "assistente_mensagem"
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    conversa_id = Column(Integer, ForeignKey("assistente_conversa.id"), nullable=False, index=True)
+    papel = Column(String(10), nullable=False)          # usuario | assistente
+    conteudo = Column(Text, nullable=False)
+    tabela = Column(Text)                                # JSON {colunas, linhas, truncado}: última consulta da resposta
+    consultas = Column(Text)                             # JSON: lista dos SQL executados na resposta
+    tokens_entrada = Column(Integer)
+    tokens_saida = Column(Integer)
+    duracao_ms = Column(Integer)
+    created_at = Column(DateTime, default=datetime.now, index=True)
+    conversa = relationship("AssistenteConversa", back_populates="mensagens")
+
+
+class AssistenteLog(Base):
+    """Auditoria: uma linha por ferramenta que a IA acionou (SQL, relatório, ajuda) ou por falha do provedor."""
+    __tablename__ = "assistente_log"
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    usuario_id = Column(Integer, ForeignKey("usuario.id"), nullable=False, index=True)
+    conversa_id = Column(Integer, ForeignKey("assistente_conversa.id"))
+    mensagem_id = Column(Integer, ForeignKey("assistente_mensagem.id"))
+    pergunta = Column(String(500))
+    ferramenta = Column(String(40), nullable=False)      # consultar_banco | relatorio_financeiro | como_usar | provedor
+    entrada = Column(Text)                               # o SQL ou os argumentos
+    views = Column(String(255))
+    status = Column(String(20), nullable=False)          # ok | sql_recusado | sem_permissao | erro_execucao | erro_ferramenta | erro_provedor
+    linhas = Column(Integer)
+    duracao_ms = Column(Integer)
+    erro = Column(String(255))
+    created_at = Column(DateTime, default=datetime.now, index=True)

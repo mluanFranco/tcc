@@ -27,6 +27,7 @@ MODULOS: Dict[str, tuple] = {
     "producao":   ("Receitas e ordens de produção", ("ver", "editar")),
     "financeiro": ("Financeiro: títulos a pagar e a receber, baixas e categorias financeiras", ("ver", "editar")),
     "relatorios": ("Relatórios financeiros por período", ("ver",)),
+    "assistente": ("Assistente de IA: perguntas em linguagem natural sobre os dados que o usuário já pode ver", ("ver",)),
 }
 _ROTULO = {"ver": "Visualizar", "editar": "Criar e alterar"}
 
@@ -34,12 +35,12 @@ CODIGOS: List[str] = [f"{m}.{a}" for m, (_, acoes) in MODULOS.items() for a in a
 
 # grupos criados pela migration (nome -> descrição, permissões)
 _OPERACIONAIS = ["geladeiras", "vendas", "compras", "cotacoes", "producao"]
-GRUPOS_PADRAO = {
+GRUPOS_PADRAO = {  # o assistente (assistente.ver) entra nos três grupos pela migration b6e1a9d3c7f2
     "Gerência":    ("Acesso a todos os módulos, inclusive financeiro e relatórios", list(CODIGOS)),
     "Operacional": ("Cadastros, geladeiras, vendas, compras, cotações e produção; sem financeiro e relatórios",
-                    ["cadastros.editar"] + [f"{m}.editar" for m in _OPERACIONAIS]),
+                    ["cadastros.editar"] + [f"{m}.editar" for m in _OPERACIONAIS] + ["assistente.ver"]),
     "Consulta":    ("Somente visualização dos módulos operacionais; sem financeiro e relatórios",
-                    [f"{m}.ver" for m in _OPERACIONAIS]),
+                    [f"{m}.ver" for m in _OPERACIONAIS] + ["assistente.ver"]),
 }
 
 
