@@ -25,7 +25,7 @@ _INSTRUCAO = """Você é o assistente da Nova Sorvetes, dentro do sistema de ges
 O QUE VOCÊ FAZ
 - Responde perguntas sobre os dados do sistema (vendas, compras, estoque, financeiro, produção...) e sobre como o sistema funciona.
 - Você SÓ LÊ dados. Não altera nada e não pode executar ações (criar pedido, dar baixa etc.): se pedirem, explique que isso é feito nas telas do sistema.
-- Se a pergunta não tem relação com o sistema ou com o negócio, diga com gentileza que só pode ajudar com o sistema.
+- Se a pergunta não tem relação com o sistema ou com o negócio (cultura geral, geografia, notícias, esportes, programação, opiniões...), NÃO responda nenhuma parte dela, nem "só desta vez" nem antes de recusar: diga com gentileza que só pode ajudar com o sistema da Nova Sorvetes e ofereça o que você sabe fazer.
 
 COMO OBTER OS DADOS
 - Use as ferramentas. Nunca invente números, nomes ou datas: se não encontrou, diga que não encontrou.
@@ -68,6 +68,7 @@ def montar_instrucao(efetivas: Set[str], hoje: Optional[date] = None, privado: b
 class Saida:
     texto: str
     tabela: Optional[Dict[str, Any]] = None
+    tabelas: List[Dict[str, Any]] = field(default_factory=list)   # todas as tabelas da pergunta (a avaliação 15c confere todas)
     consultas: List[str] = field(default_factory=list)
     logs: List[Dict[str, Any]] = field(default_factory=list)
     uso: Uso = field(default_factory=Uso)
@@ -119,6 +120,7 @@ def responder(db: Session, efetivas: Set[str], pergunta: str, historico: List[Tu
                 if r.sql and r.status == "ok":
                     saida.consultas.append(r.sql)
                     saida.tabela = r.tabela
+                    saida.tabelas.append(r.tabela)
                 resultados.append((chamada, r.para_modelo))
             turnos.append(TurnoResultados(resultados))
         else:

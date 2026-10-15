@@ -30,6 +30,7 @@ class Resposta:
     bruto: Any = None                   # objeto original do provedor (ex.: assinaturas de raciocínio do Gemini), devolvido a ele no passo seguinte
     uso: Uso = field(default_factory=Uso)
     modelo: str = ""                    # modelo que de fato respondeu (pode ser uma reserva)
+    trocas: List[str] = field(default_factory=list)   # por que os modelos anteriores falharam ("modelo: detalhe"); vazio se o principal respondeu
 
 
 @dataclass

@@ -74,6 +74,7 @@ class ProvedorGemini:
             try:
                 resposta = self._tentar(modelo, instrucao, turnos, ferramentas, tentativas=3 if i == 0 else 1, com_bruto=(i == 0))
                 resposta.modelo = modelo
+                resposta.trocas = list(falhas)
                 return resposta
             except ErroProvedor as e:
                 falhas.append(f"{modelo}: {e.detalhe or e.mensagem}")

@@ -4,14 +4,18 @@ backend/venv/
 # Banco de dados SQLite (caso de testes)
 backend/banco.db
 
-# Variáveis de ambiente
+# Variáveis de ambiente (um .env.example, se existir, pode ser versionado)
 .env
+.env.*
+!.env.example
 backend/.env
 
-# Cache do Python
+# Cache do Python e de ferramentas
 __pycache__/
 *.pyc
 *.pyo
+.pytest_cache/
+.mypy_cache/
 
 # VS Code
 .vscode/
@@ -26,3 +30,12 @@ Thumbs.db
 
 # Fotos de usuários enviadas pelo sistema (dados, não código)
 backend/uploads/
+
+# Avaliação do agente de IA: rascunho de rodadas (as evidências finais vão para docs/avaliacao-ia/)
+avaliacao_resultados/
+
+# Backups e dumps do banco: têm dados e hashes de senha, nunca versionar
+backup_*.sql
+banco_da_*.sql
+*.dump
+backend/backups/
