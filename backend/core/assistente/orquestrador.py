@@ -10,9 +10,10 @@ from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session
 
 from core.assistente import config, ferramentas
-from core.assistente.esquema import descrever
+from core.assistente.esquema import VIEWS, descrever
 from core.assistente.escopo import views_permitidas
 from core.assistente.ferramentas import Contexto
+from core.permissoes import tem_permissao
 from core.assistente.provedor import (
     ChamadaFerramenta, ErroProvedor, Provedor, Resposta, TurnoChamadas, TurnoResultados, TurnoTexto, Uso,
 )
@@ -57,11 +58,35 @@ MODO PRIVADO ATIVO: os valores das consultas não são enviados a você, apenas 
 Explique o que foi consultado e oriente-o a ler a tabela; nunca invente valores."""
 
 
+_ROTULOS_MODULOS = {
+    "geladeiras": "geladeiras e manutenções", "vendas": "vendas", "relatorios": "relatórios e margem de lucro",
+    "compras": "compras", "cotacoes": "cotações", "producao": "produção e receitas", "financeiro": "financeiro (títulos a pagar/receber e baixas)",
+}
+
+
+def modulos_sem_acesso(efetivas: Set[str]) -> List[str]:
+    """Rótulos dos módulos que o usuário não pode ver (só os nomes: nenhum dado). Vazio para quem vê tudo."""
+    modulos = []
+    for v in VIEWS.values():
+        if v.modulo and v.modulo not in modulos and not tem_permissao(efetivas, f"{v.modulo}.ver"):
+            modulos.append(v.modulo)
+    return [_ROTULOS_MODULOS.get(m, m) for m in modulos]
+
+
+def _bloco_sem_acesso(efetivas: Set[str]) -> str:
+    faltam = modulos_sem_acesso(efetivas)
+    if not faltam:
+        return ""
+    return ("\nSEM ACESSO: este usuário NÃO tem permissão para ver: " + "; ".join(faltam) + ". Se a pergunta for sobre esses assuntos, "
+            "diga com clareza que ele não tem permissão e que deve pedir ao administrador do sistema. NUNCA diga que o dado não existe "
+            "ou que o sistema não guarda essa informação, e não tente descobri-lo por outras consultas.\n")
+
+
 def montar_instrucao(efetivas: Set[str], hoje: Optional[date] = None, privado: bool = False) -> str:
     hoje = hoje or date.today()
     cab = f"Hoje é {_DIAS[hoje.weekday()]}, {hoje.strftime('%d/%m/%Y')}.\n\n"
     esquema = "VIEWS DISPONÍVEIS PARA consultar_banco (colunas e significado):\n" + descrever(views_permitidas(efetivas))
-    return cab + _INSTRUCAO + (_MODO_PRIVADO if privado else "") + "\n" + esquema
+    return cab + _INSTRUCAO + _bloco_sem_acesso(efetivas) + (_MODO_PRIVADO if privado else "") + "\n" + esquema
 
 
 @dataclass
