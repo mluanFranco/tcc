@@ -26,7 +26,8 @@
   <script src="../js/core/api.js"></script>
   <script src="../js/core/auth.js"></script>
   <script>
-    if (!exigirAdmin()) {
+    // O dashboard mostra números de relatórios: exige a permissão relatorios.ver (admin tem todas).
+    if (!exigirPermissao("relatorios.ver")) {
       // já redirecionou — interrompe a execução do restante do script
       throw new Error("Acesso restrito");
     }

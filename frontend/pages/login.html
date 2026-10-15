@@ -11,91 +11,69 @@
 </head>
 <body>
 
-  <main class="login-page">
-    <div class="login-container">
+  <main class="login-pagina">
 
-      <!-- Painel esquerdo: marca -->
-      <section class="login-marca">
-        <div class="login-marca__conteudo">
-          <img
-            src="../assets/images/logo-novasorvetes.png"
-            alt="Nova Sorvetes"
-            class="login-marca__logo"
-          >
-          <div>
-            <p class="login-marca__titulo">Sistema de Gestão</p>
-            <p class="login-marca__subtitulo">
-              Controle de estoque, pedidos e equipamentos em um só lugar.
-            </p>
-          </div>
+    <!-- Lado esquerdo: marca e formulário (sobre o fundo azul) -->
+    <section class="login-lado-form">
+      <div class="login-bloco">
+
+        <img src="../assets/images/logo-branca.png" alt="Nova Sorvetes" class="login-logo" width="560" height="247">
+
+        <h1 class="login-saudacao">Olá! Bem-vindo de volta.</h1>
+        <p class="login-instrucao">Entre com sua conta para continuar.</p>
+
+        <div class="login-erro" id="login-erro" role="alert">
+          <span id="login-erro-mensagem">Email ou senha inválidos</span>
         </div>
-      </section>
 
-      <!-- Painel direito: formulário -->
-      <section class="login-formulario">
-        <div class="login-formulario__inner">
-
-          <h1 class="login-formulario__saudacao">Olá!</h1>
-          <p class="login-formulario__instrucao">Entre com sua conta para continuar</p>
-
-          <div class="login-erro" id="login-erro">
-            <span id="login-erro-mensagem">Email ou senha inválidos</span>
+        <form id="form-login" novalidate>
+          <div class="campo">
+            <label for="email" class="sr-only">Email</label>
+            <span class="campo__icone" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                <polyline points="22,6 12,13 2,6"></polyline>
+              </svg>
+            </span>
+            <input type="email" id="email" name="email" class="campo__input" placeholder="Email"
+                   autocomplete="username" autofocus required>
           </div>
 
-          <form id="form-login" novalidate>
-            <div class="campo">
-              <span class="campo__icone">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
-                  <polyline points="22,6 12,13 2,6"></polyline>
-                </svg>
-              </span>
-              <input
-                type="email"
-                id="email"
-                name="email"
-                class="campo__input"
-                placeholder="Email"
-                autocomplete="username"
-                required
-              >
-            </div>
-
-            <div class="campo">
-              <span class="campo__icone">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-                  <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-                </svg>
-              </span>
-              <input
-                type="password"
-                id="senha"
-                name="senha"
-                class="campo__input"
-                placeholder="Senha"
-                autocomplete="current-password"
-                required
-              >
-              <button type="button" class="campo__toggle-senha" id="toggle-senha" aria-label="Mostrar senha">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                  <circle cx="12" cy="12" r="3"></circle>
-                </svg>
-              </button>
-            </div>
-
-            <button type="submit" class="botao-entrar" id="botao-entrar">
-              Entrar
+          <div class="campo">
+            <label for="senha" class="sr-only">Senha</label>
+            <span class="campo__icone" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+              </svg>
+            </span>
+            <input type="password" id="senha" name="senha" class="campo__input campo__input--com-toggle" placeholder="Senha"
+                   autocomplete="current-password" required>
+            <button type="button" class="campo__toggle-senha" id="toggle-senha" aria-label="Mostrar senha">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                <circle cx="12" cy="12" r="3"></circle>
+              </svg>
             </button>
-          </form>
+          </div>
 
-          <p class="login-rodape">Nova Sorvetes © 2026</p>
+          <button type="submit" class="botao-entrar" id="botao-entrar">Entrar</button>
+        </form>
 
-        </div>
-      </section>
+      </div>
+    </section>
 
-    </div>
+    <!-- Lado direito: cartão branco com a mensagem do sistema (some em telas estreitas) -->
+    <aside class="login-painel">
+      <h2 class="login-painel__titulo">Seu sistema de gestão<br>e monitoramento integrado.</h2>
+      <p class="login-painel__texto">Controle estoque, pedidos e monitore equipamentos em um só lugar!</p>
+      <div class="login-painel__ilustracao">
+        <img src="../assets/images/ilustracao-login.webp"
+             alt="Funcionário da Nova Sorvetes usando um notebook, cercado por estoque, equipamentos e produção"
+             width="1000" height="750">
+      </div>
+    </aside>
+
   </main>
 
   <script src="../js/core/config.js"></script>

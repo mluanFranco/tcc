@@ -1,7 +1,9 @@
 // Funções de autenticação: salvar/recuperar token, logout, verificação de sessão,
-// decodificação do token e checagem de permissão (admin).
+// decodificação do token, perfil do usuário (permissões vindas de /usuarios/me)
+// e checagem de acesso por permissão.
 
 const TOKEN_KEY = "nova_sorvetes_token";
+const PERFIL_KEY = "nova_sorvetes_perfil";
 
 // Página inicial do usuário comum, já que dashboard.html é exclusivo de admin.
 const PAGINA_INICIAL_USUARIO_COMUM = "produtos.html";
@@ -16,6 +18,7 @@ function getToken() {
 
 function clearToken() {
   localStorage.removeItem(TOKEN_KEY);
+  localStorage.removeItem(PERFIL_KEY);   // perfil sem token não vale nada
 }
 
 function isAuthenticated() {
@@ -77,6 +80,65 @@ function exigirAutenticacao() {
   return true;
 }
 
+// ---------- Perfil e permissões ----------
+// O perfil (nome, grupo, foto e permissões efetivas) vem do backend em /usuarios/me.
+// O backend continua sendo quem de fato barra o acesso (403); aqui só decidimos o que mostrar.
+
+function salvarPerfil(perfil) {
+  localStorage.setItem(PERFIL_KEY, JSON.stringify(perfil));
+}
+
+function getPerfil() {
+  try {
+    return JSON.parse(localStorage.getItem(PERFIL_KEY));
+  } catch {
+    return null;
+  }
+}
+
+async function carregarPerfil() {
+  const perfil = await apiFetch("/usuarios/me");
+  salvarPerfil(perfil);
+  return perfil;
+}
+
+// Mesma regra do backend: admin tem tudo; "editar" de um módulo inclui o "ver" dele.
+function temPermissao(codigo) {
+  const perfil = getPerfil();
+  if (!perfil) return false;
+  if (perfil.admin) return true;
+
+  const efetivas = perfil.permissoes || [];
+  if (efetivas.includes(codigo)) return true;
+  return codigo.endsWith(".ver") && efetivas.includes(codigo.slice(0, -4) + ".editar");
+}
+
+// Para onde o usuário vai depois do login: dashboard para quem pode ver relatórios;
+// os demais caem em Produtos (cadastros são de leitura livre para qualquer usuário logado).
+function destinoPosLogin() {
+  return temPermissao("relatorios.ver") ? "dashboard.html" : PAGINA_INICIAL_USUARIO_COMUM;
+}
+
+// Protege páginas que exigem uma permissão (ex.: exigirPermissao("relatorios.ver")).
+// Retorna false (e já redireciona) quando o acesso não é permitido.
+function exigirPermissao(codigo) {
+  if (!isAuthenticated()) {
+    window.location.href = "login.html";
+    return false;
+  }
+  // Sessão aberta antes desta versão (token sem perfil): pede um novo login uma única vez.
+  if (!getPerfil()) {
+    clearToken();
+    window.location.href = "login.html";
+    return false;
+  }
+  if (!temPermissao(codigo)) {
+    window.location.href = destinoPosLogin();
+    return false;
+  }
+  return true;
+}
+
 async function login(email, senha) {
   const resposta = await apiFetch("/auth/login", {
     method: "POST",
@@ -90,4 +152,4 @@ async function login(email, senha) {
 function logout() {
   clearToken();
   window.location.href = "login.html";
-}
+}

@@ -1,4 +1,5 @@
 // Lógica específica da tela de login.
+// Fluxo: autentica -> busca o perfil (permissões) em /usuarios/me -> vai para a página inicial do usuário.
 
 const ICONE_OLHO_ABERTO = `
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -14,11 +15,17 @@ const ICONE_OLHO_CORTADO = `
   </svg>
 `;
 
-document.addEventListener("DOMContentLoaded", () => {
-  // Se o usuário já está autenticado, não faz sentido ver a tela de login
+document.addEventListener("DOMContentLoaded", async () => {
+  // Quem já está logado não precisa ver o login: segue para a página inicial.
+  // Se o token estiver vencido, o perfil falha e a tela de login continua normalmente.
   if (isAuthenticated()) {
-    window.location.href = "../pages/dashboard.html";
-    return;
+    try {
+      if (!getPerfil()) await carregarPerfil();
+      window.location.href = destinoPosLogin();
+      return;
+    } catch {
+      clearToken();
+    }
   }
 
   const form = document.getElementById("form-login");
@@ -69,14 +76,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
     try {
       await login(email, senha);
-      window.location.href = "../pages/dashboard.html";
+      await carregarPerfil();
+      window.location.href = destinoPosLogin();
     } catch (erro) {
-      if (erro.status === 401 || erro.status === 403) {
+      clearToken();   // não deixa um token sem perfil para trás
+      // 401/403: credenciais ou usuário inativo (a mensagem vem do backend); 0: servidor fora do ar.
+      if (erro.status === 401 || erro.status === 403 || erro.status === 0) {
         exibirErro(erro.message);
       } else {
         exibirErro("Não foi possível entrar. Tente novamente.");
       }
-    } finally {
       definirCarregando(false);
     }
   });

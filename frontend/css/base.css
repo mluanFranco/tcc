@@ -4,12 +4,17 @@
    ============================================ */
 
 :root {
-  /* Cores — derivadas do logo Nova Sorvetes */
-  --azul-primario: #1E3A8A;
-  --azul-primario-claro: #1E40AF;
-  --azul-acao: #2563EB;
-  --azul-acao-hover: #1D4ED8;
+  /* Cores — protótipo do Figma (valores estimados das capturas: se tiver o HEX exato, troque só aqui) */
+  --azul-primario: #0F59FD;          /* azul da marca: fundo do login, botões e destaques */
+  --azul-primario-escuro: #0A2F9E;   /* títulos e textos de destaque */
+  --azul-primario-claro: #0A47D1;
+  --azul-acao: #0F59FD;
+  --azul-acao-hover: #0A47D1;
   --amarelo-acento: #FACC15;
+
+  /* Tela de login (campos azul-translúcidos sobre o fundo azul) */
+  --login-campo-fundo: #0088FF;
+  --login-campo-borda: #359BF5;
 
   --neutro-texto: #1F2937;
   --neutro-secundario: #6B7280;
@@ -28,7 +33,7 @@
   --raio-botao: 12px;
 
   /* Sombra */
-  --sombra-card: 0 20px 60px -15px rgba(30, 58, 138, 0.25);
+  --sombra-card: 0 20px 60px -15px rgba(15, 89, 253, 0.25);
   --sombra-input-foco: 0 0 0 4px rgba(250, 204, 21, 0.25);
 
   /* Tipografia */
@@ -74,4 +79,17 @@ button:focus-visible,
 input:focus-visible {
   outline: 2px solid var(--azul-acao);
   outline-offset: 2px;
+}
+
+/* Texto visível apenas para leitores de tela (rótulos de campos que no desenho têm só placeholder) */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }

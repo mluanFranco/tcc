@@ -1,223 +1,166 @@
 /* ============================================
-   LOGIN.CSS — Tela de autenticação
+   LOGIN.CSS — Tela de autenticação (protótipo Figma)
+   Fundo azul, formulário à esquerda e cartão branco à direita.
+   As cores vêm de base.css (--azul-primario, --login-campo-*).
    ============================================ */
 
-.login-page {
+.login-pagina {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 16px;
+  padding: 16px;
+  background: var(--azul-primario);
+}
+
+/* ---------- Lado esquerdo: marca + formulário ---------- */
+
+.login-lado-form {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 100vh;
-  background: #F3F4F6;
   padding: 24px;
 }
 
-.login-container {
-  display: flex;
+.login-bloco {
   width: 100%;
-  max-width: 1000px;
-  min-height: 600px;
-  background: var(--neutro-fundo);
-  border-radius: var(--raio-painel);
-  overflow: hidden;
-  box-shadow: var(--sombra-card);
+  max-width: 380px;
 }
 
-/* ---------- Painel esquerdo: marca ---------- */
-
-.login-marca {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(160deg, var(--azul-primario) 0%, var(--azul-primario-claro) 100%);
-  padding: 48px;
-  position: relative;
-}
-
-.login-marca::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(circle at 20% 85%, rgba(255, 255, 255, 0.08) 0%, transparent 45%),
-    radial-gradient(circle at 85% 15%, rgba(255, 255, 255, 0.06) 0%, transparent 40%);
-  pointer-events: none;
-}
-
-.login-marca__conteudo {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 24px;
-  text-align: center;
-}
-
-.login-marca__logo {
-  width: 180px;
+.login-logo {
+  display: block;
+  width: 230px;
   height: auto;
-  filter: drop-shadow(0 12px 24px rgba(0, 0, 0, 0.18));
+  margin: 0 auto 56px;
 }
 
-.login-marca__titulo {
-  color: #FFFFFF;
-  font-size: 22px;
-  font-weight: 600;
-  letter-spacing: 0.01em;
-}
-
-.login-marca__subtitulo {
-  color: rgba(255, 255, 255, 0.75);
-  font-size: 14px;
-  font-weight: 400;
-  max-width: 280px;
-  line-height: 1.5;
-}
-
-/* ---------- Painel direito: formulário ---------- */
-
-.login-formulario {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 48px;
-}
-
-.login-formulario__inner {
-  width: 100%;
-  max-width: 360px;
-}
-
-.login-formulario__saudacao {
+.login-saudacao {
   font-size: 28px;
   font-weight: 700;
-  color: var(--neutro-texto);
+  line-height: 1.2;
+  color: #FFFFFF;
   margin-bottom: 8px;
 }
 
-.login-formulario__instrucao {
-  font-size: 15px;
-  color: var(--neutro-secundario);
+.login-instrucao {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.9);
   margin-bottom: 32px;
 }
 
 .campo {
   position: relative;
-  margin-bottom: 16px;
+  margin-bottom: 14px;
 }
 
 .campo__icone {
   position: absolute;
-  left: 18px;
+  left: 16px;
   top: 50%;
   transform: translateY(-50%);
   width: 18px;
   height: 18px;
-  color: var(--neutro-placeholder);
   display: flex;
   align-items: center;
   justify-content: center;
+  color: #FFFFFF;
   pointer-events: none;
-  transition: color 0.2s ease;
 }
 
 .campo__input {
   width: 100%;
-  height: 52px;
-  padding: 0 18px 0 50px;
-  font-size: 15px;
-  color: var(--neutro-texto);
-  background: var(--neutro-fundo);
-  border: 1.5px solid var(--neutro-borda);
-  border-radius: var(--raio-input);
+  height: 48px;
+  padding: 0 16px 0 46px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #FFFFFF;
+  background: var(--login-campo-fundo);
+  border: 1px solid var(--login-campo-borda);
+  border-radius: 10px;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
+.campo__input--com-toggle {
+  padding-right: 46px;
+}
+
 .campo__input::placeholder {
-  color: var(--neutro-placeholder);
+  color: rgba(255, 255, 255, 0.85);
+  font-weight: 600;
 }
 
 .campo__input:focus {
-  border-color: var(--azul-acao);
-  box-shadow: var(--sombra-input-foco);
+  outline: none;
+  border-color: #FFFFFF;
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.35);
 }
 
-.campo__input:focus ~ .campo__icone,
-.campo:has(.campo__input:focus) .campo__icone {
-  color: var(--azul-acao);
+/* O preenchimento automático do navegador pinta o campo de branco/amarelo: mantém o azul */
+.campo__input:-webkit-autofill,
+.campo__input:-webkit-autofill:focus {
+  -webkit-text-fill-color: #FFFFFF;
+  caret-color: #FFFFFF;
+  box-shadow: 0 0 0 1000px var(--login-campo-fundo) inset;
+  transition: background-color 9999s ease-out 0s;
 }
 
 .campo__toggle-senha {
   position: absolute;
-  right: 18px;
+  right: 12px;
   top: 50%;
   transform: translateY(-50%);
-  width: 18px;
-  height: 18px;
-  color: var(--neutro-placeholder);
+  width: 30px;
+  height: 30px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: none;
+  color: #FFFFFF;
+  border-radius: 8px;
+  opacity: 0.9;
+  transition: background 0.15s ease, opacity 0.15s ease;
 }
 
 .campo__toggle-senha:hover {
-  color: var(--neutro-secundario);
+  background: rgba(255, 255, 255, 0.18);
+  opacity: 1;
+}
+
+.login-pagina button:focus-visible,
+.login-pagina input:focus-visible {
+  outline: 2px solid #FFFFFF;
+  outline-offset: 2px;
 }
 
 .login-erro {
   display: none;
-  align-items: center;
-  gap: 8px;
-  padding: 12px 16px;
-  margin-bottom: 16px;
-  background: var(--erro-fundo);
-  border: 1px solid rgba(220, 38, 38, 0.2);
-  border-radius: var(--raio-input);
-  color: var(--erro);
+  padding: 10px 14px;
+  margin-bottom: 14px;
+  background: #FFFFFF;
+  border-left: 4px solid var(--erro);
+  border-radius: 8px;
+  color: #B91C1C;
   font-size: 13.5px;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .login-erro.visivel {
-  display: flex;
+  display: block;
 }
 
 .botao-entrar {
   width: 100%;
-  height: 52px;
-  margin-top: 8px;
-  background: var(--azul-acao);
-  color: #FFFFFF;
-  font-size: 15px;
-  font-weight: 600;
-  border-radius: var(--raio-botao);
-  position: relative;
-  transition: background 0.2s ease, transform 0.1s ease;
-  overflow: hidden;
-}
-
-.botao-entrar::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
-  background: var(--amarelo-acento);
-  transform: scaleX(0);
-  transform-origin: left;
-  transition: transform 0.25s ease;
+  height: 48px;
+  margin-top: 6px;
+  background: #FFFFFF;
+  color: var(--azul-primario);
+  font-size: 14px;
+  font-weight: 700;
+  border-radius: 10px;
+  transition: background 0.15s ease, transform 0.1s ease;
 }
 
 .botao-entrar:hover {
-  background: var(--azul-acao-hover);
-}
-
-.botao-entrar:hover::after {
-  transform: scaleX(1);
+  background: #EAF1FF;
 }
 
 .botao-entrar:active {
@@ -225,43 +168,75 @@
 }
 
 .botao-entrar:disabled {
-  opacity: 0.6;
+  opacity: 0.7;
   cursor: not-allowed;
 }
 
-.login-rodape {
-  margin-top: 28px;
-  text-align: center;
-  font-size: 13px;
-  color: var(--neutro-placeholder);
+/* ---------- Lado direito: cartão branco ---------- */
+
+.login-painel {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 48px 5%;
+  background: #FFFFFF;
+  border-radius: 24px;
 }
 
-/* ---------- Responsivo ---------- */
-
-@media (max-width: 860px) {
-  .login-container {
-    flex-direction: column;
-    min-height: auto;
-    max-width: 440px;
-  }
-
-  .login-marca {
-    padding: 40px 32px;
-  }
-
-  .login-marca__logo {
-    width: 130px;
-  }
-
-  .login-formulario {
-    padding: 40px 32px;
-  }
+/* No desenho o texto é mais recuado que a ilustração, que ocupa quase toda a largura do cartão */
+.login-painel__titulo,
+.login-painel__texto {
+  padding-left: 8%;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .botao-entrar,
-  .botao-entrar::after,
-  .campo__input {
-    transition: none;
+.login-painel__titulo {
+  font-size: clamp(26px, 2.6vw, 38px);
+  font-weight: 700;
+  line-height: 1.18;
+  color: #0B0B0F;
+  margin-bottom: 16px;
+}
+
+.login-painel__texto {
+  font-size: clamp(14px, 1.2vw, 16px);
+  line-height: 1.5;
+  color: #1F2937;
+  max-width: 455px;
+  margin-bottom: 28px;
+}
+
+.login-painel__ilustracao {
+  background: #FAFBFC;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.login-painel__ilustracao img {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 46vh;
+  object-fit: contain;
+}
+
+/* ---------- Responsivo: abaixo de 900px só o formulário ---------- */
+
+@media (max-width: 900px) {
+  .login-pagina {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 0;
+  }
+
+  .login-painel {
+    display: none;
+  }
+
+  .login-lado-form {
+    padding: 32px 24px;
+  }
+
+  .login-logo {
+    width: 190px;
+    margin-bottom: 40px;
   }
 }
