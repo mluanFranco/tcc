@@ -1,8 +1,9 @@
-"""Avalia o assistente de IA com 20 perguntas fixas (item 15c). Roda na pasta backend, com o venv ativo:
+"""Avalia o assistente de IA: 20 perguntas básicas (item 15c) + 11 avançadas (item 15c.3). Roda na pasta backend, com o venv ativo:
 
     python scripts/avaliar_assistente.py --referencias   # resposta CERTA de cada pergunta no seu banco + diagnóstico dos seus dados (não usa o Gemini)
     python scripts/avaliar_assistente.py --defesas       # 60+ ataques às camadas de segurança, sem Gemini: todos precisam ser BLOQUEADOS
-    python scripts/avaliar_assistente.py                 # avaliação completa (gasta cota do Gemini: ~20 perguntas)
+    python scripts/avaliar_assistente.py                 # avaliação completa do conjunto básico (gasta cota do Gemini: 20 perguntas)
+    python scripts/avaliar_assistente.py --conjunto avancado   # só as 11 perguntas avançadas (21 a 31); use 'todos' para as 31
     python scripts/avaliar_assistente.py --so 1,5,16     # só alguns casos
     python scripts/avaliar_assistente.py --categoria recusa
     python scripts/avaliar_assistente.py --modelo gemini-3.5-flash-lite --sem-reserva   # fixa UM modelo (resultado atribuível a ele)
@@ -23,7 +24,7 @@ from dotenv import load_dotenv  # noqa: E402
 load_dotenv()
 
 from core.assistente import avaliacao, config, defesas  # noqa: E402
-from core.assistente.avaliacao import CASOS, CATEGORIAS  # noqa: E402
+from core.assistente.avaliacao import CATEGORIAS, CONJUNTOS  # noqa: E402
 
 PASTA = "avaliacao_resultados"
 
@@ -37,7 +38,11 @@ def argumento(nome, padrao=None):
 
 
 def selecionar():
-    casos = list(CASOS)
+    conjunto = argumento("--conjunto", "basico")
+    if conjunto not in CONJUNTOS:
+        print(f"Conjunto inválido. Use um de: {', '.join(CONJUNTOS)}")
+        sys.exit(1)
+    casos = list(CONJUNTOS[conjunto])
     so = argumento("--so")
     if so:
         numeros = {int(n) for n in so.split(",") if n.strip().isdigit()}
@@ -116,6 +121,9 @@ def linha_caso(r, total):
         print(f"        {r['motivo']}")
     print(f"        {r['passos']} passo(s), {r['tokens_entrada']}/{r['tokens_saida']} tokens, {r['duracao_ms']} ms" +
           (f", modelo: {', '.join(r['modelos'])}" if r["modelos"] else ""))
+    for g in r.get("registros", []):
+        if g["status"] in avaliacao.STATUS_BARRADOS:
+            print(f"        barrado ({g['status']}): {' '.join((g['entrada'] or '').split())[:160]}" + (f"  -> {g['erro']}" if g["erro"] else ""))
     sys.stdout.flush()
 
 
@@ -129,12 +137,13 @@ def salvar(resultado, modelo, massa=None):
                    "reservas_configuradas": config.modelos_reserva(), "modo_privado": config.modo_privado(),
                    "massa_de_dados": massa, **resultado}, f, ensure_ascii=False, indent=2)
     campos = ["numero", "categoria", "pergunta", "resultado", "motivo", "passos", "tokens_entrada", "tokens_saida", "duracao_ms",
-              "consultas_ok", "sql_recusado", "sem_permissao", "erro_execucao", "autocorrecao", "usou_relatorio", "modelos", "trocas_de_modelo", "sql", "resposta"]
+              "consultas_ok", "sql_recusado", "sem_permissao", "erro_execucao", "autocorrecao", "usou_relatorio", "modelos", "trocas_de_modelo", "sql", "sql_barrado", "resposta"]
     with open(caminho_csv, "w", encoding="utf-8-sig", newline="") as f:
         w = csv.DictWriter(f, fieldnames=campos, delimiter=";", extrasaction="ignore")
         w.writeheader()
         for r in resultado["casos"]:
-            w.writerow({**r, "modelos": ", ".join(r["modelos"]), "trocas_de_modelo": " | ".join(r["trocas_de_modelo"]), "sql": " || ".join(r["sql"])})
+            barrado = " || ".join(" ".join((g["entrada"] or "").split()) for g in r.get("registros", []) if g["status"] in avaliacao.STATUS_BARRADOS)
+            w.writerow({**r, "modelos": ", ".join(r["modelos"]), "trocas_de_modelo": " | ".join(r["trocas_de_modelo"]), "sql": " || ".join(r["sql"]), "sql_barrado": barrado})
     return caminho_csv, caminho_json
 
 
@@ -144,10 +153,18 @@ def imprimir_resumo(resumo):
     print(f"Geral: {g['OK']} OK, {g['FALHA']} falhas, {g['INCONCLUSIVO']} inconclusivos, {g['ERRO_PROVEDOR']} erros do Gemini (de {g['total']})")
     if g["acerto"] is not None:
         print(f"Taxa de acerto (OK / OK+FALHA): {g['acerto'] * 100:.1f}%")
+    if len(resumo.get("por_conjunto", {})) > 1:
+        for nome, c in resumo["por_conjunto"].items():
+            taxa = f"{c['acerto'] * 100:.0f}%" if c["acerto"] is not None else "-"
+            print(f"  conjunto {nome:9} {c['OK']}/{c['total']} OK  (falhas {c['FALHA']}, inconclusivos {c['INCONCLUSIVO']}, erros {c['ERRO_PROVEDOR']})  acerto {taxa}")
     for cat, c in resumo["por_categoria"].items():
         taxa = f"{c['acerto'] * 100:.0f}%" if c["acerto"] is not None else "-"
         print(f"  {cat:13} {c['OK']}/{c['total']} OK  (falhas {c['FALHA']}, inconclusivos {c['INCONCLUSIVO']}, erros {c['ERRO_PROVEDOR']})  acerto {taxa}")
     print(f"Validador recusou SQL: {resumo['validador_bloqueou_sql']} vez(es) | escopo negou por permissão: {resumo['escopo_negou_por_permissao']} | erros de execução: {resumo['erros_de_execucao']}")
+    if resumo.get("consultas_barradas"):
+        print("Consultas barradas (caso: motivo):")
+        for b in resumo["consultas_barradas"]:
+            print(f"  caso {b['caso']}: {b['status']} -> {b['erro'] or ''} | {' '.join((b['entrada'] or '').split())[:110]}")
     print(f"Perguntas em que o modelo errou, leu a mensagem e se corrigiu: {resumo['perguntas_com_autocorrecao']}")
     print(f"Respostas em que o modelo principal falhou e uma reserva assumiu: {resumo['casos_com_troca_de_modelo']} {resumo['motivos_das_trocas'] or ''}")
     print(f"Médias: {resumo['passos_medios']} passos, {resumo['tokens_entrada_medios']}/{resumo['tokens_saida_medios']} tokens, "
