@@ -9,6 +9,7 @@ let clientesCache = [];
 let abaAtivaClientes = "ativos";
 let clienteEmEdicaoId = null;
 let enderecoPrincipalEmEdicaoId = null;
+let enderecoEntregaEmEdicaoId = null;
 
 document.addEventListener("DOMContentLoaded", async () => {
   if (!exigirAutenticacao()) return;
@@ -29,11 +30,13 @@ document.addEventListener("DOMContentLoaded", async () => {
     modalFechar: document.getElementById("modal-fechar"),
     modalCancelar: document.getElementById("modal-cancelar"),
     form: document.getElementById("form-cliente"),
+    formEndereco: document.getElementById("form-endereco"),
     campoTipo: document.getElementById("campo-tipo"),
     labelDocumento: document.getElementById("label-documento"),
     campoDocumento: document.getElementById("campo-documento"),
     campoCep: document.getElementById("campo-cep"),
     cepStatus: document.getElementById("campo-cep-status"),
+    modalEnderecoOverlay: document.getElementById("modal-endereco"),
     modalVisualizarOverlay: document.getElementById("modal-visualizar-cliente"),
     modalVisualizarFechar: document.getElementById("modal-visualizar-fechar"),
     modalVisualizarFecharRodape: document.getElementById("modal-visualizar-fechar-rodape")
@@ -185,44 +188,59 @@ document.addEventListener("DOMContentLoaded", async () => {
     elementos.campoDocumento.placeholder = tipo === "PJ" ? "00.000.000/0000-00" : "000.000.000-00";
   }
 
-  function limparCepStatus() {
-    elementos.cepStatus.className = "campo-cep-status";
-    elementos.cepStatus.textContent = "";
+  function limparStatusCep(statusEl) {
+    statusEl.className = "campo-cep-status";
+    statusEl.textContent = "";
   }
 
-  function definirCepStatus(tipo, texto) {
-    elementos.cepStatus.className = `campo-cep-status visivel campo-cep-status--${tipo}`;
-    elementos.cepStatus.textContent = texto;
+  function definirStatusCep(statusEl, tipo, texto) {
+    statusEl.className = `campo-cep-status visivel campo-cep-status--${tipo}`;
+    statusEl.textContent = texto;
   }
 
-  async function tratarBuscaCep() {
-    const cepDigitado = elementos.campoCep.value.replace(/\D/g, "");
+  const limparCepStatus = () => limparStatusCep(elementos.cepStatus);
+
+  // Consulta o ViaCEP e preenche os campos. `ids` diz quais campos (principal ou entrega) receber o resultado.
+  async function buscarCepEPreencher(inputCep, statusEl, ids) {
+    const cepDigitado = inputCep.value.replace(/\D/g, "");
 
     if (cepDigitado.length !== 8) {
-      limparCepStatus();
+      limparStatusCep(statusEl);
       return;
     }
 
-    definirCepStatus("buscando", "Buscando...");
+    definirStatusCep(statusEl, "buscando", "Buscando...");
 
     const endereco = await viaCepService.buscarPorCep(cepDigitado);
 
+    if (inputCep.value.replace(/\D/g, "") !== cepDigitado) return;   // o CEP mudou durante a consulta
+
     if (!endereco) {
-      definirCepStatus("nao-encontrado", "CEP não encontrado");
+      definirStatusCep(statusEl, "nao-encontrado", "CEP não encontrado");
       return;
     }
 
-    campo("campo-logradouro").value = endereco.logradouro ?? "";
-    campo("campo-bairro").value = endereco.bairro ?? "";
-    campo("campo-cidade").value = endereco.cidade ?? "";
-    campo("campo-uf").value = endereco.uf ?? "";
-    campo("campo-ddd").value = endereco.ddd ?? "";
+    campo(ids.logradouro).value = endereco.logradouro ?? "";
+    campo(ids.bairro).value = endereco.bairro ?? "";
+    campo(ids.cidade).value = endereco.cidade ?? "";
+    campo(ids.uf).value = endereco.uf ?? "";
+    campo(ids.ddd).value = endereco.ddd ?? "";
 
-    definirCepStatus("encontrado", "Endereço encontrado");
+    definirStatusCep(statusEl, "encontrado", "Endereço encontrado");
 
     // O número é o único dado que o ViaCEP nunca preenche.
-    campo("campo-numero").focus();
+    campo(ids.numero).focus();
   }
+
+  const tratarBuscaCep = () => buscarCepEPreencher(elementos.campoCep, elementos.cepStatus, {
+    logradouro: "campo-logradouro", bairro: "campo-bairro", cidade: "campo-cidade",
+    uf: "campo-uf", ddd: "campo-ddd", numero: "campo-numero"
+  });
+
+  const tratarBuscaCepEndereco = () => buscarCepEPreencher(campo("end-cep"), campo("end-cep-status"), {
+    logradouro: "end-logradouro", bairro: "end-bairro", cidade: "end-cidade",
+    uf: "end-uf", ddd: "end-ddd", numero: "end-numero"
+  });
 
   // ---------- Modal de criação/edição ----------
 
@@ -257,13 +275,161 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     atualizarLabelDocumento();
+    campo("dica-entregas-novo").hidden = Boolean(cliente);
+    campo("area-entregas").hidden = !cliente;
+    if (cliente) renderizarEntregasDoForm();
     elementos.modalOverlay.classList.add("aberto");
   }
 
   function fecharModal() {
     elementos.modalOverlay.classList.remove("aberto");
+    fecharModalEndereco();
     clienteEmEdicaoId = null;
     enderecoPrincipalEmEdicaoId = null;
+  }
+
+  // ---------- Endereços de entrega (dentro do modal de edição) ----------
+  // Cada operação grava na hora, em /clientes/{id}/enderecos, independente do botão Salvar do cliente.
+
+  function renderizarEntregasDoForm() {
+    const cliente = clientesCache.find(c => c.id === clienteEmEdicaoId);
+    const entregas = ((cliente && cliente.enderecos) || []).filter(e => e.tipo === "entrega");
+    const lista = campo("lista-entregas-form");
+    lista.innerHTML = "";
+    entregas.forEach(e => {
+      const li = document.createElement("li");
+      const texto = document.createElement("span");
+      texto.className = "endereco-texto";
+      texto.textContent = textoEndereco(e);   // textContent: o texto do endereço nunca vira HTML
+      const acoes = document.createElement("span");
+      acoes.className = "endereco-acoes";
+      acoes.innerHTML = `
+        <button type="button" class="botao-icone" data-end-acao="editar" data-end-id="${e.id}" title="Editar endereço" aria-label="Editar endereço">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+        </button>
+        <button type="button" class="botao-icone botao-icone--perigo" data-end-acao="remover" data-end-id="${e.id}" title="Remover endereço" aria-label="Remover endereço">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6"></path><path d="M14 11v6"></path></svg>
+        </button>`;
+      li.append(texto, acoes);
+      lista.appendChild(li);
+    });
+    campo("vazio-entregas-form").hidden = entregas.length > 0;
+  }
+
+  // Depois de mexer num endereço, relê o cliente: a lista do modal e a da tabela passam a refletir o banco.
+  async function atualizarClienteNoCache(id) {
+    const atualizado = await clienteService.buscarPorId(id);
+    const posicao = clientesCache.findIndex(c => c.id === id);
+    if (posicao >= 0) clientesCache[posicao] = atualizado;
+    renderizarTabela();
+    if (clienteEmEdicaoId === id) renderizarEntregasDoForm();
+  }
+
+  function abrirModalEndereco(endereco = null) {
+    elementos.formEndereco.reset();
+    elementos.formEndereco.querySelectorAll(".campo-form").forEach(c => c.classList.remove("invalido"));
+    limparStatusCep(campo("end-cep-status"));
+    enderecoEntregaEmEdicaoId = endereco ? endereco.id : null;
+    campo("modal-endereco-titulo").textContent = endereco ? "Editar endereço de entrega" : "Novo endereço de entrega";
+    if (endereco) {
+      campo("end-cep").value = endereco.cep ? formatarCep(endereco.cep) : "";
+      campo("end-logradouro").value = endereco.logradouro ?? "";
+      campo("end-numero").value = endereco.numero ?? "";
+      campo("end-complemento").value = endereco.complemento ?? "";
+      campo("end-bairro").value = endereco.bairro ?? "";
+      campo("end-cidade").value = endereco.cidade ?? "";
+      campo("end-uf").value = endereco.uf ?? "";
+      campo("end-ddd").value = endereco.ddd ?? "";
+    }
+    elementos.modalEnderecoOverlay.classList.add("aberto");
+    campo("end-cep").focus();
+  }
+
+  function fecharModalEndereco() {
+    elementos.modalEnderecoOverlay.classList.remove("aberto");
+    enderecoEntregaEmEdicaoId = null;
+  }
+
+  function lerEnderecoDoModal() {
+    return {
+      cep: campo("end-cep").value,
+      logradouro: campo("end-logradouro").value,
+      numero: campo("end-numero").value,
+      complemento: campo("end-complemento").value.trim() || null,
+      bairro: campo("end-bairro").value.trim() || null,
+      cidade: campo("end-cidade").value,
+      uf: campo("end-uf").value.trim().toUpperCase(),
+      ddd: campo("end-ddd").value.trim() || null
+    };
+  }
+
+  function validarEndereco(e) {
+    const marcar = (id) => campo(id).closest(".campo-form").classList.add("invalido");
+    elementos.formEndereco.querySelectorAll(".campo-form").forEach(c => c.classList.remove("invalido"));
+    const problemas = [];
+    if (e.cep.replace(/\D/g, "").length !== 8) { marcar("end-cep"); problemas.push("Informe o CEP com 8 números."); }
+    if (!e.logradouro.trim()) { marcar("end-logradouro"); problemas.push("Informe o logradouro."); }
+    if (!e.numero.trim()) { marcar("end-numero"); problemas.push("Informe o número (use S/N se não houver)."); }
+    if (!e.cidade.trim()) { marcar("end-cidade"); problemas.push("Informe a cidade."); }
+    if (!/^[A-Za-z]{2}$/.test(e.uf.trim())) { marcar("end-uf"); problemas.push("Informe a UF com 2 letras."); }
+    if (problemas.length) toast.erro(problemas[0] + (problemas.length > 1 ? ` (mais ${problemas.length - 1} a corrigir)` : ""));
+    return problemas.length === 0;
+  }
+
+  async function salvarEndereco(evento) {
+    evento.preventDefault();
+    const dados = lerEnderecoDoModal();
+    if (!validarEndereco(dados)) return;
+
+    const clienteId = clienteEmEdicaoId;
+    const botao = campo("modal-endereco-salvar");
+    botao.disabled = true;
+    botao.textContent = "Salvando...";
+    try {
+      if (enderecoEntregaEmEdicaoId) {
+        await clienteService.atualizarEndereco(clienteId, enderecoEntregaEmEdicaoId, dados);
+      } else {
+        await clienteService.criarEndereco(clienteId, { ...dados, tipo: "entrega" });
+      }
+      const editando = Boolean(enderecoEntregaEmEdicaoId);
+      fecharModalEndereco();
+      toast.sucesso(editando ? "Endereço de entrega atualizado." : "Endereço de entrega adicionado.");
+      await atualizarClienteNoCache(clienteId);
+    } catch (erro) {
+      toast.erro(erro.message);
+    } finally {
+      botao.disabled = false;
+      botao.textContent = "Salvar endereço";
+    }
+  }
+
+  async function tratarAcaoEntrega(evento) {
+    const botao = evento.target.closest("button[data-end-acao]");
+    if (!botao) return;
+    const cliente = clientesCache.find(c => c.id === clienteEmEdicaoId);
+    const endereco = ((cliente && cliente.enderecos) || []).find(e => e.id === Number(botao.dataset.endId));
+    if (!endereco) return;
+
+    if (botao.dataset.endAcao === "editar") {
+      abrirModalEndereco(endereco);
+      return;
+    }
+
+    const confirmado = await confirmarAcao({
+      titulo: "Remover endereço de entrega",
+      mensagem: "Este endereço deixará de ser oferecido em novos pedidos. Pedidos antigos continuam mostrando o endereço em que foram entregues.",
+      textoConfirmar: "Remover",
+      perigo: true
+    });
+    if (!confirmado) return;
+    const clienteId = clienteEmEdicaoId;
+    try {
+      await clienteService.desativarEndereco(clienteId, endereco.id);
+      toast.sucesso("Endereço de entrega removido.");
+      await atualizarClienteNoCache(clienteId);
+    } catch (erro) {
+      toast.erro(erro.message);
+    }
   }
 
   function limparErrosForm() {
@@ -423,6 +589,11 @@ document.addEventListener("DOMContentLoaded", async () => {
   elementos.botaoIncluir.addEventListener("click", () => abrirModal());
   document.addEventListener("keydown", (e) => {
     if (e.key !== "Escape") return;
+    if (document.querySelector(".confirmacao-overlay")) return;   // a janela de confirmação trata o próprio Esc
+    if (elementos.modalEnderecoOverlay.classList.contains("aberto")) {
+      fecharModalEndereco();   // abre por cima do modal do cliente: o Esc fecha só ele
+      return;
+    }
     fecharModal();
     fecharModalVisualizacao();
   });
@@ -438,6 +609,15 @@ document.addEventListener("DOMContentLoaded", async () => {
   elementos.tabelaCorpo.addEventListener("click", tratarAcaoTabela);
   elementos.campoTipo.addEventListener("change", atualizarLabelDocumento);
   elementos.campoCep.addEventListener("input", tratarBuscaCep);
+  campo("botao-novo-endereco").addEventListener("click", () => abrirModalEndereco());
+  campo("lista-entregas-form").addEventListener("click", tratarAcaoEntrega);
+  elementos.formEndereco.addEventListener("submit", salvarEndereco);
+  campo("end-cep").addEventListener("input", tratarBuscaCepEndereco);
+  campo("modal-endereco-fechar").addEventListener("click", fecharModalEndereco);
+  campo("modal-endereco-cancelar").addEventListener("click", fecharModalEndereco);
+  elementos.modalEnderecoOverlay.addEventListener("click", (e) => {
+    if (e.target === elementos.modalEnderecoOverlay) fecharModalEndereco();
+  });
   elementos.modalVisualizarFechar.addEventListener("click", fecharModalVisualizacao);
   elementos.modalVisualizarFecharRodape.addEventListener("click", fecharModalVisualizacao);
   elementos.modalVisualizarOverlay.addEventListener("click", (e) => {

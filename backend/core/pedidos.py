@@ -19,7 +19,7 @@ from core.estoque import travar_produtos
 from core.financeiro import gerar_titulos
 from models import (
     PedidoVenda, ItemPedidoVenda, PedidoCompra, ItemPedidoCompra,
-    Cliente, Fornecedor, FormaPagamento,
+    Cliente, ClienteEndereco, Fornecedor, FormaPagamento,
 )
 from schemas.pedido_venda import PedidoVendaCreate
 from schemas.pedido_compra import PedidoCompraCreate
@@ -47,6 +47,13 @@ def registrar_pedido_venda(db: Session, usuario_id: int, dados: PedidoVendaCreat
         raise HTTPException(status_code=400, detail="O cliente selecionado está inativo")
 
     _validar_forma_pagamento(db, dados.forma_pagamento_id)   # na venda, os títulos nascem na confirmação
+
+    if dados.endereco_entrega_id is not None:
+        endereco = db.query(ClienteEndereco).filter(ClienteEndereco.id == dados.endereco_entrega_id).first()
+        if not endereco or endereco.cliente_id != cliente.id:
+            raise HTTPException(status_code=400, detail="O endereço de entrega informado não pertence a este cliente")
+        if not endereco.ativo:
+            raise HTTPException(status_code=400, detail="O endereço de entrega selecionado está inativo")
 
     # Trava os produtos envolvidos até o fim da transação: se outro pedido estiver
     # reservando o mesmo produto neste instante, esta requisição espera e depois
@@ -92,6 +99,7 @@ def registrar_pedido_venda(db: Session, usuario_id: int, dados: PedidoVendaCreat
         valor_total=round(valor_total, 2),
         status="aberto",
         forma_pagamento_id=dados.forma_pagamento_id,
+        endereco_entrega_id=dados.endereco_entrega_id,
         observacao=dados.observacao
     )
     db.add(pedido)

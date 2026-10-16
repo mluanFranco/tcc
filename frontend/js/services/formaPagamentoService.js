@@ -15,6 +15,11 @@ const formaPagamentoService = {
     return apiFetch(`/formas-pagamento/${id}`);
   },
 
+  // Somente leitura: como um valor seria dividido nas parcelas da forma de pagamento.
+  async simular(id, valor) {
+    return apiFetch(`/formas-pagamento/${id}/simulacao?valor=${Number(valor).toFixed(2)}`);
+  },
+
   async criar(dados) {
     return apiFetch("/formas-pagamento/", {
       method: "POST",

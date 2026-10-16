@@ -271,6 +271,7 @@ class PedidoVenda(Base):
     valor_total    = Column(Float, default=0.0)
     status         = Column(String(20), default="aberto")  # aberto | confirmado | cancelado
     forma_pagamento_id = Column(Integer, ForeignKey("forma_pagamento.id"))
+    endereco_entrega_id = Column(Integer, ForeignKey("cliente_endereco.id"), nullable=True)   # nulo = retirada, sem entrega
     observacao     = Column(String(255))
     confirmado_em  = Column(DateTime)   # preenchido na confirmação: é a data em que a venda se concretiza
     created_at     = Column(DateTime, default=datetime.now)
@@ -278,6 +279,7 @@ class PedidoVenda(Base):
 
     cliente = relationship("Cliente", back_populates="pedidos_venda")
     forma_pagamento = relationship("FormaPagamento", back_populates="pedidos_venda")
+    endereco_entrega = relationship("ClienteEndereco")
     itens   = relationship("ItemPedidoVenda", back_populates="pedido_venda")
 
 

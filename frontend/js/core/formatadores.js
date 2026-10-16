@@ -57,3 +57,22 @@ function formatarCep(valor) {
   const d = String(valor).replace(/\D/g, "");
   return d.length === 8 ? d.replace(/(\d{5})(\d{3})/, "$1-$2") : String(valor);
 }
+
+// Endereço em uma linha: "Rua A, 10 — Sala 2 — Centro — Itapira/SP — CEP 13974-070". Aceita o objeto da API.
+function formatarEndereco(e) {
+  if (!e) return "—";
+  const rua = [e.logradouro, e.numero].filter(Boolean).join(", ");
+  const cidadeUf = [e.cidade, e.uf].filter(Boolean).join("/");
+  const partes = [rua, e.complemento, e.bairro, cidadeUf, e.cep ? `CEP ${formatarCep(e.cep)}` : null].filter(Boolean);
+  return partes.length ? partes.join(" — ") : "—";
+}
+
+// 58 -> "00058" (o número do pedido nas telas e no protótipo tem 5 dígitos).
+function formatarNumeroPedido(id) {
+  return String(id ?? "").padStart(5, "0");
+}
+
+// Rótulo de tela para o status do pedido de venda.
+function rotuloStatusPedido(status) {
+  return { aberto: "Aberto", confirmado: "Confirmado", cancelado: "Cancelado" }[status] || String(status ?? "—");
+}

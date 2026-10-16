@@ -2,6 +2,7 @@ from pydantic import BaseModel, Field, model_validator
 from typing import Optional, List
 from datetime import datetime
 from schemas.tipos import Quantidade, QuantidadeSaida
+from schemas.endereco import EnderecoResponse
 
 
 class ItemPedidoVendaCreate(BaseModel):
@@ -22,6 +23,7 @@ class ItemPedidoVendaCreate(BaseModel):
 class PedidoVendaCreate(BaseModel):
     cliente_id: int = Field(gt=0)
     forma_pagamento_id: int = Field(gt=0)   # obrigatória: é dela que saem as parcelas (contas a receber)
+    endereco_entrega_id: Optional[int] = Field(default=None, gt=0)   # endereço ativo do próprio cliente; nulo = retirada
     observacao: Optional[str] = Field(default=None, max_length=255)
     itens: List[ItemPedidoVendaCreate]
 
@@ -46,6 +48,8 @@ class PedidoVendaResponse(BaseModel):
     valor_total: float
     status: str
     forma_pagamento_id: Optional[int]
+    endereco_entrega_id: Optional[int] = None
+    endereco_entrega: Optional[EnderecoResponse] = None
     observacao: Optional[str]
     itens: List[ItemPedidoVendaResponse]
 

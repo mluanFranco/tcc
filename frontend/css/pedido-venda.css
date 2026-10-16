@@ -1,0 +1,402 @@
+/* ============================================
+   PEDIDO-VENDA.CSS — lista, novo pedido e detalhe do pedido de venda
+   Complementa listagem-crud.css e detalhe-pedido.css (que ainda serve ao pedido de compra).
+   ============================================ */
+
+/* ---------- Lista ---------- */
+
+.badge-status--aberto      { background: #FEF9C3; color: #854D0E; }
+.badge-status--confirmado  { background: #DCFCE7; color: #166534; }
+.badge-status--cancelado   { background: #FEE2E2; color: #991B1B; }
+
+.tabela td.celula-numero,
+.tabela th.coluna-numero { text-align: right; }
+
+.linha-clicavel:focus-visible {
+  outline: 2px solid var(--azul-acao);
+  outline-offset: -2px;
+}
+
+.aviso-periodo {
+  color: var(--erro);
+}
+
+/* ---------- Cabeçalho das páginas de pedido (voltar + título + ações) ---------- */
+
+.pedido-topo {
+  margin-bottom: 20px;
+}
+
+.pedido-topo__voltar {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--neutro-secundario);
+}
+
+.pedido-topo__voltar:hover {
+  color: var(--neutro-texto);
+}
+
+.pedido-topo__linha {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.pedido-topo__linha h1 {
+  font-size: 24px;
+  font-weight: 700;
+  color: #374151;
+}
+
+.pedido-acoes {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.pilula-status {
+  display: inline-flex;
+  align-items: center;
+  height: 40px;
+  padding: 0 22px;
+  border-radius: var(--raio-botao);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.pilula-status--aberto     { background: #FEF9C3; color: #854D0E; }
+.pilula-status--confirmado { background: #DCFCE7; color: #166534; }
+.pilula-status--cancelado  { background: #FEE2E2; color: #991B1B; }
+
+.botao-cancelar-vermelho {
+  height: 40px;
+  padding: 0 22px;
+  background: #EF1C1C;
+  color: #FFFFFF;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: var(--raio-botao);
+  transition: background 0.15s ease;
+}
+
+.botao-cancelar-vermelho:hover {
+  background: #C81414;
+}
+
+.botao-primario:disabled,
+.botao-sucesso:disabled,
+.botao-cancelar-vermelho:disabled,
+.botao-secundario:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ---------- Cartões ---------- */
+
+.cartao {
+  background: var(--neutro-fundo);
+  border: 1px solid var(--neutro-borda);
+  border-radius: 14px;
+  padding: 20px 24px;
+  margin-bottom: 20px;
+}
+
+.cartao__titulo {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--neutro-texto);
+  margin-bottom: 16px;
+}
+
+.cartao__topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.cartao__topo .cartao__titulo {
+  margin-bottom: 0;
+}
+
+.cartao-grade {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 16px;
+}
+
+.cartao-grade .campo-form,
+.cartao-grade .visualizacao-item {
+  min-width: 0;
+}
+
+.cartao-grade--cheia {
+  grid-column: 1 / -1;
+}
+
+.campo-form .dica {
+  font-size: 12.5px;
+  color: var(--neutro-secundario);
+}
+
+.campo-form .dica--aviso {
+  color: #92400E;
+}
+
+.contador-caracteres {
+  align-self: flex-end;
+  font-size: 12px;
+  color: var(--neutro-placeholder);
+}
+
+.previa-pagamento {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 2px;
+  font-size: 12.5px;
+  color: var(--neutro-secundario);
+}
+
+.previa-pagamento strong {
+  color: var(--neutro-texto);
+  font-weight: 600;
+}
+
+/* ---------- Itens (novo pedido) ---------- */
+
+.tabela-itens-pedido {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.tabela-itens-pedido th {
+  text-align: left;
+  padding: 8px 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--neutro-secundario);
+  border-bottom: 1px solid var(--neutro-borda);
+}
+
+.tabela-itens-pedido td {
+  padding: 10px;
+  vertical-align: top;
+  border-bottom: 1px solid var(--neutro-borda);
+  font-size: 14px;
+}
+
+.tabela-itens-pedido tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.tabela-itens-pedido select,
+.tabela-itens-pedido input {
+  width: 100%;
+  height: 38px;
+  padding: 0 10px;
+  font-size: 13.5px;
+  font-family: inherit;
+  color: var(--neutro-texto);
+  background: var(--neutro-fundo);
+  border: 1.5px solid var(--neutro-borda);
+  border-radius: 8px;
+  box-sizing: border-box;
+}
+
+.tabela-itens-pedido select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236B7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  padding-right: 32px;
+  cursor: pointer;
+}
+
+.tabela-itens-pedido select:focus,
+.tabela-itens-pedido input:focus {
+  border-color: var(--azul-acao);
+  outline: none;
+}
+
+.tabela-itens-pedido .col-produto  { width: auto; }
+.tabela-itens-pedido .col-qtd      { width: 110px; }
+.tabela-itens-pedido .col-preco    { width: 130px; }
+.tabela-itens-pedido .col-desc     { width: 100px; }
+.tabela-itens-pedido .col-subtotal { width: 120px; text-align: right; }
+.tabela-itens-pedido .col-acao     { width: 44px; }
+
+.tabela-itens-pedido td.col-subtotal {
+  padding-top: 18px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.tabela-itens-pedido td.col-acao {
+  padding-top: 13px;
+}
+
+.item-invalido select,
+.item-invalido input.campo-invalido,
+.tabela-itens-pedido input.campo-invalido {
+  border-color: var(--erro);
+}
+
+.item-aviso {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--erro);
+}
+
+.item-dica {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--neutro-secundario);
+}
+
+.item-dica--aviso {
+  color: #92400E;
+}
+
+.botao-lixeira {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  color: var(--neutro-secundario);
+}
+
+.botao-lixeira:hover {
+  background: var(--erro-fundo);
+  color: var(--erro);
+}
+
+.itens-vazio-novo {
+  padding: 28px;
+  text-align: center;
+  font-size: 13.5px;
+  color: var(--neutro-secundario);
+}
+
+.total-pedido {
+  display: flex;
+  align-items: baseline;
+  justify-content: flex-end;
+  gap: 14px;
+  margin-top: 8px;
+  padding-top: 16px;
+  border-top: 1px solid var(--neutro-borda);
+}
+
+.total-pedido__rotulo {
+  font-size: 13px;
+  color: var(--neutro-secundario);
+}
+
+.total-pedido__valor {
+  font-size: 24px;
+  font-weight: 700;
+  color: #0B0B0F;
+}
+
+/* ---------- Detalhe (somente leitura) ---------- */
+
+.tabela-itens-leitura {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.tabela-itens-leitura th {
+  text-align: left;
+  padding: 10px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--neutro-secundario);
+  border-bottom: 1px solid var(--neutro-borda);
+}
+
+.tabela-itens-leitura td {
+  padding: 12px;
+  font-size: 14px;
+  border-bottom: 1px solid var(--neutro-borda);
+}
+
+.tabela-itens-leitura tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.tabela-itens-leitura th.num,
+.tabela-itens-leitura td.num {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.tabela-itens-leitura td.subtotal {
+  font-weight: 700;
+}
+
+.situacao-titulo {
+  display: inline-flex;
+  padding: 3px 9px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.situacao-titulo--aberto    { background: #EFF6FF; color: var(--azul-acao); }
+.situacao-titulo--parcial   { background: #FEF9C3; color: #854D0E; }
+.situacao-titulo--pago      { background: #DCFCE7; color: #166534; }
+.situacao-titulo--cancelado { background: #F3F4F6; color: var(--neutro-secundario); }
+.situacao-titulo--vencido   { background: #FEE2E2; color: #991B1B; }
+
+.nota-cartao {
+  margin-top: 12px;
+  font-size: 12.5px;
+  color: var(--neutro-secundario);
+}
+
+.estado-pagina {
+  padding: 64px 24px;
+  text-align: center;
+  color: var(--neutro-secundario);
+  font-size: 14px;
+}
+
+@media (max-width: 720px) {
+  .cartao-grade {
+    grid-template-columns: 1fr;
+  }
+  .tabela-itens-pedido,
+  .tabela-itens-pedido tbody,
+  .tabela-itens-pedido tr,
+  .tabela-itens-pedido td {
+    display: block;
+    width: 100%;
+  }
+  .tabela-itens-pedido thead {
+    display: none;
+  }
+  .tabela-itens-pedido td.col-subtotal {
+    text-align: left;
+    padding-top: 10px;
+  }
+  .tabela-itens-pedido .col-qtd,
+  .tabela-itens-pedido .col-preco,
+  .tabela-itens-pedido .col-desc,
+  .tabela-itens-pedido .col-subtotal,
+  .tabela-itens-pedido .col-acao {
+    width: 100%;
+  }
+}

@@ -152,11 +152,87 @@
             <input type="text" id="campo-ddd" maxlength="3" style="max-width: 100px;">
           </div>
 
+          <p class="secao-titulo">Endereços de entrega</p>
+          <p class="dica-secao" id="dica-entregas-novo">Salve o cliente primeiro; depois edite-o para cadastrar endereços de entrega.</p>
+          <div id="area-entregas" hidden>
+            <ul class="lista-enderecos lista-enderecos--gestao" id="lista-entregas-form"></ul>
+            <p class="dica-secao" id="vazio-entregas-form">Nenhum endereço de entrega cadastrado.</p>
+            <button type="button" class="botao-secundario botao-secundario--pequeno" id="botao-novo-endereco">+ Adicionar endereço de entrega</button>
+            <p class="dica-secao">Os endereços de entrega são salvos na hora, sem precisar clicar em Salvar.</p>
+          </div>
+
         </div>
 
         <div class="modal__rodape">
           <button type="button" class="botao-secundario" id="modal-cancelar">Cancelar</button>
           <button type="submit" class="botao-primario" id="modal-salvar">Salvar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal de endereço de entrega (abre por cima do modal do cliente) -->
+  <div class="modal-overlay" id="modal-endereco">
+    <div class="modal">
+      <div class="modal__topo">
+        <span class="modal__titulo" id="modal-endereco-titulo">Novo endereço de entrega</span>
+        <button class="modal__fechar" id="modal-endereco-fechar" aria-label="Fechar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+
+      <form id="form-endereco" novalidate>
+        <div class="modal__corpo">
+
+          <div class="campo-form">
+            <label for="end-cep">CEP *</label>
+            <div class="campo-cep-wrapper">
+              <input type="text" id="end-cep" placeholder="00000-000" maxlength="9">
+              <span class="campo-cep-status" id="end-cep-status"></span>
+            </div>
+          </div>
+
+          <div class="campo-form-linha">
+            <div class="campo-form">
+              <label for="end-logradouro">Logradouro *</label>
+              <input type="text" id="end-logradouro">
+            </div>
+            <div class="campo-form">
+              <label for="end-numero">Número *</label>
+              <input type="text" id="end-numero" maxlength="10">
+            </div>
+          </div>
+
+          <div class="campo-form">
+            <label for="end-complemento">Complemento</label>
+            <input type="text" id="end-complemento">
+          </div>
+
+          <div class="campo-form-linha--endereco-3">
+            <div class="campo-form">
+              <label for="end-bairro">Bairro</label>
+              <input type="text" id="end-bairro">
+            </div>
+            <div class="campo-form">
+              <label for="end-cidade">Cidade *</label>
+              <input type="text" id="end-cidade">
+            </div>
+            <div class="campo-form">
+              <label for="end-uf">UF *</label>
+              <input type="text" id="end-uf" maxlength="2">
+            </div>
+          </div>
+
+          <div class="campo-form">
+            <label for="end-ddd">DDD</label>
+            <input type="text" id="end-ddd" maxlength="3" style="max-width: 100px;">
+          </div>
+
+        </div>
+
+        <div class="modal__rodape">
+          <button type="button" class="botao-secundario" id="modal-endereco-cancelar">Cancelar</button>
+          <button type="submit" class="botao-primario" id="modal-endereco-salvar">Salvar endereço</button>
         </div>
       </form>
     </div>

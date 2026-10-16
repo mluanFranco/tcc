@@ -51,6 +51,36 @@ async function apiFetch(endpoint, options = {}) {
   return body;
 }
 
+// Para respostas que não são JSON (ex.: PDF). Mantém o token JWT e o mesmo tratamento de erros;
+// devolve um Blob. Quem chama decide se abre numa aba ou baixa.
+async function apiFetchBlob(endpoint) {
+  const token = getToken();
+  let response;
+  try {
+    response = await fetch(`${CONFIG.API_BASE_URL}${endpoint}`, {
+      headers: token ? { "Authorization": `Bearer ${token}` } : {}
+    });
+  } catch (erro) {
+    throw new ApiError("Não foi possível conectar ao servidor.", 0);
+  }
+
+  if (response.status === 401) {
+    clearToken();
+    if (!window.location.pathname.includes("login.html")) {
+      window.location.href = "login.html";
+    }
+    throw new ApiError("Sessão expirada. Faça login novamente.", 401);
+  }
+
+  if (!response.ok) {
+    let corpo = null;
+    try { corpo = await response.json(); } catch (e) { /* resposta sem JSON */ }
+    throw new ApiError(extrairMensagemErro(corpo, response.status), response.status);
+  }
+
+  return response.blob();
+}
+
 class ApiError extends Error {
   constructor(message, status) {
     super(message);

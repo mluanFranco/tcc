@@ -1,313 +1,292 @@
-// Lógica da tela de detalhe de Pedido de Venda.
-// Sem ?id na URL: modo de criação (cabeçalho + itens editáveis).
-// Com ?id na URL: carrega o pedido existente. Editável apenas se status === "aberto".
-
-let pedidoAtual = null;
-let produtosDisponiveis = [];
-let clientesDisponiveis = [];
-let itensDoFormulario = []; // [{ produto_id, quantidade, preco_unitario, desconto }]
+// Detalhe do Pedido de Venda (somente leitura).
+// O pedido não é editado depois de criado: só muda de status (aberto → confirmado/cancelado, confirmado → cancelado).
+//  - Confirmar baixa o estoque e gera as contas a receber;
+//  - Cancelar um pedido aberto libera a reserva; cancelar um confirmado devolve o estoque e cancela as contas a receber
+//    (o backend recusa se alguma parcela já tiver recebimento lançado).
 
 document.addEventListener("DOMContentLoaded", async () => {
-  if (!exigirAutenticacao()) return;
+  if (!exigirPermissao("vendas.ver")) return;
 
   const params = new URLSearchParams(window.location.search);
-  const pedidoId = params.get("id");
+  const pedidoId = Number(params.get("id"));
+  const pedidoRecemCriado = params.get("novo") === "1";
 
-  const elementos = {
-    titulo: document.getElementById("detalhe-titulo"),
-    badgeStatus: document.getElementById("badge-status"),
-    botaoVoltar: document.getElementById("botao-voltar"),
-    campoCliente: document.getElementById("campo-cliente"),
-    campoFormaPagamento: document.getElementById("campo-forma-pagamento"),
-    campoObservacao: document.getElementById("campo-observacao"),
-    tabelaItensCorpo: document.getElementById("tabela-itens-corpo"),
-    itensVazio: document.getElementById("itens-vazio"),
-    botaoAdicionarItem: document.getElementById("botao-adicionar-item"),
-    totalExibicao: document.getElementById("total-exibicao"),
-    acoesContainer: document.getElementById("acoes-container")
+  const podeEditar = temPermissao("vendas.editar");
+  const podeVerFinanceiro = temPermissao("financeiro.ver");
+
+  const el = {
+    estadoPagina: document.getElementById("estado-pagina"),
+    conteudo: document.getElementById("conteudo-pedido"),
+    titulo: document.getElementById("titulo-pedido"),
+    pilula: document.getElementById("pilula-status"),
+    botaoPdf: document.getElementById("botao-pdf"),
+    botaoConfirmar: document.getElementById("botao-confirmar"),
+    botaoCancelar: document.getElementById("botao-cancelar-pedido"),
+    cliente: document.getElementById("vis-cliente"),
+    forma: document.getElementById("vis-forma"),
+    data: document.getElementById("vis-data"),
+    entrega: document.getElementById("vis-entrega"),
+    observacao: document.getElementById("vis-observacao"),
+    itensCorpo: document.getElementById("itens-corpo"),
+    total: document.getElementById("total-exibicao"),
+    cartaoTitulos: document.getElementById("cartao-titulos"),
+    titulosCorpo: document.getElementById("titulos-corpo"),
+    notaTitulos: document.getElementById("nota-titulos")
   };
 
-  function formatarMoeda(numero) {
-    return `R$ ${Number(numero || 0).toFixed(2).replace(".", ",")}`;
+  let pedido = null;
+  let cliente = null;
+  let forma = null;
+  let titulos = [];
+  let produtosPorId = {};
+  let siglasPorUnidade = {};
+  let ocupado = false;
+
+  const numeroDoPedido = () => formatarNumeroPedido(pedido.id);
+
+  function mostrarErroDePagina(mensagem) {
+    el.estadoPagina.textContent = mensagem;
+    el.estadoPagina.hidden = false;
+    el.conteudo.hidden = true;
   }
 
-  async function carregarDadosDeApoio() {
-    [produtosDisponiveis, clientesDisponiveis] = await Promise.all([
-      produtoService.listar(),
-      clienteService.listar()
-    ]);
+  // ---------- Desenho ----------
 
-    elementos.campoCliente.innerHTML = '<option value="">Selecione um cliente...</option>' +
-      clientesDisponiveis.map(c => `<option value="${c.id}">${c.nome}</option>`).join("");
-  }
-
-  function calcularTotal() {
-    return itensDoFormulario.reduce((soma, item) => soma + calcularSubtotalItem(item), 0);
-  }
-
-  function calcularSubtotalItem(item) {
-    const quantidade = Number(item.quantidade) || 0;
-    const preco = Number(item.preco_unitario) || 0;
-    const descontoPercentual = Number(item.desconto_percentual) || 0;
-    const valorBruto = quantidade * preco;
-    const valorDesconto = valorBruto * (descontoPercentual / 100);
-    return valorBruto - valorDesconto;
-  }
-
-  function produtoPorId(id) {
-    return produtosDisponiveis.find(p => p.id === Number(id));
-  }
-
-  function estoqueExcedido(item) {
-    const produto = produtoPorId(item.produto_id);
-    if (!produto) return false;
-    return Number(item.quantidade) > produto.estoque_disponivel;
+  function resumoDasParcelas() {
+    if (!forma || !forma.parcelas?.length) return "conforme a forma de pagamento";
+    const parcelas = forma.parcelas;
+    if (parcelas.length === 1) {
+      return parcelas[0].prazo_dias === 0 ? "1 parcela, à vista" : `1 parcela em ${parcelas[0].prazo_dias} dias`;
+    }
+    return `${parcelas.length} parcelas (${parcelas.map(p => p.prazo_dias).join("/")} dias)`;
   }
 
   function renderizarItens() {
-    const modoLeitura = pedidoAtual && pedidoAtual.status !== "aberto";
+    el.itensCorpo.innerHTML = pedido.itens.slice().sort((a, b) => a.id - b.id).map(item => {
+      const produto = produtosPorId[item.produto_id];
+      const nome = produto ? produto.nome : `Produto #${item.produto_id}`;
+      const sigla = produto ? (siglasPorUnidade[produto.unidade_medida_id] || "") : "";
+      const bruto = Number(item.quantidade) * Number(item.preco_unitario);
+      const pct = bruto > 0 ? Math.round((Number(item.desconto) / bruto) * 10000) / 100 : 0;
+      const desconto = Number(item.desconto) > 0
+        ? `${formatarMoeda(item.desconto)} (${formatarNumero(pct)}%)`
+        : "—";
+      return `
+        <tr>
+          <td>${escaparHtml(nome)}</td>
+          <td class="num">${formatarNumero(item.quantidade)}${sigla ? " " + escaparHtml(sigla) : ""}</td>
+          <td class="num">${formatarMoeda(item.preco_unitario)}</td>
+          <td class="num">${desconto}</td>
+          <td class="num subtotal">${formatarMoeda(item.subtotal)}</td>
+        </tr>`;
+    }).join("");
+    el.total.textContent = formatarMoeda(pedido.valor_total);
+  }
 
-    if (itensDoFormulario.length === 0) {
-      elementos.tabelaItensCorpo.innerHTML = "";
-      elementos.itensVazio.style.display = "block";
-    } else {
-      elementos.itensVazio.style.display = "none";
+  function rotuloSituacao(titulo) {
+    if (titulo.status === "cancelado") return { classe: "cancelado", texto: "Cancelado" };
+    if (titulo.status === "pago") return { classe: "pago", texto: "Recebido" };
+    if (titulo.vencido) return { classe: "vencido", texto: `Vencido (${titulo.dias_atraso} ${titulo.dias_atraso === 1 ? "dia" : "dias"})` };
+    if (titulo.status === "parcial") return { classe: "parcial", texto: "Parcial" };
+    return { classe: "aberto", texto: "Em aberto" };
+  }
 
-      elementos.tabelaItensCorpo.innerHTML = itensDoFormulario.map((item, index) => {
-        const excedido = !modoLeitura && estoqueExcedido(item);
-        const produtoSelecionado = produtoPorId(item.produto_id);
+  function renderizarTitulos() {
+    // Quem não tem financeiro.ver não vê o cartão; pedido aberto ainda não gerou contas.
+    const mostrar = podeVerFinanceiro && pedido.status !== "aberto";
+    el.cartaoTitulos.hidden = !mostrar;
+    if (!mostrar) return;
 
-        if (modoLeitura) {
-          return `
-            <tr>
-              <td>${produtoSelecionado ? produtoSelecionado.nome : `Produto #${item.produto_id}`}</td>
-              <td>${item.quantidade}</td>
-              <td>${formatarMoeda(item.preco_unitario)}</td>
-              <td>${Number(item.desconto_percentual || 0).toFixed(1)}%</td>
-              <td class="subtotal-exibicao">${formatarMoeda(calcularSubtotalItem(item))}</td>
-              <td></td>
-            </tr>
-          `;
-        }
+    el.titulosCorpo.innerHTML = titulos.map(t => {
+      const situacao = rotuloSituacao(t);
+      return `
+        <tr>
+          <td>${t.numero_parcela}/${t.total_parcelas}</td>
+          <td>${formatarData(t.vencimento)}</td>
+          <td class="num">${formatarMoeda(t.valor)}</td>
+          <td class="num">${formatarMoeda(t.valor_pago)}</td>
+          <td><span class="situacao-titulo situacao-titulo--${situacao.classe}">${escaparHtml(situacao.texto)}</span></td>
+        </tr>`;
+    }).join("");
 
-        const opcoesProduto = produtosDisponiveis.map(p =>
-          `<option value="${p.id}" ${Number(item.produto_id) === p.id ? "selected" : ""}>${p.nome} (disp. ${p.estoque_disponivel})</option>`
-        ).join("");
-
-        return `
-          <tr class="${excedido ? "linha-item--invalida" : ""}">
-            <td>
-              <select data-index="${index}" data-campo="produto_id">
-                <option value="">Selecione...</option>
-                ${opcoesProduto}
-              </select>
-              ${excedido ? `<span class="aviso-estoque">Quantidade acima do estoque disponível</span>` : ""}
-            </td>
-            <td class="coluna-qtd">
-              <input type="number" min="1" data-index="${index}" data-campo="quantidade" value="${item.quantidade}">
-            </td>
-            <td class="coluna-preco">
-              <input type="number" min="0" step="0.01" data-index="${index}" data-campo="preco_unitario" value="${item.preco_unitario}">
-            </td>
-            <td class="coluna-desconto">
-              <input type="number" min="0" max="100" step="0.1" data-index="${index}" data-campo="desconto_percentual" value="${item.desconto_percentual}">
-            </td>
-            <td class="coluna-subtotal subtotal-exibicao">${formatarMoeda(calcularSubtotalItem(item))}</td>
-            <td class="coluna-acao">
-              <button type="button" class="botao-remover-item" data-remover="${index}" aria-label="Remover item">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="M3 6h18"></path><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path></svg>
-              </button>
-            </td>
-          </tr>
-        `;
-      }).join("");
+    let nota = "";
+    if (titulos.length === 0) {
+      nota = pedido.status === "cancelado"
+        ? "Este pedido foi cancelado antes da confirmação e não gerou contas a receber."
+        : "Nenhuma conta a receber encontrada para este pedido.";
     }
-
-    elementos.totalExibicao.textContent = formatarMoeda(calcularTotal());
+    el.notaTitulos.textContent = nota;
+    el.notaTitulos.hidden = !nota;
   }
 
-  function adicionarLinhaItem() {
-    itensDoFormulario.push({ produto_id: "", quantidade: 1, preco_unitario: 0, desconto_percentual: 0 });
+  function renderizarPedido() {
+    el.titulo.textContent = `Pedido: ${numeroDoPedido()}`;
+    el.pilula.textContent = rotuloStatusPedido(pedido.status);
+    el.pilula.className = `pilula-status pilula-status--${pedido.status}`;
+
+    el.cliente.textContent = cliente ? `${cliente.nome} (${formatarDocumento(cliente.cpf_cnpj)})` : `Cliente #${pedido.cliente_id}`;
+    el.forma.textContent = forma ? forma.descricao : "—";
+    el.data.textContent = formatarDataHora(pedido.data_pedido);
+    el.entrega.textContent = pedido.endereco_entrega ? formatarEndereco(pedido.endereco_entrega) : "Retirada (sem entrega)";
+    el.observacao.textContent = pedido.observacao || "—";
+
     renderizarItens();
+    renderizarTitulos();
+
+    el.botaoConfirmar.hidden = !(podeEditar && pedido.status === "aberto");
+    el.botaoCancelar.hidden = !(podeEditar && (pedido.status === "aberto" || pedido.status === "confirmado"));
+    definirOcupado(false);
+
+    el.estadoPagina.hidden = true;
+    el.conteudo.hidden = false;
+    document.title = `Pedido ${numeroDoPedido()} — Nova Sorvetes`;
   }
 
-  function existeItemInvalido() {
-    return itensDoFormulario.some(item => !item.produto_id || estoqueExcedido(item));
+  function definirOcupado(valor) {
+    ocupado = valor;
+    el.botaoConfirmar.disabled = valor;
+    el.botaoCancelar.disabled = valor;
   }
 
-  elementos.tabelaItensCorpo.addEventListener("input", (evento) => {
-    const campo = evento.target.dataset.campo;
-    const index = evento.target.dataset.index;
-    if (campo === undefined || index === undefined) return;
+  // ---------- Ações ----------
 
-    itensDoFormulario[index][campo] = evento.target.value;
-
-    if (campo === "produto_id") {
-      const produto = produtoPorId(evento.target.value);
-      if (produto && produto.preco_venda != null) {
-        itensDoFormulario[index].preco_unitario = produto.preco_venda;
-      }
-    }
-
-    renderizarItens();
-  });
-
-  elementos.tabelaItensCorpo.addEventListener("click", (evento) => {
-    const botao = evento.target.closest("button[data-remover]");
-    if (!botao) return;
-    itensDoFormulario.splice(Number(botao.dataset.remover), 1);
-    renderizarItens();
-  });
-
-  function renderizarAcoes() {
-    elementos.acoesContainer.innerHTML = "";
-
-    if (!pedidoAtual) {
-      // Modo criação
-      elementos.acoesContainer.innerHTML = `
-        <button class="botao-primario" id="botao-salvar-pedido">Salvar pedido</button>
-      `;
-      document.getElementById("botao-salvar-pedido").addEventListener("click", salvarPedido);
+  async function carregarTitulos() {
+    if (!podeVerFinanceiro || pedido.status === "aberto") {
+      titulos = [];
       return;
     }
-
-    if (pedidoAtual.status === "aberto") {
-      elementos.acoesContainer.innerHTML = `
-        <button class="botao-perigo" id="botao-cancelar-pedido">Cancelar pedido</button>
-        <button class="botao-sucesso" id="botao-confirmar-pedido">Confirmar pedido</button>
-      `;
-      document.getElementById("botao-cancelar-pedido").addEventListener("click", () => mudarStatus("cancelado"));
-      document.getElementById("botao-confirmar-pedido").addEventListener("click", () => mudarStatus("confirmado"));
-    }
-
-    if (pedidoAtual.status === "confirmado") {
-      elementos.acoesContainer.innerHTML = `
-        <button class="botao-perigo" id="botao-cancelar-pedido">Cancelar pedido</button>
-      `;
-      document.getElementById("botao-cancelar-pedido").addEventListener("click", () => mudarStatus("cancelado"));
+    try {
+      titulos = await pedidoVendaService.listarTitulos(pedido.id);
+    } catch (erro) {
+      titulos = [];
+      toast.erro(`Não foi possível carregar as contas a receber. ${erro.message}`);
     }
   }
 
   async function mudarStatus(novoStatus) {
-    const mensagens = {
-      confirmado: "Confirmar este pedido? O estoque reservado será debitado definitivamente.",
-      cancelado: "Cancelar este pedido? Esta ação não pode ser desfeita."
-    };
+    if (ocupado) return;
 
-    if (!confirm(mensagens[novoStatus])) return;
-
-    try {
-      pedidoAtual = await pedidoVendaService.atualizarStatus(pedidoAtual.id, novoStatus);
-      aplicarModoVisualizacao();
-    } catch (erro) {
-      alert(erro.message);
-    }
-  }
-
-  async function salvarPedido() {
-    if (!elementos.campoCliente.value) {
-      alert("Selecione um cliente.");
-      return;
-    }
-
-    if (itensDoFormulario.length === 0) {
-      alert("Adicione ao menos um item ao pedido.");
-      return;
-    }
-
-    if (existeItemInvalido()) {
-      alert("Corrija os itens com estoque insuficiente ou produto não selecionado antes de salvar.");
-      return;
-    }
-
-    const dados = {
-      cliente_id: parseInt(elementos.campoCliente.value, 10),
-      forma_pagamento: elementos.campoFormaPagamento.value || null,
-      observacao: elementos.campoObservacao.value || null,
-      itens: itensDoFormulario.map(item => {
-        const quantidade = parseInt(item.quantidade, 10);
-        const precoUnitario = parseFloat(item.preco_unitario);
-        const descontoPercentual = parseFloat(item.desconto_percentual) || 0;
-        const descontoEmReais = (quantidade * precoUnitario) * (descontoPercentual / 100);
-
-        return {
-          produto_id: parseInt(item.produto_id, 10),
-          quantidade,
-          preco_unitario: precoUnitario,
-          desconto: Number(descontoEmReais.toFixed(2))
-        };
-      })
-    };
-
-    const botaoSalvar = document.getElementById("botao-salvar-pedido");
-    botaoSalvar.disabled = true;
-    botaoSalvar.textContent = "Salvando...";
-
-    try {
-      const pedidoCriado = await pedidoVendaService.criar(dados);
-      window.location.href = `pedido-venda-detalhe.html?id=${pedidoCriado.id}`;
-    } catch (erro) {
-      alert(erro.message);
-      botaoSalvar.disabled = false;
-      botaoSalvar.textContent = "Salvar pedido";
-    }
-  }
-
-  function aplicarModoVisualizacao() {
-    const modoLeitura = pedidoAtual && pedidoAtual.status !== "aberto";
-
-    elementos.titulo.textContent = `Pedido de Venda #${pedidoAtual.id}`;
-    elementos.badgeStatus.textContent = pedidoAtual.status;
-    elementos.badgeStatus.className = `badge-status-grande badge-status-grande--${pedidoAtual.status}`;
-    elementos.badgeStatus.style.display = "inline-flex";
-
-    elementos.campoCliente.value = pedidoAtual.cliente_id;
-    elementos.campoFormaPagamento.value = pedidoAtual.forma_pagamento ?? "";
-    elementos.campoObservacao.value = pedidoAtual.observacao ?? "";
-
-    elementos.campoCliente.disabled = modoLeitura;
-    elementos.campoFormaPagamento.disabled = modoLeitura;
-    elementos.campoObservacao.disabled = modoLeitura;
-    elementos.botaoAdicionarItem.style.display = modoLeitura ? "none" : "inline-flex";
-
-    itensDoFormulario = pedidoAtual.itens.map(item => {
-      const valorBruto = item.quantidade * item.preco_unitario;
-      const descontoPercentual = valorBruto > 0
-        ? Number(((item.desconto / valorBruto) * 100).toFixed(1))
-        : 0;
-
-      return {
-        produto_id: item.produto_id,
-        quantidade: item.quantidade,
-        preco_unitario: item.preco_unitario,
-        desconto_percentual: descontoPercentual
+    const numero = numeroDoPedido();
+    let config;
+    if (novoStatus === "confirmado") {
+      config = {
+        titulo: `Confirmar o pedido ${numero}?`,
+        mensagem: `O estoque dos itens será baixado e as contas a receber serão geradas: ${resumoDasParcelas()}.`,
+        textoConfirmar: "Confirmar pedido",
+        perigo: false,
+        sucesso: `Pedido ${numero} confirmado.`
       };
-    });
+    } else if (pedido.status === "aberto") {
+      config = {
+        titulo: `Cancelar o pedido ${numero}?`,
+        mensagem: "A reserva de estoque dos itens será liberada. Esta ação não pode ser desfeita.",
+        textoConfirmar: "Cancelar pedido",
+        perigo: true,
+        sucesso: `Pedido ${numero} cancelado.`
+      };
+    } else {
+      config = {
+        titulo: `Cancelar o pedido ${numero}?`,
+        mensagem: "O estoque dos itens volta ao saldo e as contas a receber deste pedido serão canceladas. " +
+          "Só é possível se nenhuma parcela tiver recebimento lançado. Esta ação não pode ser desfeita.",
+        textoConfirmar: "Cancelar pedido",
+        perigo: true,
+        sucesso: `Pedido ${numero} cancelado.`
+      };
+    }
 
-    renderizarItens();
-    renderizarAcoes();
+    const confirmou = await confirmarAcao({
+      titulo: config.titulo,
+      mensagem: config.mensagem,
+      textoConfirmar: config.textoConfirmar,
+      textoCancelar: "Voltar",
+      perigo: config.perigo
+    });
+    if (!confirmou) return;
+
+    definirOcupado(true);
+    try {
+      pedido = await pedidoVendaService.atualizarStatus(pedido.id, novoStatus);
+      await carregarTitulos();
+      renderizarPedido();
+      toast.sucesso(config.sucesso);
+    } catch (erro) {
+      toast.erro(erro.message);
+      // O status pode ter mudado em outra aba/usuário: mostra o estado atual real.
+      try {
+        pedido = await pedidoVendaService.buscarPorId(pedido.id);
+        await carregarTitulos();
+        renderizarPedido();
+      } catch (e) {
+        definirOcupado(false);
+      }
+    }
   }
 
-  elementos.botaoVoltar.addEventListener("click", () => {
-    window.location.href = "pedidos-venda.html";
-  });
+  function baixarArquivo(url, nome) {
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = nome;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+  }
 
-  elementos.botaoAdicionarItem.addEventListener("click", adicionarLinhaItem);
-
-  await carregarDadosDeApoio();
-
-  if (pedidoId) {
+  async function abrirPdf() {
+    // A aba é aberta já no clique (antes da espera pela API), senão o navegador a trata como pop-up.
+    const aba = window.open("", "_blank");
+    el.botaoPdf.disabled = true;
     try {
-      pedidoAtual = await pedidoVendaService.buscarPorId(pedidoId);
-      aplicarModoVisualizacao();
+      const blob = await pedidoVendaService.baixarPdf(pedido.id);
+      const url = URL.createObjectURL(blob);
+      if (aba) aba.location.href = url;
+      else baixarArquivo(url, `pedido-venda-${pedido.id}.pdf`);
+      setTimeout(() => URL.revokeObjectURL(url), 5 * 60 * 1000);
     } catch (erro) {
-      alert(erro.message);
-      window.location.href = "pedidos-venda.html";
+      if (aba) aba.close();
+      toast.erro(erro.message);
+    } finally {
+      el.botaoPdf.disabled = false;
     }
-  } else {
-    elementos.titulo.textContent = "Novo pedido de venda";
-    elementos.badgeStatus.style.display = "none";
-    renderizarItens();
-    renderizarAcoes();
+  }
+
+  el.botaoConfirmar.addEventListener("click", () => mudarStatus("confirmado"));
+  el.botaoCancelar.addEventListener("click", () => mudarStatus("cancelado"));
+  el.botaoPdf.addEventListener("click", abrirPdf);
+
+  // ---------- Carga ----------
+
+  if (!Number.isInteger(pedidoId) || pedidoId <= 0) {
+    mostrarErroDePagina("Pedido não informado.");
+    toast.erro("Pedido não informado.");
+    return;
+  }
+
+  try {
+    pedido = await pedidoVendaService.buscarPorId(pedidoId);
+  } catch (erro) {
+    mostrarErroDePagina(erro.status === 404 ? "Pedido de venda não encontrado." : "Não foi possível carregar o pedido.");
+    toast.erro(erro.message);
+    return;
+  }
+
+  // O restante só enriquece a tela (nomes, unidades, parcelas). Se algo falhar, o pedido aparece com o que já se tem.
+  const [rCliente, rProdutos, rUnidades, rForma] = await Promise.allSettled([
+    clienteService.buscarPorId(pedido.cliente_id),
+    produtoService.listar({ incluirInativos: true }),
+    unidadeMedidaService.listar({ incluirInativos: true }),
+    pedido.forma_pagamento_id ? formaPagamentoService.buscarPorId(pedido.forma_pagamento_id) : Promise.resolve(null)
+  ]);
+  cliente = rCliente.status === "fulfilled" ? rCliente.value : null;
+  forma = rForma.status === "fulfilled" ? rForma.value : null;
+  if (rProdutos.status === "fulfilled") produtosPorId = Object.fromEntries(rProdutos.value.map(p => [p.id, p]));
+  if (rUnidades.status === "fulfilled") siglasPorUnidade = Object.fromEntries(rUnidades.value.map(u => [u.id, u.sigla]));
+
+  await carregarTitulos();
+  renderizarPedido();
+
+  if (pedidoRecemCriado) {
+    toast.sucesso(`Pedido ${numeroDoPedido()} criado. O estoque dos itens fica reservado até o pedido ser confirmado ou cancelado.`);
+    history.replaceState(null, "", `pedido-venda-detalhe.html?id=${pedido.id}`);
   }
 });

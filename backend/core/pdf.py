@@ -253,7 +253,10 @@ def _endereco_cliente(cliente) -> str:
     ativos = [e for e in cliente.enderecos if e.ativo]
     if not ativos:
         return "—"
-    e = ativos[0]
+    return _formatar_endereco(ativos[0])
+
+
+def _formatar_endereco(e) -> str:
     partes = [", ".join(x for x in (e.logradouro, e.numero) if x), e.complemento, e.bairro,
               "/".join(x for x in (e.cidade, e.uf) if x), f"CEP {e.cep}" if e.cep else None]
     return _txt(" - ".join(x for x in partes if x))
@@ -348,7 +351,8 @@ def pdf_pedido_venda(db: Session, pedido_id: int, emitido_por: str) -> Tuple[byt
         raise HTTPException(status_code=404, detail="Pedido de venda não encontrado")
     c, forma = ped.cliente, ped.forma_pagamento
     pares = _pares_parte("Cliente", c.nome, c.cpf_cnpj, c.telefone, c.email, _endereco_cliente(c))
-    pares += [("Data do pedido", data_br(ped.data_pedido)), ("Confirmado em", data_br(ped.confirmado_em)),
+    entrega = _formatar_endereco(ped.endereco_entrega) if ped.endereco_entrega else "Retirada (sem entrega)"
+    pares += [("Entrega", entrega), ("Data do pedido", data_br(ped.data_pedido)), ("Confirmado em", data_br(ped.confirmado_em)),
               ("Forma de pgto.", _txt(forma.descricao if forma else None))]
 
     linhas, descontos = [], Decimal("0")

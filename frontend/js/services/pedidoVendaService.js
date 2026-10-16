@@ -18,6 +18,16 @@ const pedidoVendaService = {
     });
   },
 
+  // Contas a receber geradas pelo pedido (só existem a partir da confirmação). Exige financeiro.ver.
+  async listarTitulos(id) {
+    return apiFetch(`/pedidos-venda/${id}/titulos`);
+  },
+
+  // PDF do pedido, como Blob (a rota exige o token, por isso não dá para usar um link direto).
+  async baixarPdf(id) {
+    return apiFetchBlob(`/pedidos-venda/${id}/pdf`);
+  },
+
   async atualizarStatus(id, novoStatus) {
     return apiFetch(`/pedidos-venda/${id}/status`, {
       method: "PATCH",
