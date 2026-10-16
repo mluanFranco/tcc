@@ -9,9 +9,13 @@ let subcategoriaEmEdicaoId = null;
 document.addEventListener("DOMContentLoaded", async () => {
   if (!exigirAutenticacao()) return;
 
+  // Cadastros: qualquer usuário logado consulta; criar, editar e desativar exigem cadastros.editar.
+  const podeEditar = temPermissao("cadastros.editar");
+
   const elementos = {
     tabelaCorpo: document.getElementById("tabela-subcategorias-corpo"),
     estadoVazio: document.getElementById("estado-vazio"),
+    estadoCarregando: document.getElementById("estado-carregando"),
     campoBusca: document.getElementById("campo-busca"),
     abaAtivos: document.getElementById("aba-ativos"),
     abaInativos: document.getElementById("aba-inativos"),
@@ -37,20 +41,31 @@ document.addEventListener("DOMContentLoaded", async () => {
       categoriasParaSelect = await categoriaService.listar();
       elementos.campoCategoria.innerHTML =
         `<option value="">Selecione...</option>` +
-        categoriasParaSelect.map(c => `<option value="${c.id}">${c.nome}</option>`).join("");
+        categoriasParaSelect.map(c => `<option value="${c.id}">${escaparHtml(c.nome)}</option>`).join("");
     } catch (erro) {
-      alert("Não foi possível carregar as categorias: " + erro.message);
+      toast.erro("Não foi possível carregar as categorias: " + erro.message);
     }
   }
 
+  let requisicaoAtual = 0;
+
   async function carregarSubcategorias() {
+    const minha = ++requisicaoAtual;
+    elementos.estadoCarregando.style.display = "block";
+    elementos.estadoVazio.style.display = "none";
+    elementos.tabelaCorpo.innerHTML = "";
     try {
-      subcategoriasCache = abaAtivaSubcategoria === "ativos"
+      const lista = abaAtivaSubcategoria === "ativos"
         ? await subcategoriaService.listar()
         : await subcategoriaService.listarInativos();
+      if (minha !== requisicaoAtual) return;   // o usuário já trocou de aba
+      subcategoriasCache = lista;
+      elementos.estadoCarregando.style.display = "none";
       renderizarTabela();
     } catch (erro) {
-      alert(erro.message);
+      if (minha !== requisicaoAtual) return;
+      elementos.estadoCarregando.style.display = "none";
+      toast.erro(erro.message);
     }
   }
 
@@ -84,17 +99,17 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       return `
         <tr>
-          <td class="celula-nome">${subcategoria.nome}</td>
-          <td>${nomeCategoria(subcategoria.categoria_id)}</td>
+          <td class="celula-nome">${escaparHtml(subcategoria.nome)}</td>
+          <td>${escaparHtml(nomeCategoria(subcategoria.categoria_id))}</td>
           <td><span class="badge-status ${badgeStatusClasse}">${subcategoria.ativo ? "Ativa" : "Inativa"}</span></td>
           <td class="celula-acoes">
             <button class="botao-icone" data-acao="visualizar" data-id="${subcategoria.id}" title="Visualizar" aria-label="Visualizar">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
             </button>
-            <button class="botao-icone" data-acao="editar" data-id="${subcategoria.id}" title="Editar" aria-label="Editar">
+            ${podeEditar ? `<button class="botao-icone" data-acao="editar" data-id="${subcategoria.id}" title="Editar" aria-label="Editar">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
             </button>
-            ${botaoAcao}
+            ${botaoAcao}` : ""}
           </td>
         </tr>
       `;
@@ -128,7 +143,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     document.getElementById("vis-status").textContent = subcategoria.ativo ? "Ativa" : "Inativa";
     document.getElementById("vis-categoria").textContent = nomeCategoria(subcategoria.categoria_id);
     document.getElementById("vis-criado-em").textContent =
-      new Date(subcategoria.created_at).toLocaleDateString("pt-BR");
+      formatarData(subcategoria.created_at);
 
     elementos.modalVisualizarOverlay.classList.add("aberto");
   }
@@ -179,9 +194,10 @@ document.addEventListener("DOMContentLoaded", async () => {
         await subcategoriaService.criar(dados);
       }
       fecharModal();
+      toast.sucesso("Subcategoria salva.");
       await carregarSubcategorias();
     } catch (erro) {
-      alert(erro.message);
+      toast.erro(erro.message);
     } finally {
       botaoSalvar.disabled = false;
       botaoSalvar.textContent = "Salvar";
@@ -200,27 +216,37 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (subcategoria) abrirModalVisualizacao(subcategoria);
     }
 
+    if (!podeEditar) return;   // o backend também bloqueia; aqui só evita ações sem botão visível
+
     if (acao === "editar") {
       const subcategoria = subcategoriasCache.find(s => s.id === id);
       if (subcategoria) abrirModal(subcategoria);
     }
 
     if (acao === "desativar") {
-      if (!confirm("Desativar esta subcategoria? Produtos vinculados não serão afetados.")) return;
+      const confirmado = await confirmarAcao({
+        titulo: "Desativar subcategoria",
+        mensagem: "Desativar esta subcategoria? Produtos vinculados não serão afetados.",
+        textoConfirmar: "Desativar",
+        perigo: true
+      });
+      if (!confirmado) return;
       try {
         await subcategoriaService.desativar(id);
+        toast.sucesso("Subcategoria desativada.");
         await carregarSubcategorias();
       } catch (erro) {
-        alert(erro.message);
+        toast.erro(erro.message);
       }
     }
 
     if (acao === "reativar") {
       try {
         await subcategoriaService.reativar(id);
+        toast.sucesso("Subcategoria reativada.");
         await carregarSubcategorias();
       } catch (erro) {
-        alert(erro.message);
+        toast.erro(erro.message);
       }
     }
   }
@@ -232,7 +258,13 @@ document.addEventListener("DOMContentLoaded", async () => {
     carregarSubcategorias();
   }
 
+  elementos.botaoIncluir.hidden = !podeEditar;
   elementos.botaoIncluir.addEventListener("click", () => abrirModal());
+  document.addEventListener("keydown", (e) => {
+    if (e.key !== "Escape") return;
+    fecharModal();
+    fecharModalVisualizacao();
+  });
   elementos.modalFechar.addEventListener("click", fecharModal);
   elementos.modalCancelar.addEventListener("click", fecharModal);
   elementos.modalOverlay.addEventListener("click", (e) => {

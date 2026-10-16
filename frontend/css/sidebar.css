@@ -1,16 +1,19 @@
 /* ============================================
-   SIDEBAR.CSS — Navegação lateral colapsável
+   SIDEBAR.CSS — Navegação lateral colapsável (layout do Figma)
    ============================================ */
 
 .app-layout {
   display: flex;
   min-height: 100vh;
-  background: #F3F4F6;
+  background: #FFFFFF;
 }
 
 .sidebar {
   width: 248px;
   flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  height: 100vh;
   background: var(--neutro-fundo);
   border-right: 1px solid var(--neutro-borda);
   display: flex;
@@ -22,25 +25,37 @@
   width: 76px;
 }
 
+/* ---------- Topo: logo + nome + botão de recolher ---------- */
+
 .sidebar__topo {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 8px;
   padding: 20px 16px;
-  border-bottom: 1px solid var(--neutro-borda);
-  min-height: 64px;
+  min-height: 72px;
 }
 
 .sidebar__marca {
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--azul-primario);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--neutro-texto);
   white-space: nowrap;
-  overflow: hidden;
 }
 
-.sidebar.colapsado .sidebar__marca {
-  display: none;
+.sidebar__logo {
+  width: 34px;
+  height: auto;
+  flex-shrink: 0;
+}
+
+.sidebar__marca-texto {
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .sidebar__toggle {
@@ -55,35 +70,56 @@
   transition: background 0.15s ease, color 0.15s ease;
 }
 
+.sidebar__toggle svg {
+  width: 17px;
+  height: 17px;
+}
+
 .sidebar__toggle:hover {
   background: #F3F4F6;
   color: var(--azul-acao);
 }
+
+/* Recolhida: só o logo; o botão de expandir vai para baixo dele */
+.sidebar.colapsado .sidebar__topo {
+  flex-direction: column;
+  justify-content: center;
+  padding: 16px 8px;
+}
+
+.sidebar.colapsado .sidebar__marca-texto {
+  display: none;
+}
+
+/* ---------- Menu ---------- */
 
 .sidebar__menu {
   flex: 1;
   display: flex;
   flex-direction: column;
   gap: 2px;
-  padding: 16px 12px;
+  padding: 8px 12px 16px;
   overflow-y: auto;
 }
 
-.sidebar__item {
+.sidebar__item,
+.sidebar__grupo-cabecalho {
   display: flex;
   align-items: center;
   gap: 12px;
+  width: 100%;
   padding: 10px 12px;
   border-radius: 10px;
-  color: var(--neutro-secundario);
+  color: #4B5563;
   font-size: 14px;
   font-weight: 500;
+  text-align: left;
   white-space: nowrap;
-  position: relative;
   transition: background 0.15s ease, color 0.15s ease;
 }
 
-.sidebar__item:hover {
+.sidebar__item:hover,
+.sidebar__grupo-cabecalho:hover {
   background: #F3F4F6;
   color: var(--neutro-texto);
 }
@@ -97,119 +133,39 @@
   justify-content: center;
 }
 
+.sidebar__item-icone svg {
+  width: 18px;
+  height: 18px;
+}
+
 .sidebar__item-label {
+  flex: 1;
   overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebar__item--ativo,
+.sidebar__item--ativo:hover,
+.sidebar__grupo-cabecalho--ativo {
+  color: var(--azul-acao);
 }
 
 .sidebar.colapsado .sidebar__item-label {
   display: none;
 }
 
-.sidebar.colapsado .sidebar__item {
+.sidebar.colapsado .sidebar__item,
+.sidebar.colapsado .sidebar__grupo-cabecalho {
   justify-content: center;
   padding: 10px;
 }
 
-.sidebar__item--ativo {
+.sidebar.colapsado .sidebar__item--ativo,
+.sidebar.colapsado .sidebar__grupo-cabecalho--ativo {
   background: #EFF6FF;
-  color: var(--azul-acao);
 }
 
-.sidebar__item--ativo::before {
-  content: '';
-  position: absolute;
-  left: -12px;
-  top: 8px;
-  bottom: 8px;
-  width: 3px;
-  background: var(--amarelo-acento);
-  border-radius: 0 4px 4px 0;
-}
-
-.sidebar.colapsado .sidebar__item--ativo::before {
-  left: -12px;
-}
-
-.sidebar__rodape {
-  border-top: 1px solid var(--neutro-borda);
-  padding: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-}
-
-.sidebar__usuario {
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--neutro-texto);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.sidebar.colapsado .sidebar__usuario {
-  display: none;
-}
-
-.sidebar__logout {
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 8px;
-  color: var(--neutro-secundario);
-  flex-shrink: 0;
-  transition: background 0.15s ease, color 0.15s ease;
-}
-
-.sidebar__logout:hover {
-  background: var(--erro-fundo);
-  color: var(--erro);
-}
-
-.conteudo-principal {
-  flex: 1;
-  padding: 32px 40px;
-  overflow-y: auto;
-}
-
-@media (max-width: 768px) {
-  .sidebar {
-    position: fixed;
-    z-index: 50;
-    height: 100vh;
-  }
-  .conteudo-principal {
-    padding: 24px;
-  }
-}
-
-/* ---------- Grupo expansível (Cadastros) ---------- */
-
-.sidebar__grupo-cabecalho {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  width: 100%;
-  padding: 10px 12px;
-  border-radius: 10px;
-  color: var(--neutro-secundario);
-  font-size: 14px;
-  font-weight: 500;
-  white-space: nowrap;
-  transition: background 0.15s ease, color 0.15s ease;
-}
-
-.sidebar__grupo-cabecalho:hover {
-  background: #F3F4F6;
-  color: var(--neutro-texto);
-}
-
-.sidebar__grupo-cabecalho--ativo {
-  color: var(--azul-acao);
-}
+/* ---------- Grupos expansíveis ---------- */
 
 .sidebar__grupo-seta {
   margin-left: auto;
@@ -226,8 +182,8 @@
 .sidebar__subitens {
   display: none;
   flex-direction: column;
-  gap: 2px;
-  padding: 4px 0 4px 32px;
+  gap: 1px;
+  padding: 2px 0 6px 44px;
 }
 
 .sidebar__grupo--aberto .sidebar__subitens {
@@ -235,11 +191,11 @@
 }
 
 .sidebar__subitem {
-  padding: 8px 12px;
+  padding: 6px 10px;
   border-radius: 8px;
   font-size: 13.5px;
   font-weight: 500;
-  color: var(--neutro-secundario);
+  color: #4B5563;
   transition: background 0.15s ease, color 0.15s ease;
 }
 
@@ -248,19 +204,124 @@
   color: var(--neutro-texto);
 }
 
-.sidebar__subitem--ativo {
-  background: #EFF6FF;
+.sidebar__subitem--ativo,
+.sidebar__subitem--ativo:hover {
   color: var(--azul-acao);
   font-weight: 600;
 }
 
-/* Sidebar colapsada: esconde os grupos (evita menu ilegível) */
+/* Recolhida: esconde os grupos (evita menu ilegível) */
 .sidebar.colapsado .sidebar__grupo-seta,
 .sidebar.colapsado .sidebar__subitens {
   display: none;
 }
 
-.sidebar.colapsado .sidebar__grupo-cabecalho {
+/* ---------- Rodapé: avatar, nome, papel e sair ---------- */
+
+.sidebar__rodape {
+  border-top: 1px solid var(--neutro-borda);
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sidebar__avatar {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
   justify-content: center;
-  padding: 10px;
+  border-radius: 50%;
+  background: var(--azul-primario);
+  color: #FFFFFF;
+  font-size: 12px;
+  font-weight: 700;
+  background-size: cover;
+  background-position: center;
+}
+
+.sidebar__avatar--foto {
+  font-size: 0;
+}
+
+.sidebar__usuario-bloco {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar__usuario {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--neutro-texto);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebar__papel {
+  font-size: 11px;
+  color: var(--neutro-secundario);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebar__logout {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  color: var(--neutro-secundario);
+  flex-shrink: 0;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.sidebar__logout svg {
+  width: 17px;
+  height: 17px;
+}
+
+.sidebar__logout:hover {
+  background: var(--erro-fundo);
+  color: var(--erro);
+}
+
+/* Recolhida: avatar com o botão de sair embaixo */
+.sidebar.colapsado .sidebar__rodape {
+  flex-direction: column;
+  padding: 12px 8px;
+}
+
+.sidebar.colapsado .sidebar__usuario-bloco {
+  display: none;
+}
+
+/* ---------- Conteúdo ---------- */
+
+.conteudo-principal {
+  flex: 1;
+  min-width: 0;
+  padding: 32px 40px;
+  overflow-y: auto;
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    position: fixed;
+    z-index: 50;
+    height: 100vh;
+  }
+  .sidebar.colapsado {
+    width: 76px;
+  }
+  .conteudo-principal {
+    padding: 24px;
+    margin-left: 76px;
+  }
 }

@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="../css/base.css">
   <link rel="stylesheet" href="../css/sidebar.css">
   <link rel="stylesheet" href="../css/listagem-crud.css">
+  <link rel="stylesheet" href="../css/feedback.css">
 </head>
 <body>
 
@@ -21,7 +22,7 @@
 
       <div class="pagina-topo">
         <h1>Produtos</h1>
-        <button class="botao-primario" id="botao-incluir">
+        <button class="botao-primario" id="botao-incluir" hidden>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
           Incluir
         </button>
@@ -34,6 +35,7 @@
         </div>
         <div class="abas-status">
           <button class="aba-status aba-status--ativa" id="aba-ativos">Ativos</button>
+          <button class="aba-status" id="aba-estoque-baixo">Estoque baixo <span class="aba-contador" id="contador-estoque-baixo" hidden></span></button>
           <button class="aba-status" id="aba-inativos">Inativos</button>
         </div>
       </div>
@@ -44,18 +46,18 @@
             <tr>
               <th>Nome</th>
               <th>Categoria</th>
-              <th>Subcategoria</th>
               <th>Tipo</th>
               <th>Preço de venda</th>
               <th>Estoque atual</th>
               <th>Estoque reservado</th>
               <th>Estoque mínimo</th>
               <th>Status</th>
-              <th>Ações</th>
+              <th><span class="sr-only">Ações</span></th>
             </tr>
           </thead>
           <tbody id="tabela-produtos-corpo"></tbody>
         </table>
+        <div class="estado-carregando" id="estado-carregando">Carregando produtos...</div>
         <div class="estado-vazio" id="estado-vazio" style="display: none;">
           Nenhum produto encontrado.
         </div>
@@ -254,6 +256,8 @@
   <script src="../js/core/api.js"></script>
   <script src="../js/core/auth.js"></script>
   <script src="../js/core/mascaras.js"></script>
+  <script src="../js/core/formatadores.js"></script>
+  <script src="../js/components/feedback.js"></script>
   <script src="../js/components/sidebar.js"></script>
   <script src="../js/services/categoriaService.js"></script>
   <script src="../js/services/subcategoriaService.js"></script>

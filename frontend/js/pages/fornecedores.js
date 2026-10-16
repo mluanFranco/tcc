@@ -8,9 +8,13 @@ let fornecedorEmEdicaoId = null;
 document.addEventListener("DOMContentLoaded", async () => {
   if (!exigirAutenticacao()) return;
 
+  // Cadastros: qualquer usuário logado consulta; criar, editar e desativar exigem cadastros.editar.
+  const podeEditar = temPermissao("cadastros.editar");
+
   const elementos = {
     tabelaCorpo: document.getElementById("tabela-fornecedores-corpo"),
     estadoVazio: document.getElementById("estado-vazio"),
+    estadoCarregando: document.getElementById("estado-carregando"),
     campoBusca: document.getElementById("campo-busca"),
     abaAtivos: document.getElementById("aba-ativos"),
     abaInativos: document.getElementById("aba-inativos"),
@@ -27,14 +31,25 @@ document.addEventListener("DOMContentLoaded", async () => {
     modalVisualizarFecharRodape: document.getElementById("modal-visualizar-fechar-rodape")
   };
 
+  let requisicaoAtual = 0;
+
   async function carregarFornecedores() {
+    const minha = ++requisicaoAtual;
+    elementos.estadoCarregando.style.display = "block";
+    elementos.estadoVazio.style.display = "none";
+    elementos.tabelaCorpo.innerHTML = "";
     try {
-      fornecedoresCache = abaAtivaFornecedores === "ativos"
+      const lista = abaAtivaFornecedores === "ativos"
         ? await fornecedorService.listar()
         : await fornecedorService.listarInativos();
+      if (minha !== requisicaoAtual) return;   // o usuário já trocou de aba
+      fornecedoresCache = lista;
+      elementos.estadoCarregando.style.display = "none";
       renderizarTabela();
     } catch (erro) {
-      alert(erro.message);
+      if (minha !== requisicaoAtual) return;
+      elementos.estadoCarregando.style.display = "none";
+      toast.erro(erro.message);
     }
   }
 
@@ -45,7 +60,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (!termoBusca) return true;
       return (
         fornecedor.nome.toLowerCase().includes(termoBusca) ||
-        fornecedor.cnpj.includes(termoBusca)
+        fornecedor.cnpj.toLowerCase().includes(termoBusca.replace(/[^0-9a-z]/gi, ""))
       );
     });
 
@@ -71,34 +86,29 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       return `
         <tr>
-          <td class="celula-nome">${fornecedor.nome}</td>
-          <td>${fornecedor.cnpj}</td>
-          <td>${fornecedor.telefone ?? "—"}</td>
-          <td>${cidadeUf}</td>
+          <td class="celula-nome">${escaparHtml(fornecedor.nome)}</td>
+          <td>${escaparHtml(formatarDocumento(fornecedor.cnpj))}</td>
+          <td>${escaparHtml(fornecedor.telefone ?? "—")}</td>
+          <td>${escaparHtml(cidadeUf)}</td>
           <td><span class="badge-status ${badgeStatusClasse}">${fornecedor.ativo ? "Ativo" : "Inativo"}</span></td>
           <td class="celula-acoes">
             <button class="botao-icone" data-acao="visualizar" data-id="${fornecedor.id}" title="Visualizar" aria-label="Visualizar">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
             </button>
-            <button class="botao-icone" data-acao="editar" data-id="${fornecedor.id}" title="Editar" aria-label="Editar">
+            ${podeEditar ? `<button class="botao-icone" data-acao="editar" data-id="${fornecedor.id}" title="Editar" aria-label="Editar">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
             </button>
-            ${botaoAcao}
+            ${botaoAcao}` : ""}
           </td>
         </tr>
       `;
     }).join("");
   }
 
-  function formatarData(isoString) {
-    if (!isoString) return "—";
-    return new Date(isoString).toLocaleDateString("pt-BR");
-  }
-
   function abrirModalVisualizacao(fornecedor) {
     document.getElementById("vis-nome").textContent = fornecedor.nome;
     document.getElementById("vis-status").textContent = fornecedor.ativo ? "Ativo" : "Inativo";
-    document.getElementById("vis-cnpj").textContent = fornecedor.cnpj;
+    document.getElementById("vis-cnpj").textContent = formatarDocumento(fornecedor.cnpj);
     document.getElementById("vis-telefone").textContent = fornecedor.telefone ?? "—";
     document.getElementById("vis-email").textContent = fornecedor.email ?? "—";
     document.getElementById("vis-cep").textContent = fornecedor.cep ?? "—";
@@ -240,9 +250,10 @@ document.addEventListener("DOMContentLoaded", async () => {
         await fornecedorService.criar(dados);
       }
       fecharModal();
+      toast.sucesso("Fornecedor salvo.");
       await carregarFornecedores();
     } catch (erro) {
-      alert(erro.message);
+      toast.erro(erro.message);
     } finally {
       botaoSalvar.disabled = false;
       botaoSalvar.textContent = "Salvar";
@@ -261,27 +272,37 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (fornecedor) abrirModalVisualizacao(fornecedor);
     }
 
+    if (!podeEditar) return;   // o backend também bloqueia; aqui só evita ações sem botão visível
+
     if (acao === "editar") {
       const fornecedor = fornecedoresCache.find(f => f.id === id);
       if (fornecedor) abrirModal(fornecedor);
     }
 
     if (acao === "desativar") {
-      if (!confirm("Desativar este fornecedor? Ele deixará de aparecer na listagem de ativos.")) return;
+      const confirmado = await confirmarAcao({
+        titulo: "Desativar fornecedor",
+        mensagem: "Desativar este fornecedor? Ele deixará de aparecer na listagem de ativos.",
+        textoConfirmar: "Desativar",
+        perigo: true
+      });
+      if (!confirmado) return;
       try {
         await fornecedorService.desativar(id);
+        toast.sucesso("Fornecedor desativado.");
         await carregarFornecedores();
       } catch (erro) {
-        alert(erro.message);
+        toast.erro(erro.message);
       }
     }
 
     if (acao === "reativar") {
       try {
         await fornecedorService.reativar(id);
+        toast.sucesso("Fornecedor reativado.");
         await carregarFornecedores();
       } catch (erro) {
-        alert(erro.message);
+        toast.erro(erro.message);
       }
     }
   }
@@ -293,7 +314,13 @@ document.addEventListener("DOMContentLoaded", async () => {
     carregarFornecedores();
   }
 
+  elementos.botaoIncluir.hidden = !podeEditar;
   elementos.botaoIncluir.addEventListener("click", () => abrirModal());
+  document.addEventListener("keydown", (e) => {
+    if (e.key !== "Escape") return;
+    fecharModal();
+    fecharModalVisualizacao();
+  });
   elementos.modalFechar.addEventListener("click", fecharModal);
   elementos.modalCancelar.addEventListener("click", fecharModal);
   elementos.modalOverlay.addEventListener("click", (e) => {

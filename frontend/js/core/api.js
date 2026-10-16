@@ -45,8 +45,7 @@ async function apiFetch(endpoint, options = {}) {
     : null;
 
   if (!response.ok) {
-    const mensagem = body?.detail || "Ocorreu um erro inesperado.";
-    throw new ApiError(mensagem, response.status);
+    throw new ApiError(extrairMensagemErro(body, response.status), response.status);
   }
 
   return body;
@@ -57,4 +56,41 @@ class ApiError extends Error {
     super(message);
     this.status = status;
   }
+}
+
+// Nomes amigáveis dos campos que mais aparecem nos erros de validação (422).
+const ROTULOS_CAMPOS = {
+  nome: "Nome", cpf_cnpj: "CPF/CNPJ", cnpj: "CNPJ", tipo: "Tipo", telefone: "Telefone", email: "E-mail",
+  cep: "CEP", logradouro: "Logradouro", numero: "Número", complemento: "Complemento", bairro: "Bairro",
+  cidade: "Cidade", uf: "UF", ddd: "DDD", senha: "Senha", sigla: "Sigla", descricao: "Descrição",
+  categoria_id: "Categoria", subcategoria_id: "Subcategoria", unidade_medida_id: "Unidade de medida",
+  preco_custo: "Preço de custo", porcentagem: "Margem", estoque_minimo: "Estoque mínimo",
+  endereco_principal: "Endereço"
+};
+
+// O FastAPI devolve "detail" como texto (erros de negócio) ou como lista (erros de validação).
+// Aqui a lista vira uma frase legível, em vez de "[object Object]".
+function extrairMensagemErro(body, status) {
+  const detalhe = body?.detail;
+  if (typeof detalhe === "string" && detalhe) return detalhe;
+
+  if (Array.isArray(detalhe) && detalhe.length) {
+    const frases = detalhe.map(item => {
+      const caminho = (item.loc || []).filter(parte => parte !== "body" && typeof parte === "string");
+      const campo = caminho.length ? (ROTULOS_CAMPOS[caminho[caminho.length - 1]] || caminho[caminho.length - 1]) : "";
+      let texto = String(item.msg || "valor inválido");
+      if (texto === "Field required") texto = "campo obrigatório";
+      else if (texto.startsWith("Value error, ")) texto = texto.slice("Value error, ".length);
+      else if (/at least 1 character/.test(texto)) texto = "não pode ficar vazio";
+      else if (/valid email/i.test(texto)) texto = "e-mail inválido";
+      // a mensagem do backend já pode começar pelo nome do campo ("CEP inválido...")
+      if (!campo || texto.toLowerCase().startsWith(campo.toLowerCase())) return texto;
+      return `${campo}: ${texto}`;
+    });
+    return [...new Set(frases)].join(" • ");
+  }
+
+  if (status === 403) return "Você não tem permissão para realizar esta ação.";
+  if (status === 404) return "Registro não encontrado.";
+  return "Ocorreu um erro inesperado.";
 }

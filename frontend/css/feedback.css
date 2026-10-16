@@ -1,0 +1,108 @@
+/* ============================================
+   FEEDBACK.CSS — toasts e janela de confirmação
+   ============================================ */
+
+.toast-area {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 300;
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 10px;
+  width: min(360px, calc(100vw - 40px));
+  pointer-events: none;
+}
+
+.toast {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 14px;
+  background: #FFFFFF;
+  border: 1px solid var(--neutro-borda);
+  border-left: 4px solid var(--azul-acao);
+  border-radius: 10px;
+  box-shadow: 0 8px 24px -8px rgba(15, 23, 42, 0.25);
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--neutro-texto);
+  pointer-events: auto;
+  animation: toast-entrada 0.18s ease-out;
+}
+
+.toast--sucesso { border-left-color: #16A34A; }
+.toast--erro { border-left-color: var(--erro); background: var(--erro-fundo); }
+.toast--saindo { opacity: 0; transform: translateX(12px); transition: opacity 0.18s ease, transform 0.18s ease; }
+
+.toast__texto { flex: 1; word-break: break-word; }
+
+.toast__fechar {
+  font-size: 18px;
+  line-height: 1;
+  color: var(--neutro-secundario);
+  padding: 0 2px;
+}
+
+.toast__fechar:hover { color: var(--neutro-texto); }
+
+@keyframes toast-entrada {
+  from { opacity: 0; transform: translateX(12px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+/* ---------- Confirmação ---------- */
+
+.confirmacao-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 250;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(15, 23, 42, 0.45);
+}
+
+.confirmacao {
+  width: 100%;
+  max-width: 400px;
+  padding: 24px;
+  background: #FFFFFF;
+  border-radius: 16px;
+  box-shadow: 0 20px 50px -12px rgba(15, 23, 42, 0.4);
+}
+
+.confirmacao__titulo {
+  font-size: 17px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.confirmacao__texto {
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--neutro-secundario);
+  margin-bottom: 20px;
+}
+
+.confirmacao__rodape {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.botao-perigo {
+  display: flex;
+  align-items: center;
+  height: 40px;
+  padding: 0 18px;
+  background: var(--erro);
+  color: #FFFFFF;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: var(--raio-botao);
+  transition: background 0.15s ease;
+}
+
+.botao-perigo:hover { background: #B91C1C; }

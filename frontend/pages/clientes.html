@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="../css/base.css">
   <link rel="stylesheet" href="../css/sidebar.css">
   <link rel="stylesheet" href="../css/listagem-crud.css">
+  <link rel="stylesheet" href="../css/feedback.css">
   <link rel="stylesheet" href="../css/clientes.css">
 </head>
 <body>
@@ -20,7 +21,7 @@
 
       <div class="pagina-topo">
         <h1>Clientes</h1>
-        <button class="botao-primario" id="botao-incluir">
+        <button class="botao-primario" id="botao-incluir" hidden>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
           Incluir
         </button>
@@ -46,11 +47,12 @@
               <th>Telefone</th>
               <th>Cidade/UF</th>
               <th>Status</th>
-              <th>Ações</th>
+              <th><span class="sr-only">Ações</span></th>
             </tr>
           </thead>
           <tbody id="tabela-clientes-corpo"></tbody>
         </table>
+        <div class="estado-carregando" id="estado-carregando">Carregando...</div>
         <div class="estado-vazio" id="estado-vazio" style="display: none;">
           Nenhum cliente encontrado.
         </div>
@@ -104,24 +106,24 @@
             </div>
           </div>
 
-          <p class="secao-titulo">Endereço</p>
+          <p class="secao-titulo" id="titulo-endereco-form">Endereço principal</p>
 
           <div class="campo-form">
-            <label for="campo-cep">CEP</label>
+            <label for="campo-cep">CEP *</label>
             <div class="campo-cep-wrapper">
-              <input type="text" id="campo-cep" placeholder="00000-000" maxlength="9">
+              <input type="text" id="campo-cep" placeholder="00000-000" maxlength="9" required>
               <span class="campo-cep-status" id="campo-cep-status"></span>
             </div>
           </div>
 
           <div class="campo-form-linha">
             <div class="campo-form">
-              <label for="campo-logradouro">Logradouro</label>
-              <input type="text" id="campo-logradouro">
+              <label for="campo-logradouro">Logradouro *</label>
+              <input type="text" id="campo-logradouro" required>
             </div>
             <div class="campo-form">
-              <label for="campo-numero">Número</label>
-              <input type="text" id="campo-numero">
+              <label for="campo-numero">Número *</label>
+              <input type="text" id="campo-numero" maxlength="10" required>
             </div>
           </div>
 
@@ -136,12 +138,12 @@
               <input type="text" id="campo-bairro">
             </div>
             <div class="campo-form">
-              <label for="campo-cidade">Cidade</label>
-              <input type="text" id="campo-cidade">
+              <label for="campo-cidade">Cidade *</label>
+              <input type="text" id="campo-cidade" required>
             </div>
             <div class="campo-form">
-              <label for="campo-uf">UF</label>
-              <input type="text" id="campo-uf" maxlength="2">
+              <label for="campo-uf">UF *</label>
+              <input type="text" id="campo-uf" maxlength="2" required>
             </div>
           </div>
 
@@ -200,7 +202,7 @@
           </div>
         </div>
 
-        <p class="secao-titulo">Endereço</p>
+        <p class="secao-titulo">Endereço principal</p>
         <div class="visualizacao-grid">
           <div class="visualizacao-item">
             <span class="visualizacao-label">CEP</span>
@@ -232,6 +234,11 @@
           </div>
         </div>
 
+        <div id="bloco-vis-entregas" hidden>
+          <p class="secao-titulo">Endereços de entrega</p>
+          <ul class="lista-enderecos" id="vis-entregas"></ul>
+        </div>
+
       </div>
 
       <div class="modal__rodape">
@@ -244,6 +251,8 @@
   <script src="../js/core/api.js"></script>
   <script src="../js/core/auth.js"></script>
   <script src="../js/core/mascaras.js"></script>
+  <script src="../js/core/formatadores.js"></script>
+  <script src="../js/components/feedback.js"></script>
   <script src="../js/components/sidebar.js"></script>
   <script src="../js/services/clienteService.js"></script>
   <script src="../js/services/viaCepService.js"></script>

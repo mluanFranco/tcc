@@ -8,9 +8,13 @@ let unidadeEmEdicaoId = null;
 document.addEventListener("DOMContentLoaded", async () => {
   if (!exigirAutenticacao()) return;
 
+  // Cadastros: qualquer usuário logado consulta; criar, editar e desativar exigem cadastros.editar.
+  const podeEditar = temPermissao("cadastros.editar");
+
   const elementos = {
     tabelaCorpo: document.getElementById("tabela-unidades-corpo"),
     estadoVazio: document.getElementById("estado-vazio"),
+    estadoCarregando: document.getElementById("estado-carregando"),
     campoBusca: document.getElementById("campo-busca"),
     abaAtivos: document.getElementById("aba-ativos"),
     abaInativos: document.getElementById("aba-inativos"),
@@ -25,14 +29,25 @@ document.addEventListener("DOMContentLoaded", async () => {
     modalVisualizarFecharRodape: document.getElementById("modal-visualizar-fechar-rodape")
   };
 
+  let requisicaoAtual = 0;
+
   async function carregarUnidades() {
+    const minha = ++requisicaoAtual;
+    elementos.estadoCarregando.style.display = "block";
+    elementos.estadoVazio.style.display = "none";
+    elementos.tabelaCorpo.innerHTML = "";
     try {
-      unidadesCache = abaAtivaUnidade === "ativos"
+      const lista = abaAtivaUnidade === "ativos"
         ? await unidadeMedidaService.listar()
         : await unidadeMedidaService.listarInativos();
+      if (minha !== requisicaoAtual) return;   // o usuário já trocou de aba
+      unidadesCache = lista;
+      elementos.estadoCarregando.style.display = "none";
       renderizarTabela();
     } catch (erro) {
-      alert(erro.message);
+      if (minha !== requisicaoAtual) return;
+      elementos.estadoCarregando.style.display = "none";
+      toast.erro(erro.message);
     }
   }
 
@@ -66,17 +81,17 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       return `
         <tr>
-          <td class="celula-nome">${unidade.nome}</td>
-          <td>${unidade.sigla}</td>
+          <td class="celula-nome">${escaparHtml(unidade.nome)}</td>
+          <td>${escaparHtml(unidade.sigla)}</td>
           <td><span class="badge-status ${badgeStatusClasse}">${unidade.ativo ? "Ativa" : "Inativa"}</span></td>
           <td class="celula-acoes">
             <button class="botao-icone" data-acao="visualizar" data-id="${unidade.id}" title="Visualizar" aria-label="Visualizar">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
             </button>
-            <button class="botao-icone" data-acao="editar" data-id="${unidade.id}" title="Editar" aria-label="Editar">
+            ${podeEditar ? `<button class="botao-icone" data-acao="editar" data-id="${unidade.id}" title="Editar" aria-label="Editar">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
             </button>
-            ${botaoAcao}
+            ${botaoAcao}` : ""}
           </td>
         </tr>
       `;
@@ -110,7 +125,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     document.getElementById("vis-sigla").textContent = unidade.sigla;
     document.getElementById("vis-status").textContent = unidade.ativo ? "Ativa" : "Inativa";
     document.getElementById("vis-criado-em").textContent =
-      new Date(unidade.created_at).toLocaleDateString("pt-BR");
+      formatarData(unidade.created_at);
 
     elementos.modalVisualizarOverlay.classList.add("aberto");
   }
@@ -161,9 +176,10 @@ document.addEventListener("DOMContentLoaded", async () => {
         await unidadeMedidaService.criar(dados);
       }
       fecharModal();
+      toast.sucesso("Unidade de medida salva.");
       await carregarUnidades();
     } catch (erro) {
-      alert(erro.message);
+      toast.erro(erro.message);
     } finally {
       botaoSalvar.disabled = false;
       botaoSalvar.textContent = "Salvar";
@@ -182,27 +198,37 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (unidade) abrirModalVisualizacao(unidade);
     }
 
+    if (!podeEditar) return;   // o backend também bloqueia; aqui só evita ações sem botão visível
+
     if (acao === "editar") {
       const unidade = unidadesCache.find(u => u.id === id);
       if (unidade) abrirModal(unidade);
     }
 
     if (acao === "desativar") {
-      if (!confirm("Desativar esta unidade de medida? Produtos vinculados não serão afetados.")) return;
+      const confirmado = await confirmarAcao({
+        titulo: "Desativar unidade de medida",
+        mensagem: "Desativar esta unidade de medida? Produtos vinculados não serão afetados.",
+        textoConfirmar: "Desativar",
+        perigo: true
+      });
+      if (!confirmado) return;
       try {
         await unidadeMedidaService.desativar(id);
+        toast.sucesso("Unidade de medida desativada.");
         await carregarUnidades();
       } catch (erro) {
-        alert(erro.message);
+        toast.erro(erro.message);
       }
     }
 
     if (acao === "reativar") {
       try {
         await unidadeMedidaService.reativar(id);
+        toast.sucesso("Unidade de medida reativada.");
         await carregarUnidades();
       } catch (erro) {
-        alert(erro.message);
+        toast.erro(erro.message);
       }
     }
   }
@@ -214,7 +240,13 @@ document.addEventListener("DOMContentLoaded", async () => {
     carregarUnidades();
   }
 
+  elementos.botaoIncluir.hidden = !podeEditar;
   elementos.botaoIncluir.addEventListener("click", () => abrirModal());
+  document.addEventListener("keydown", (e) => {
+    if (e.key !== "Escape") return;
+    fecharModal();
+    fecharModalVisualizacao();
+  });
   elementos.modalFechar.addEventListener("click", fecharModal);
   elementos.modalCancelar.addEventListener("click", fecharModal);
   elementos.modalOverlay.addEventListener("click", (e) => {

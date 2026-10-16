@@ -59,3 +59,20 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Endereços de entrega no modal de detalhes */
+.lista-enderecos {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.lista-enderecos li {
+  padding: 10px 12px;
+  border: 1px solid var(--neutro-borda);
+  border-radius: 10px;
+  font-size: 13.5px;
+  line-height: 1.4;
+}

@@ -11,6 +11,11 @@ const produtoService = {
     return apiFetch("/produtos/inativos");
   },
 
+  // Ativos com estoque_atual <= estoque_minimo (a mesma regra do dashboard e do assistente).
+  async listarEstoqueBaixo() {
+    return apiFetch("/produtos/estoque-baixo");
+  },
+
   async buscarPorId(id) {
     return apiFetch(`/produtos/${id}`);
   },

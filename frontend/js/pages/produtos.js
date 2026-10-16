@@ -11,14 +11,20 @@ let produtoEmEdicaoId = null;
 document.addEventListener("DOMContentLoaded", async () => {
   if (!exigirAutenticacao()) return;
 
+  // Cadastros: qualquer usuário logado consulta; criar, editar e desativar exigem cadastros.editar.
+  const podeEditar = temPermissao("cadastros.editar");
+
   aplicarMascaraMoeda(document.getElementById("campo-preco-custo"));
 
   const elementos = {
     tabelaCorpo: document.getElementById("tabela-produtos-corpo"),
     estadoVazio: document.getElementById("estado-vazio"),
+    estadoCarregando: document.getElementById("estado-carregando"),
     campoBusca: document.getElementById("campo-busca"),
     abaAtivos: document.getElementById("aba-ativos"),
     abaInativos: document.getElementById("aba-inativos"),
+    abaEstoqueBaixo: document.getElementById("aba-estoque-baixo"),
+    contadorEstoqueBaixo: document.getElementById("contador-estoque-baixo"),
     botaoIncluir: document.getElementById("botao-incluir"),
     campoCategoria: document.getElementById("campo-categoria"),
     campoSubcategoria: document.getElementById("campo-subcategoria"),
@@ -76,13 +82,13 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       elementos.campoCategoria.innerHTML =
         `<option value="">Selecione...</option>` +
-        categoriasCache.map(c => `<option value="${c.id}">${c.nome}</option>`).join("");
+        categoriasCache.map(c => `<option value="${c.id}">${escaparHtml(c.nome)}</option>`).join("");
 
       elementos.campoUnidade.innerHTML =
         `<option value="">Selecione...</option>` +
-        unidadesCache.map(u => `<option value="${u.id}">${u.nome} (${u.sigla})</option>`).join("");
+        unidadesCache.map(u => `<option value="${u.id}">${escaparHtml(u.nome)} (${escaparHtml(u.sigla)})</option>`).join("");
     } catch (erro) {
-      alert("Não foi possível carregar categorias/unidades: " + erro.message);
+      toast.erro("Não foi possível carregar categorias e unidades: " + erro.message);
     }
   }
 
@@ -97,14 +103,14 @@ document.addEventListener("DOMContentLoaded", async () => {
       const subcategorias = await subcategoriaService.listar({ categoriaId });
       elementos.campoSubcategoria.innerHTML =
         `<option value="">Selecione...</option>` +
-        subcategorias.map(s => `<option value="${s.id}">${s.nome}</option>`).join("");
+        subcategorias.map(s => `<option value="${s.id}">${escaparHtml(s.nome)}</option>`).join("");
       elementos.campoSubcategoria.disabled = false;
 
       if (subcategoriaSelecionadaId) {
         elementos.campoSubcategoria.value = subcategoriaSelecionadaId;
       }
     } catch (erro) {
-      alert("Não foi possível carregar as subcategorias: " + erro.message);
+      toast.erro("Não foi possível carregar as subcategorias: " + erro.message);
     }
   }
 
@@ -137,14 +143,39 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // ---------- Tabela ----------
 
+  function atualizarContadorEstoqueBaixo(quantidade) {
+    elementos.contadorEstoqueBaixo.textContent = quantidade;
+    elementos.contadorEstoqueBaixo.hidden = quantidade === 0;
+  }
+
+  const MENSAGENS_VAZIO = {
+    "ativos": "Nenhum produto encontrado.",
+    "inativos": "Nenhum produto inativo.",
+    "estoque-baixo": "Nenhum produto com estoque baixo. Tudo acima do mínimo!"
+  };
+
+  let requisicaoAtual = 0;
+
   async function carregarProdutos() {
+    const minha = ++requisicaoAtual;
+    elementos.estadoCarregando.style.display = "block";
+    elementos.estadoVazio.style.display = "none";
+    elementos.tabelaCorpo.innerHTML = "";
     try {
-      produtosCache = abaAtiva === "ativos"
-        ? await produtoService.listar()
+      const lista = abaAtiva === "ativos" ? await produtoService.listar()
+        : abaAtiva === "estoque-baixo" ? await produtoService.listarEstoqueBaixo()
         : await produtoService.listarInativos();
+      if (minha !== requisicaoAtual) return;   // o usuário já trocou de aba
+      produtosCache = lista;
+      // O contador acompanha a lista carregada; na aba de inativos mantém o último valor conhecido.
+      if (abaAtiva === "estoque-baixo") atualizarContadorEstoqueBaixo(lista.length);
+      else if (abaAtiva === "ativos") atualizarContadorEstoqueBaixo(lista.filter(p => p.estoque_atual <= p.estoque_minimo).length);
+      elementos.estadoCarregando.style.display = "none";
       renderizarTabela();
     } catch (erro) {
-      alert(erro.message);
+      if (minha !== requisicaoAtual) return;
+      elementos.estadoCarregando.style.display = "none";
+      toast.erro(erro.message);
     }
   }
 
@@ -161,6 +192,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     if (produtosFiltrados.length === 0) {
       elementos.tabelaCorpo.innerHTML = "";
+      elementos.estadoVazio.textContent = produtosCache.length === 0 || !termoBusca ? MENSAGENS_VAZIO[abaAtiva] : "Nenhum produto encontrado para essa busca.";
       elementos.estadoVazio.style.display = "block";
       return;
     }
@@ -171,37 +203,38 @@ document.addEventListener("DOMContentLoaded", async () => {
       const estoqueBaixo = produto.estoque_atual <= produto.estoque_minimo;
       const badgeEstoqueClasse = estoqueBaixo ? "badge-estoque--baixo" : "badge-estoque--ok";
       const badgeStatusClasse = produto.ativo ? "badge-status--ativo" : "badge-status--inativo";
-      const precoFormatado = produto.preco_venda != null
-        ? `R$ ${Number(produto.preco_venda).toFixed(2).replace(".", ",")}`
-        : "—";
+      const nome = escaparHtml(produto.nome);
 
-      const botaoAcao = produto.ativo
-        ? `<button class="botao-icone botao-icone--perigo" data-acao="desativar" data-id="${produto.id}" title="Desativar" aria-label="Desativar">
-             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6"></path><path d="M14 11v6"></path></svg>
-           </button>`
-        : `<button class="botao-icone" data-acao="reativar" data-id="${produto.id}" title="Reativar" aria-label="Reativar">
-             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>
-           </button>`;
+      let botoesEdicao = "";
+      if (podeEditar) {
+        const botaoAtivacao = produto.ativo
+          ? `<button class="botao-icone botao-icone--perigo" data-acao="desativar" data-id="${produto.id}" title="Desativar" aria-label="Desativar ${nome}">
+               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6"></path><path d="M14 11v6"></path></svg>
+             </button>`
+          : `<button class="botao-icone" data-acao="reativar" data-id="${produto.id}" title="Reativar" aria-label="Reativar ${nome}">
+               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>
+             </button>`;
+        botoesEdicao = `
+            <button class="botao-icone" data-acao="editar" data-id="${produto.id}" title="Editar" aria-label="Editar ${nome}">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+            </button>
+            ${botaoAtivacao}`;
+      }
 
       return `
         <tr>
-          <td class="celula-nome">${produto.nome}</td>
-          <td>${nomeCategoria(produto.categoria_id)}</td>
-          <td>${nomeSubcategoria(produto.subcategoria_id)}</td>
+          <td class="celula-nome">${nome}</td>
+          <td>${escaparHtml(nomeCategoria(produto.categoria_id))}</td>
           <td>${rotuloTipo(produto)}</td>
-          <td>${precoFormatado}</td>
-          <td><span class="badge-estoque ${badgeEstoqueClasse}">${produto.estoque_atual}</span></td>
-          <td>${produto.estoque_reservado ?? 0}</td>
-          <td>${produto.estoque_minimo}</td>
+          <td>${formatarMoeda(produto.preco_venda)}</td>
+          <td><span class="badge-estoque ${badgeEstoqueClasse}">${formatarNumero(produto.estoque_atual)}</span></td>
+          <td>${formatarNumero(produto.estoque_reservado ?? 0)}</td>
+          <td>${formatarNumero(produto.estoque_minimo)}</td>
           <td><span class="badge-status ${badgeStatusClasse}">${produto.ativo ? "Ativo" : "Inativo"}</span></td>
           <td class="celula-acoes">
-            <button class="botao-icone" data-acao="visualizar" data-id="${produto.id}" title="Visualizar" aria-label="Visualizar">
+            <button class="botao-icone" data-acao="visualizar" data-id="${produto.id}" title="Visualizar" aria-label="Visualizar ${nome}">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-            </button>
-            <button class="botao-icone" data-acao="editar" data-id="${produto.id}" title="Editar" aria-label="Editar">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
-            </button>
-            ${botaoAcao}
+            </button>${botoesEdicao}
           </td>
         </tr>
       `;
@@ -209,15 +242,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   // ---------- Modal de visualização ----------
-
-  function formatarMoeda(numero) {
-    return numero != null ? `R$ ${Number(numero).toFixed(2).replace(".", ",")}` : "—";
-  }
-
-  function formatarData(isoString) {
-    if (!isoString) return "—";
-    return new Date(isoString).toLocaleDateString("pt-BR");
-  }
 
   function abrirModalVisualizacao(produto) {
     document.getElementById("vis-nome").textContent = produto.nome;
@@ -231,11 +255,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     document.getElementById("vis-porcentagem").textContent =
       produto.porcentagem != null ? `${produto.porcentagem}%` : "—";
     document.getElementById("vis-preco-venda").textContent = formatarMoeda(produto.preco_venda);
-    document.getElementById("vis-estoque-atual").textContent = produto.estoque_atual;
-    document.getElementById("vis-estoque-minimo").textContent = produto.estoque_minimo;
-    document.getElementById("vis-estoque-reservado").textContent = produto.estoque_reservado ?? 0;
-    document.getElementById("vis-estoque-disponivel").textContent =
-      produto.estoque_disponivel ?? (produto.estoque_atual - (produto.estoque_reservado ?? 0));
+    document.getElementById("vis-estoque-atual").textContent = formatarNumero(produto.estoque_atual);
+    document.getElementById("vis-estoque-minimo").textContent = formatarNumero(produto.estoque_minimo);
+    document.getElementById("vis-estoque-reservado").textContent = formatarNumero(produto.estoque_reservado ?? 0);
+    document.getElementById("vis-estoque-disponivel").textContent = formatarNumero(
+      produto.estoque_disponivel ?? (produto.estoque_atual - (produto.estoque_reservado ?? 0)));
     document.getElementById("vis-criado-em").textContent = formatarData(produto.created_at);
 
     elementos.modalVisualizarOverlay.classList.add("aberto");
@@ -355,15 +379,17 @@ document.addEventListener("DOMContentLoaded", async () => {
     botaoSalvar.textContent = "Salvando...";
 
     try {
-      if (produtoEmEdicaoId) {
+      const editando = !!produtoEmEdicaoId;
+      if (editando) {
         await produtoService.atualizar(produtoEmEdicaoId, dados);
       } else {
         await produtoService.criar(dados);
       }
       fecharModal();
+      toast.sucesso(editando ? "Produto atualizado." : "Produto cadastrado.");
       await carregarProdutos();
     } catch (erro) {
-      alert(erro.message);
+      toast.erro(erro.message);
     } finally {
       botaoSalvar.disabled = false;
       botaoSalvar.textContent = "Salvar";
@@ -384,27 +410,38 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (produto) abrirModalVisualizacao(produto);
     }
 
+    if (!podeEditar) return;   // o backend também bloqueia; aqui só evita ações sem botão visível
+
     if (acao === "editar") {
       const produto = produtosCache.find(p => p.id === id);
       if (produto) await abrirModal(produto);
     }
 
     if (acao === "desativar") {
-      if (!confirm("Desativar este produto? Ele deixará de aparecer na listagem de ativos.")) return;
+      const produto = produtosCache.find(p => p.id === id);
+      const confirmado = await confirmarAcao({
+        titulo: "Desativar produto",
+        mensagem: `"${produto ? produto.nome : "Este produto"}" deixará de aparecer na listagem de ativos. Você poderá reativá-lo depois.`,
+        textoConfirmar: "Desativar",
+        perigo: true
+      });
+      if (!confirmado) return;
       try {
         await produtoService.desativar(id);
+        toast.sucesso("Produto desativado.");
         await carregarProdutos();
       } catch (erro) {
-        alert(erro.message);
+        toast.erro(erro.message);
       }
     }
 
     if (acao === "reativar") {
       try {
         await produtoService.reativar(id);
+        toast.sucesso("Produto reativado.");
         await carregarProdutos();
       } catch (erro) {
-        alert(erro.message);
+        toast.erro(erro.message);
       }
     }
   }
@@ -413,12 +450,19 @@ document.addEventListener("DOMContentLoaded", async () => {
     abaAtiva = novaAba;
     elementos.abaAtivos.classList.toggle("aba-status--ativa", novaAba === "ativos");
     elementos.abaInativos.classList.toggle("aba-status--ativa", novaAba === "inativos");
+    elementos.abaEstoqueBaixo.classList.toggle("aba-status--ativa", novaAba === "estoque-baixo");
     carregarProdutos();
   }
 
   // ---------- Listeners ----------
 
+  elementos.botaoIncluir.hidden = !podeEditar;
   elementos.botaoIncluir.addEventListener("click", () => abrirModal());
+  document.addEventListener("keydown", (e) => {
+    if (e.key !== "Escape") return;
+    fecharModal();
+    fecharModalVisualizacao();
+  });
   elementos.modalFechar.addEventListener("click", fecharModal);
   elementos.modalCancelar.addEventListener("click", fecharModal);
   elementos.modalOverlay.addEventListener("click", (e) => {
@@ -428,6 +472,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   elementos.campoBusca.addEventListener("input", renderizarTabela);
   elementos.abaAtivos.addEventListener("click", () => trocarAba("ativos"));
   elementos.abaInativos.addEventListener("click", () => trocarAba("inativos"));
+  elementos.abaEstoqueBaixo.addEventListener("click", () => trocarAba("estoque-baixo"));
   elementos.tabelaCorpo.addEventListener("click", tratarAcaoTabela);
   elementos.modalVisualizarFechar.addEventListener("click", fecharModalVisualizacao);
   elementos.modalVisualizarFecharRodape.addEventListener("click", fecharModalVisualizacao);

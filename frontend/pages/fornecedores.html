@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="../css/base.css">
   <link rel="stylesheet" href="../css/sidebar.css">
   <link rel="stylesheet" href="../css/listagem-crud.css">
+  <link rel="stylesheet" href="../css/feedback.css">
   <link rel="stylesheet" href="../css/clientes.css">
 </head>
 <body>
@@ -20,7 +21,7 @@
 
       <div class="pagina-topo">
         <h1>Fornecedores</h1>
-        <button class="botao-primario" id="botao-incluir">
+        <button class="botao-primario" id="botao-incluir" hidden>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
           Incluir
         </button>
@@ -46,11 +47,12 @@
               <th>Telefone</th>
               <th>Cidade/UF</th>
               <th>Status</th>
-              <th>Ações</th>
+              <th><span class="sr-only">Ações</span></th>
             </tr>
           </thead>
           <tbody id="tabela-fornecedores-corpo"></tbody>
         </table>
+        <div class="estado-carregando" id="estado-carregando">Carregando...</div>
         <div class="estado-vazio" id="estado-vazio" style="display: none;">
           Nenhum fornecedor encontrado.
         </div>
@@ -231,6 +233,8 @@
   <script src="../js/core/api.js"></script>
   <script src="../js/core/auth.js"></script>
   <script src="../js/core/mascaras.js"></script>
+  <script src="../js/core/formatadores.js"></script>
+  <script src="../js/components/feedback.js"></script>
   <script src="../js/components/sidebar.js"></script>
   <script src="../js/services/fornecedorService.js"></script>
   <script src="../js/services/viaCepService.js"></script>

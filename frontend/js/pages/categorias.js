@@ -8,9 +8,13 @@ let categoriaEmEdicaoId = null;
 document.addEventListener("DOMContentLoaded", async () => {
   if (!exigirAutenticacao()) return;
 
+  // Cadastros: qualquer usuário logado consulta; criar, editar e desativar exigem cadastros.editar.
+  const podeEditar = temPermissao("cadastros.editar");
+
   const elementos = {
     tabelaCorpo: document.getElementById("tabela-categorias-corpo"),
     estadoVazio: document.getElementById("estado-vazio"),
+    estadoCarregando: document.getElementById("estado-carregando"),
     campoBusca: document.getElementById("campo-busca"),
     abaAtivos: document.getElementById("aba-ativos"),
     abaInativos: document.getElementById("aba-inativos"),
@@ -25,14 +29,25 @@ document.addEventListener("DOMContentLoaded", async () => {
     modalVisualizarFecharRodape: document.getElementById("modal-visualizar-fechar-rodape")
   };
 
+  let requisicaoAtual = 0;
+
   async function carregarCategorias() {
+    const minha = ++requisicaoAtual;
+    elementos.estadoCarregando.style.display = "block";
+    elementos.estadoVazio.style.display = "none";
+    elementos.tabelaCorpo.innerHTML = "";
     try {
-      categoriasCache = abaAtivaCategoria === "ativos"
+      const lista = abaAtivaCategoria === "ativos"
         ? await categoriaService.listar()
         : await categoriaService.listarInativos();
+      if (minha !== requisicaoAtual) return;   // o usuário já trocou de aba
+      categoriasCache = lista;
+      elementos.estadoCarregando.style.display = "none";
       renderizarTabela();
     } catch (erro) {
-      alert(erro.message);
+      if (minha !== requisicaoAtual) return;
+      elementos.estadoCarregando.style.display = "none";
+      toast.erro(erro.message);
     }
   }
 
@@ -64,16 +79,16 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       return `
         <tr>
-          <td class="celula-nome">${categoria.nome}</td>
+          <td class="celula-nome">${escaparHtml(categoria.nome)}</td>
           <td><span class="badge-status ${badgeStatusClasse}">${categoria.ativo ? "Ativa" : "Inativa"}</span></td>
           <td class="celula-acoes">
             <button class="botao-icone" data-acao="visualizar" data-id="${categoria.id}" title="Visualizar" aria-label="Visualizar">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
             </button>
-            <button class="botao-icone" data-acao="editar" data-id="${categoria.id}" title="Editar" aria-label="Editar">
+            ${podeEditar ? `<button class="botao-icone" data-acao="editar" data-id="${categoria.id}" title="Editar" aria-label="Editar">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
             </button>
-            ${botaoAcao}
+            ${botaoAcao}` : ""}
           </td>
         </tr>
       `;
@@ -105,7 +120,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     document.getElementById("vis-nome").textContent = categoria.nome;
     document.getElementById("vis-status").textContent = categoria.ativo ? "Ativa" : "Inativa";
     document.getElementById("vis-criado-em").textContent =
-      new Date(categoria.created_at).toLocaleDateString("pt-BR");
+      formatarData(categoria.created_at);
 
     elementos.modalVisualizarOverlay.classList.add("aberto");
   }
@@ -150,9 +165,10 @@ document.addEventListener("DOMContentLoaded", async () => {
         await categoriaService.criar(dados);
       }
       fecharModal();
+      toast.sucesso("Categoria salva.");
       await carregarCategorias();
     } catch (erro) {
-      alert(erro.message);
+      toast.erro(erro.message);
     } finally {
       botaoSalvar.disabled = false;
       botaoSalvar.textContent = "Salvar";
@@ -171,27 +187,37 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (categoria) abrirModalVisualizacao(categoria);
     }
 
+    if (!podeEditar) return;   // o backend também bloqueia; aqui só evita ações sem botão visível
+
     if (acao === "editar") {
       const categoria = categoriasCache.find(c => c.id === id);
       if (categoria) abrirModal(categoria);
     }
 
     if (acao === "desativar") {
-      if (!confirm("Desativar esta categoria? Produtos e subcategorias vinculados não serão afetados, mas ela deixará de aparecer para novos cadastros.")) return;
+      const confirmado = await confirmarAcao({
+        titulo: "Desativar categoria",
+        mensagem: "Desativar esta categoria? Produtos e subcategorias vinculados não serão afetados, mas ela deixará de aparecer para novos cadastros.",
+        textoConfirmar: "Desativar",
+        perigo: true
+      });
+      if (!confirmado) return;
       try {
         await categoriaService.desativar(id);
+        toast.sucesso("Categoria desativada.");
         await carregarCategorias();
       } catch (erro) {
-        alert(erro.message);
+        toast.erro(erro.message);
       }
     }
 
     if (acao === "reativar") {
       try {
         await categoriaService.reativar(id);
+        toast.sucesso("Categoria reativada.");
         await carregarCategorias();
       } catch (erro) {
-        alert(erro.message);
+        toast.erro(erro.message);
       }
     }
   }
@@ -203,7 +229,13 @@ document.addEventListener("DOMContentLoaded", async () => {
     carregarCategorias();
   }
 
+  elementos.botaoIncluir.hidden = !podeEditar;
   elementos.botaoIncluir.addEventListener("click", () => abrirModal());
+  document.addEventListener("keydown", (e) => {
+    if (e.key !== "Escape") return;
+    fecharModal();
+    fecharModalVisualizacao();
+  });
   elementos.modalFechar.addEventListener("click", fecharModal);
   elementos.modalCancelar.addEventListener("click", fecharModal);
   elementos.modalOverlay.addEventListener("click", (e) => {

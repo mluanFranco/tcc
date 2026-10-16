@@ -1,17 +1,25 @@
-// Lógica da tela de Clientes: busca dados via clienteService, renderiza a tabela,
-// controla o modal de criação/edição, autocomplete de endereço via ViaCEP
-// e o filtro de tipo de documento (CPF/CNPJ) conforme PF ou PJ.
+// Lógica da tela de Clientes: lista, modal de criação/edição, busca de endereço pelo ViaCEP
+// e validação do documento conforme PF ou PJ.
+//
+// O cliente tem um endereço principal (obrigatório) e pode ter endereços de entrega. O backend guarda os
+// endereços em /clientes/{id}/enderecos; aqui o formulário edita o principal e o modal de detalhes
+// mostra os de entrega.
 
 let clientesCache = [];
 let abaAtivaClientes = "ativos";
 let clienteEmEdicaoId = null;
+let enderecoPrincipalEmEdicaoId = null;
 
 document.addEventListener("DOMContentLoaded", async () => {
   if (!exigirAutenticacao()) return;
 
+  // Cadastros: qualquer usuário logado consulta; criar, editar e desativar exigem cadastros.editar.
+  const podeEditar = temPermissao("cadastros.editar");
+
   const elementos = {
     tabelaCorpo: document.getElementById("tabela-clientes-corpo"),
     estadoVazio: document.getElementById("estado-vazio"),
+    estadoCarregando: document.getElementById("estado-carregando"),
     campoBusca: document.getElementById("campo-busca"),
     abaAtivos: document.getElementById("aba-ativos"),
     abaInativos: document.getElementById("aba-inativos"),
@@ -31,25 +39,60 @@ document.addEventListener("DOMContentLoaded", async () => {
     modalVisualizarFecharRodape: document.getElementById("modal-visualizar-fechar-rodape")
   };
 
+  const campo = (id) => document.getElementById(id);
+
+  // ---------- Dados do endereço principal ----------
+
+  function enderecoPrincipal(cliente) {
+    const lista = cliente.enderecos || [];
+    return lista.find(e => e.tipo === "principal") || null;
+  }
+
+  function cidadeUf(endereco) {
+    if (!endereco || !endereco.cidade) return "—";
+    return `${endereco.cidade}${endereco.uf ? "/" + endereco.uf : ""}`;
+  }
+
+  function textoEndereco(e) {
+    const rua = [e.logradouro, e.numero].filter(Boolean).join(", ");
+    const complemento = e.complemento ? ` — ${e.complemento}` : "";
+    const bairro = e.bairro ? `${e.bairro}, ` : "";
+    return `${rua}${complemento}. ${bairro}${cidadeUf(e)}. CEP ${formatarCep(e.cep)}`;
+  }
+
+  // ---------- Tabela ----------
+
+  let requisicaoAtual = 0;
+
   async function carregarClientes() {
+    const minha = ++requisicaoAtual;
+    elementos.estadoCarregando.style.display = "block";
+    elementos.estadoVazio.style.display = "none";
+    elementos.tabelaCorpo.innerHTML = "";
     try {
-      clientesCache = abaAtivaClientes === "ativos"
+      const lista = abaAtivaClientes === "ativos"
         ? await clienteService.listar()
         : await clienteService.listarInativos();
+      if (minha !== requisicaoAtual) return;   // o usuário já trocou de aba
+      clientesCache = lista;
+      elementos.estadoCarregando.style.display = "none";
       renderizarTabela();
     } catch (erro) {
-      alert(erro.message);
+      if (minha !== requisicaoAtual) return;
+      elementos.estadoCarregando.style.display = "none";
+      toast.erro(erro.message);
     }
   }
 
   function renderizarTabela() {
     const termoBusca = elementos.campoBusca.value.trim().toLowerCase();
+    const termoDocumento = termoBusca.replace(/[^0-9a-z]/g, "");
 
     const clientesFiltrados = clientesCache.filter(cliente => {
       if (!termoBusca) return true;
       return (
         cliente.nome.toLowerCase().includes(termoBusca) ||
-        cliente.cpf_cnpj.includes(termoBusca)
+        (termoDocumento && cliente.cpf_cnpj.toLowerCase().includes(termoDocumento))
       );
     });
 
@@ -63,58 +106,69 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     elementos.tabelaCorpo.innerHTML = clientesFiltrados.map(cliente => {
       const badgeStatusClasse = cliente.ativo ? "badge-status--ativo" : "badge-status--inativo";
-      const cidadeUf = cliente.cidade ? `${cliente.cidade}${cliente.uf ? "/" + cliente.uf : ""}` : "—";
+      const nome = escaparHtml(cliente.nome);
+      const rotuloDocumento = cliente.tipo === "PJ" ? "CNPJ" : "CPF";
 
-      const botaoAcao = cliente.ativo
-        ? `<button class="botao-icone botao-icone--perigo" data-acao="desativar" data-id="${cliente.id}" title="Desativar" aria-label="Desativar">
-             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6"></path><path d="M14 11v6"></path></svg>
-           </button>`
-        : `<button class="botao-icone" data-acao="reativar" data-id="${cliente.id}" title="Reativar" aria-label="Reativar">
-             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>
-           </button>`;
+      let botoesEdicao = "";
+      if (podeEditar) {
+        const botaoAtivacao = cliente.ativo
+          ? `<button class="botao-icone botao-icone--perigo" data-acao="desativar" data-id="${cliente.id}" title="Desativar" aria-label="Desativar ${nome}">
+               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6"></path><path d="M14 11v6"></path></svg>
+             </button>`
+          : `<button class="botao-icone" data-acao="reativar" data-id="${cliente.id}" title="Reativar" aria-label="Reativar ${nome}">
+               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>
+             </button>`;
+        botoesEdicao = `
+            <button class="botao-icone" data-acao="editar" data-id="${cliente.id}" title="Editar" aria-label="Editar ${nome}">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+            </button>
+            ${botaoAtivacao}`;
+      }
 
       return `
         <tr>
-          <td class="celula-nome">${cliente.nome}</td>
-          <td>${cliente.tipo === "PJ" ? "CNPJ" : "CPF"}: ${cliente.cpf_cnpj}</td>
-          <td>${cliente.telefone ?? "—"}</td>
-          <td>${cidadeUf}</td>
+          <td class="celula-nome">${nome}</td>
+          <td>${rotuloDocumento}: ${escaparHtml(formatarDocumento(cliente.cpf_cnpj))}</td>
+          <td>${escaparHtml(cliente.telefone ?? "—")}</td>
+          <td>${escaparHtml(cidadeUf(enderecoPrincipal(cliente)))}</td>
           <td><span class="badge-status ${badgeStatusClasse}">${cliente.ativo ? "Ativo" : "Inativo"}</span></td>
           <td class="celula-acoes">
-            <button class="botao-icone" data-acao="visualizar" data-id="${cliente.id}" title="Visualizar" aria-label="Visualizar">
+            <button class="botao-icone" data-acao="visualizar" data-id="${cliente.id}" title="Visualizar" aria-label="Visualizar ${nome}">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-            </button>
-            <button class="botao-icone" data-acao="editar" data-id="${cliente.id}" title="Editar" aria-label="Editar">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
-            </button>
-            ${botaoAcao}
+            </button>${botoesEdicao}
           </td>
         </tr>
       `;
     }).join("");
   }
 
-  function formatarData(isoString) {
-    if (!isoString) return "—";
-    return new Date(isoString).toLocaleDateString("pt-BR");
-  }
+  // ---------- Modal de visualização ----------
 
   function abrirModalVisualizacao(cliente) {
-    document.getElementById("vis-nome").textContent = cliente.nome;
-    document.getElementById("vis-status").textContent = cliente.ativo ? "Ativo" : "Inativo";
-    document.getElementById("vis-tipo").textContent = cliente.tipo === "PJ" ? "Pessoa Jurídica" : "Pessoa Física";
-    document.getElementById("vis-documento").textContent = cliente.cpf_cnpj;
-    document.getElementById("vis-telefone").textContent = cliente.telefone ?? "—";
-    document.getElementById("vis-email").textContent = cliente.email ?? "—";
-    document.getElementById("vis-cep").textContent = cliente.cep ?? "—";
-    document.getElementById("vis-logradouro").textContent = cliente.logradouro ?? "—";
-    document.getElementById("vis-numero").textContent = cliente.numero ?? "—";
-    document.getElementById("vis-complemento").textContent = cliente.complemento ?? "—";
-    document.getElementById("vis-bairro").textContent = cliente.bairro ?? "—";
-    document.getElementById("vis-cidade-uf").textContent = cliente.cidade
-      ? `${cliente.cidade}${cliente.uf ? "/" + cliente.uf : ""}`
-      : "—";
-    document.getElementById("vis-criado-em").textContent = formatarData(cliente.created_at);
+    const principal = enderecoPrincipal(cliente) || {};
+    campo("vis-nome").textContent = cliente.nome;
+    campo("vis-status").textContent = cliente.ativo ? "Ativo" : "Inativo";
+    campo("vis-tipo").textContent = cliente.tipo === "PJ" ? "Pessoa Jurídica" : "Pessoa Física";
+    campo("vis-documento").textContent = formatarDocumento(cliente.cpf_cnpj);
+    campo("vis-telefone").textContent = cliente.telefone ?? "—";
+    campo("vis-email").textContent = cliente.email ?? "—";
+    campo("vis-cep").textContent = principal.cep ? formatarCep(principal.cep) : "—";
+    campo("vis-logradouro").textContent = principal.logradouro ?? "—";
+    campo("vis-numero").textContent = principal.numero ?? "—";
+    campo("vis-complemento").textContent = principal.complemento ?? "—";
+    campo("vis-bairro").textContent = principal.bairro ?? "—";
+    campo("vis-cidade-uf").textContent = cidadeUf(principal);
+    campo("vis-criado-em").textContent = formatarData(cliente.created_at);
+
+    const entregas = (cliente.enderecos || []).filter(e => e.tipo === "entrega");
+    const lista = campo("vis-entregas");
+    lista.innerHTML = "";
+    entregas.forEach(e => {
+      const li = document.createElement("li");
+      li.textContent = textoEndereco(e);   // textContent: o texto do endereço nunca vira HTML
+      lista.appendChild(li);
+    });
+    campo("bloco-vis-entregas").hidden = entregas.length === 0;
 
     elementos.modalVisualizarOverlay.classList.add("aberto");
   }
@@ -122,6 +176,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   function fecharModalVisualizacao() {
     elementos.modalVisualizarOverlay.classList.remove("aberto");
   }
+
+  // ---------- Documento e CEP ----------
 
   function atualizarLabelDocumento() {
     const tipo = elementos.campoTipo.value;
@@ -156,40 +212,44 @@ document.addEventListener("DOMContentLoaded", async () => {
       return;
     }
 
-    document.getElementById("campo-logradouro").value = endereco.logradouro ?? "";
-    document.getElementById("campo-bairro").value = endereco.bairro ?? "";
-    document.getElementById("campo-cidade").value = endereco.cidade ?? "";
-    document.getElementById("campo-uf").value = endereco.uf ?? "";
-    document.getElementById("campo-ddd").value = endereco.ddd ?? "";
+    campo("campo-logradouro").value = endereco.logradouro ?? "";
+    campo("campo-bairro").value = endereco.bairro ?? "";
+    campo("campo-cidade").value = endereco.cidade ?? "";
+    campo("campo-uf").value = endereco.uf ?? "";
+    campo("campo-ddd").value = endereco.ddd ?? "";
 
     definirCepStatus("encontrado", "Endereço encontrado");
 
-    // Move o foco para o número, já que é o único dado de endereço
-    // que o ViaCEP nunca preenche e o usuário precisa digitar.
-    document.getElementById("campo-numero").focus();
+    // O número é o único dado que o ViaCEP nunca preenche.
+    campo("campo-numero").focus();
   }
+
+  // ---------- Modal de criação/edição ----------
 
   function abrirModal(cliente = null) {
     elementos.form.reset();
     limparErrosForm();
     limparCepStatus();
+    enderecoPrincipalEmEdicaoId = null;
 
     if (cliente) {
+      const principal = enderecoPrincipal(cliente) || {};
       clienteEmEdicaoId = cliente.id;
+      enderecoPrincipalEmEdicaoId = principal.id ?? null;
       elementos.modalTitulo.textContent = "Editar cliente";
-      document.getElementById("campo-nome").value = cliente.nome;
+      campo("campo-nome").value = cliente.nome;
       elementos.campoTipo.value = cliente.tipo ?? "PF";
-      elementos.campoDocumento.value = cliente.cpf_cnpj;
-      document.getElementById("campo-telefone").value = cliente.telefone ?? "";
-      document.getElementById("campo-email").value = cliente.email ?? "";
-      elementos.campoCep.value = cliente.cep ?? "";
-      document.getElementById("campo-logradouro").value = cliente.logradouro ?? "";
-      document.getElementById("campo-numero").value = cliente.numero ?? "";
-      document.getElementById("campo-complemento").value = cliente.complemento ?? "";
-      document.getElementById("campo-bairro").value = cliente.bairro ?? "";
-      document.getElementById("campo-cidade").value = cliente.cidade ?? "";
-      document.getElementById("campo-uf").value = cliente.uf ?? "";
-      document.getElementById("campo-ddd").value = cliente.ddd ?? "";
+      elementos.campoDocumento.value = formatarDocumento(cliente.cpf_cnpj);
+      campo("campo-telefone").value = cliente.telefone ?? "";
+      campo("campo-email").value = cliente.email ?? "";
+      elementos.campoCep.value = principal.cep ? formatarCep(principal.cep) : "";
+      campo("campo-logradouro").value = principal.logradouro ?? "";
+      campo("campo-numero").value = principal.numero ?? "";
+      campo("campo-complemento").value = principal.complemento ?? "";
+      campo("campo-bairro").value = principal.bairro ?? "";
+      campo("campo-cidade").value = principal.cidade ?? "";
+      campo("campo-uf").value = principal.uf ?? "";
+      campo("campo-ddd").value = principal.ddd ?? "";
     } else {
       clienteEmEdicaoId = null;
       elementos.modalTitulo.textContent = "Novo cliente";
@@ -203,69 +263,105 @@ document.addEventListener("DOMContentLoaded", async () => {
   function fecharModal() {
     elementos.modalOverlay.classList.remove("aberto");
     clienteEmEdicaoId = null;
+    enderecoPrincipalEmEdicaoId = null;
   }
 
   function limparErrosForm() {
-    document.querySelectorAll(".campo-form").forEach(campo => campo.classList.remove("invalido"));
+    document.querySelectorAll(".campo-form").forEach(c => c.classList.remove("invalido"));
   }
 
+  function marcarInvalido(idCampo) {
+    campo(idCampo).closest(".campo-form").classList.add("invalido");
+  }
+
+  // Confere o que o backend também confere, para o usuário ver o problema antes de enviar.
   function validarForm(dados) {
     limparErrosForm();
-    let valido = true;
+    const problemas = [];
 
-    if (!dados.nome.trim()) {
-      document.getElementById("campo-nome").closest(".campo-form").classList.add("invalido");
-      valido = false;
+    if (!dados.nome.trim()) { marcarInvalido("campo-nome"); problemas.push("Informe o nome."); }
+
+    const documento = dados.cpf_cnpj.replace(/[^0-9a-zA-Z]/g, "");
+    if (dados.tipo === "PF" && !/^\d{11}$/.test(documento)) {
+      marcarInvalido("campo-documento"); problemas.push("O CPF deve ter 11 números.");
+    } else if (dados.tipo === "PJ" && documento.length !== 14) {
+      marcarInvalido("campo-documento"); problemas.push("O CNPJ deve ter 14 caracteres.");
     }
 
-    if (!dados.cpf_cnpj.trim()) {
-      elementos.campoDocumento.closest(".campo-form").classList.add("invalido");
-      valido = false;
-    }
+    const e = dados.endereco;
+    if (e.cep.replace(/\D/g, "").length !== 8) { marcarInvalido("campo-cep"); problemas.push("Informe o CEP com 8 números."); }
+    if (!e.logradouro.trim()) { marcarInvalido("campo-logradouro"); problemas.push("Informe o logradouro."); }
+    if (!e.numero.trim()) { marcarInvalido("campo-numero"); problemas.push("Informe o número (use S/N se não houver)."); }
+    if (!e.cidade.trim()) { marcarInvalido("campo-cidade"); problemas.push("Informe a cidade."); }
+    if (!/^[A-Za-z]{2}$/.test(e.uf.trim())) { marcarInvalido("campo-uf"); problemas.push("Informe a UF com 2 letras."); }
 
-    return valido;
+    if (problemas.length) toast.erro(problemas[0] + (problemas.length > 1 ? ` (mais ${problemas.length - 1} a corrigir)` : ""));
+    return problemas.length === 0;
+  }
+
+  function lerFormulario() {
+    return {
+      nome: campo("campo-nome").value,
+      tipo: elementos.campoTipo.value,
+      cpf_cnpj: elementos.campoDocumento.value,
+      telefone: campo("campo-telefone").value.trim() || null,
+      email: campo("campo-email").value.trim() || null,
+      endereco: {
+        cep: elementos.campoCep.value,
+        logradouro: campo("campo-logradouro").value,
+        numero: campo("campo-numero").value,
+        complemento: campo("campo-complemento").value.trim() || null,
+        bairro: campo("campo-bairro").value.trim() || null,
+        cidade: campo("campo-cidade").value,
+        uf: campo("campo-uf").value.trim().toUpperCase(),
+        ddd: campo("campo-ddd").value.trim() || null
+      }
+    };
   }
 
   async function salvarCliente(evento) {
     evento.preventDefault();
 
-    const dados = {
-      nome: document.getElementById("campo-nome").value,
-      tipo: elementos.campoTipo.value,
-      cpf_cnpj: elementos.campoDocumento.value,
-      telefone: document.getElementById("campo-telefone").value || null,
-      email: document.getElementById("campo-email").value || null,
-      cep: elementos.campoCep.value || null,
-      logradouro: document.getElementById("campo-logradouro").value || null,
-      numero: document.getElementById("campo-numero").value || null,
-      complemento: document.getElementById("campo-complemento").value || null,
-      bairro: document.getElementById("campo-bairro").value || null,
-      cidade: document.getElementById("campo-cidade").value || null,
-      uf: document.getElementById("campo-uf").value || null,
-      ddd: document.getElementById("campo-ddd").value || null
-    };
-
+    const dados = lerFormulario();
     if (!validarForm(dados)) return;
 
-    const botaoSalvar = document.getElementById("modal-salvar");
+    const botaoSalvar = campo("modal-salvar");
     botaoSalvar.disabled = true;
     botaoSalvar.textContent = "Salvando...";
 
+    const dadosCliente = { nome: dados.nome, tipo: dados.tipo, cpf_cnpj: dados.cpf_cnpj, telefone: dados.telefone, email: dados.email };
+
     try {
       if (clienteEmEdicaoId) {
-        await clienteService.atualizar(clienteEmEdicaoId, dados);
+        await clienteService.atualizar(clienteEmEdicaoId, dadosCliente);
+        try {
+          if (enderecoPrincipalEmEdicaoId) {
+            await clienteService.atualizarEndereco(clienteEmEdicaoId, enderecoPrincipalEmEdicaoId, dados.endereco);
+          } else {
+            await clienteService.criarEndereco(clienteEmEdicaoId, { ...dados.endereco, tipo: "principal" });
+          }
+        } catch (erroEndereco) {
+          // Os dados do cliente já foram gravados; só o endereço falhou.
+          await carregarClientes();
+          toast.erro("Os dados do cliente foram salvos, mas o endereço não: " + erroEndereco.message);
+          return;
+        }
       } else {
-        await clienteService.criar(dados);
+        await clienteService.criar({ ...dadosCliente, endereco_principal: dados.endereco });
       }
+      const editando = !!clienteEmEdicaoId;
       fecharModal();
+      toast.sucesso(editando ? "Cliente atualizado." : "Cliente cadastrado.");
       await carregarClientes();
     } catch (erro) {
-      alert(erro.message);
+      toast.erro(erro.message);
     } finally {
       botaoSalvar.disabled = false;
       botaoSalvar.textContent = "Salvar";
     }
   }
+
+  // ---------- Ações da tabela e abas ----------
 
   async function tratarAcaoTabela(evento) {
     const botao = evento.target.closest("button[data-acao]");
@@ -273,33 +369,43 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     const id = parseInt(botao.dataset.id, 10);
     const acao = botao.dataset.acao;
+    const cliente = clientesCache.find(c => c.id === id);
 
     if (acao === "visualizar") {
-      const cliente = clientesCache.find(c => c.id === id);
       if (cliente) abrirModalVisualizacao(cliente);
+      return;
     }
 
+    if (!podeEditar) return;   // o backend também bloqueia; aqui só evita ações sem botão visível
+
     if (acao === "editar") {
-      const cliente = clientesCache.find(c => c.id === id);
       if (cliente) abrirModal(cliente);
     }
 
     if (acao === "desativar") {
-      if (!confirm("Desativar este cliente? Ele deixará de aparecer na listagem de ativos.")) return;
+      const confirmado = await confirmarAcao({
+        titulo: "Desativar cliente",
+        mensagem: `"${cliente ? cliente.nome : "Este cliente"}" deixará de aparecer na listagem de ativos. Você poderá reativá-lo depois.`,
+        textoConfirmar: "Desativar",
+        perigo: true
+      });
+      if (!confirmado) return;
       try {
         await clienteService.desativar(id);
+        toast.sucesso("Cliente desativado.");
         await carregarClientes();
       } catch (erro) {
-        alert(erro.message);
+        toast.erro(erro.message);
       }
     }
 
     if (acao === "reativar") {
       try {
         await clienteService.reativar(id);
+        toast.sucesso("Cliente reativado.");
         await carregarClientes();
       } catch (erro) {
-        alert(erro.message);
+        toast.erro(erro.message);
       }
     }
   }
@@ -311,7 +417,15 @@ document.addEventListener("DOMContentLoaded", async () => {
     carregarClientes();
   }
 
+  // ---------- Listeners ----------
+
+  elementos.botaoIncluir.hidden = !podeEditar;
   elementos.botaoIncluir.addEventListener("click", () => abrirModal());
+  document.addEventListener("keydown", (e) => {
+    if (e.key !== "Escape") return;
+    fecharModal();
+    fecharModalVisualizacao();
+  });
   elementos.modalFechar.addEventListener("click", fecharModal);
   elementos.modalCancelar.addEventListener("click", fecharModal);
   elementos.modalOverlay.addEventListener("click", (e) => {
