@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Assistente de IA — Nova Sorvetes</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/base.css">
+  <link rel="stylesheet" href="../css/sidebar.css">
+  <link rel="stylesheet" href="../css/listagem-crud.css">
+  <link rel="stylesheet" href="../css/assistente.css">
+  <link rel="stylesheet" href="../css/feedback.css">
+</head>
+<body>
+
+  <div class="app-layout">
+    <aside id="sidebar" class="sidebar"></aside>
+
+    <main class="conteudo-principal">
+
+      <div class="pagina-topo">
+        <h1>Assistente de IA</h1>
+        <div class="chat-topo-info">
+          <span class="chat-restantes" id="chat-restantes" hidden></span>
+        </div>
+      </div>
+
+      <div class="chat-aviso" id="chat-aviso" hidden></div>
+
+      <div class="chat-layout">
+
+        <aside class="chat-conversas" id="chat-conversas" aria-label="Conversas">
+          <button type="button" class="botao-primario" id="botao-nova-conversa">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            Nova conversa
+          </button>
+          <ul class="chat-conversas__lista" id="lista-conversas"></ul>
+          <p class="chat-conversas__vazio" id="conversas-vazio" hidden>Nenhuma conversa ainda.</p>
+          <button type="button" class="botao-secundario botao-conversas-mobile" id="botao-fechar-conversas">Fechar</button>
+        </aside>
+
+        <section class="chat-painel" aria-label="Chat">
+          <div class="chat-painel__topo">
+            <button type="button" class="botao-secundario botao-conversas-mobile" id="botao-abrir-conversas">Conversas</button>
+          </div>
+
+          <div class="chat-mensagens" id="chat-mensagens" role="log" aria-live="polite" aria-label="Mensagens da conversa"></div>
+
+          <form class="chat-compositor" id="form-pergunta" novalidate>
+            <div class="chat-compositor__linha">
+              <textarea id="campo-pergunta" rows="1" maxlength="2000" placeholder="Pergunte algo sobre os dados do sistema..." aria-label="Sua pergunta"></textarea>
+              <button type="submit" class="botao-primario" id="botao-enviar">Enviar</button>
+            </div>
+            <div class="chat-compositor__rodape">
+              <span>Enter envia · Shift+Enter quebra a linha</span>
+              <span id="contador-pergunta">0/2000</span>
+            </div>
+          </form>
+        </section>
+
+      </div>
+    </main>
+  </div>
+
+  <script src="../js/core/config.js"></script>
+  <script src="../js/core/api.js"></script>
+  <script src="../js/core/auth.js"></script>
+  <script src="../js/core/formatadores.js"></script>
+  <script src="../js/components/sidebar.js"></script>
+  <script src="../js/components/feedback.js"></script>
+  <script src="../js/services/assistenteService.js"></script>
+  <script src="../js/pages/assistente.js"></script>
+</body>
+</html>
