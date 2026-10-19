@@ -8,6 +8,9 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../css/base.css">
   <link rel="stylesheet" href="../css/sidebar.css">
+  <link rel="stylesheet" href="../css/listagem-crud.css">
+  <link rel="stylesheet" href="../css/dashboard.css">
+  <link rel="stylesheet" href="../css/feedback.css">
 </head>
 <body>
 
@@ -15,10 +18,83 @@
     <aside id="sidebar" class="sidebar"></aside>
 
     <main class="conteudo-principal">
-      <h1>Bem-vindo(a)!</h1>
-      <p style="color: var(--neutro-secundario); margin-top: 8px;">
-        Esta é uma tela provisória — o dashboard real com métricas vem a seguir.
-      </p>
+
+      <div class="pagina-topo dash-topo">
+        <div>
+          <h1>Dashboard</h1>
+          <p class="dash-periodo-texto" id="periodo-texto"></p>
+        </div>
+        <div class="dash-filtro">
+          <label class="sr-only" for="periodo-select">Período</label>
+          <select id="periodo-select">
+            <option value="mes">Este mês</option>
+            <option value="mes-passado">Mês passado</option>
+            <option value="90d">Últimos 90 dias</option>
+            <option value="ano">Este ano</option>
+            <option value="custom">Personalizado…</option>
+          </select>
+          <span class="dash-filtro__custom" id="periodo-custom" hidden>
+            <label class="sr-only" for="data-inicio">Data inicial</label>
+            <input type="date" id="data-inicio">
+            <span>até</span>
+            <label class="sr-only" for="data-fim">Data final</label>
+            <input type="date" id="data-fim">
+            <button type="button" class="botao-secundario" id="periodo-aplicar">Aplicar</button>
+          </span>
+        </div>
+      </div>
+
+      <p class="dash-erro-periodo" id="erro-periodo" role="alert" hidden></p>
+
+      <section class="dash-destaques" id="destaques" aria-live="polite" aria-label="Destaques">
+        <h2 class="dash-destaques__titulo">Destaques</h2>
+        <ul id="destaques-lista"><li class="destaque destaque--info">Carregando...</li></ul>
+      </section>
+
+      <section class="dash-kpis" id="bloco-kpis" aria-label="Indicadores do período"></section>
+
+      <div class="dash-grade">
+        <section class="dash-cartao dash-cartao--larga" id="bloco-serie">
+          <header class="dash-cartao__topo"><h2>Evolução dos últimos 6 meses</h2><span class="dash-cartao__sub">Receita, margem bruta e resultado</span></header>
+          <div class="dash-cartao__corpo" data-corpo></div>
+        </section>
+
+        <section class="dash-cartao" id="bloco-caixa">
+          <header class="dash-cartao__topo"><h2>Caixa do período</h2><span class="dash-cartao__sub">O que realmente entrou e saiu</span></header>
+          <div class="dash-cartao__corpo" data-corpo></div>
+        </section>
+
+        <section class="dash-cartao" id="bloco-previsto">
+          <header class="dash-cartao__topo"><h2>Previsão de caixa — 90 dias</h2><a class="dash-cartao__link" id="link-financeiro" href="financeiro.html" hidden>Ver financeiro</a></header>
+          <div class="dash-cartao__corpo" data-corpo></div>
+        </section>
+
+        <section class="dash-cartao" id="bloco-vencidos">
+          <header class="dash-cartao__topo"><h2>Inadimplência</h2><span class="dash-cartao__sub">Títulos a receber vencidos</span></header>
+          <div class="dash-cartao__corpo" data-corpo></div>
+        </section>
+
+        <section class="dash-cartao" id="bloco-produtos">
+          <header class="dash-cartao__topo"><h2>Produtos mais vendidos</h2><span class="dash-cartao__sub">Por receita</span></header>
+          <div class="dash-cartao__corpo" data-corpo></div>
+        </section>
+
+        <section class="dash-cartao" id="bloco-clientes">
+          <header class="dash-cartao__topo"><h2>Melhores clientes</h2><span class="dash-cartao__sub">Por receita</span></header>
+          <div class="dash-cartao__corpo" data-corpo></div>
+        </section>
+
+        <section class="dash-cartao" id="bloco-formas">
+          <header class="dash-cartao__topo"><h2>Formas de pagamento nas vendas</h2><span class="dash-cartao__sub">Participação, prazo e taxa</span></header>
+          <div class="dash-cartao__corpo" data-corpo></div>
+        </section>
+
+        <section class="dash-cartao" id="bloco-estoque">
+          <header class="dash-cartao__topo"><h2>Estoque baixo</h2><a class="dash-cartao__link" href="produtos.html">Ver produtos</a></header>
+          <div class="dash-cartao__corpo" data-corpo></div>
+        </section>
+      </div>
+
     </main>
   </div>
 
@@ -27,11 +103,13 @@
   <script src="../js/core/auth.js"></script>
   <script>
     // O dashboard mostra números de relatórios: exige a permissão relatorios.ver (admin tem todas).
-    if (!exigirPermissao("relatorios.ver")) {
-      // já redirecionou — interrompe a execução do restante do script
-      throw new Error("Acesso restrito");
-    }
+    exigirPermissao("relatorios.ver"); // redireciona quem não tem acesso; o dashboard.js confere de novo e não carrega nada
   </script>
+  <script src="../js/core/formatadores.js"></script>
   <script src="../js/components/sidebar.js"></script>
+  <script src="../js/components/feedback.js"></script>
+  <script src="../js/components/graficos.js"></script>
+  <script src="../js/services/dashboardService.js"></script>
+  <script src="../js/pages/dashboard.js"></script>
 </body>
 </html>
