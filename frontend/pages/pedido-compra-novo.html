@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Novo Pedido de Compra — Nova Sorvetes</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/base.css">
+  <link rel="stylesheet" href="../css/sidebar.css">
+  <link rel="stylesheet" href="../css/listagem-crud.css">
+  <link rel="stylesheet" href="../css/detalhe-pedido.css">
+  <link rel="stylesheet" href="../css/pedido-venda.css">
+  <link rel="stylesheet" href="../css/pedido-compra.css">
+  <link rel="stylesheet" href="../css/feedback.css">
+</head>
+<body>
+
+  <div class="app-layout">
+    <aside id="sidebar" class="sidebar"></aside>
+
+    <main class="conteudo-principal">
+
+      <div class="pedido-topo">
+        <a class="pedido-topo__voltar" href="pedidos-compra.html" id="link-voltar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><polyline points="15 18 9 12 15 6"></polyline></svg>
+          Pedidos de Compra
+        </a>
+        <div class="pedido-topo__linha">
+          <h1>Novo Pedido de Compra</h1>
+          <div class="pedido-acoes">
+            <button type="button" class="botao-primario" id="botao-salvar" disabled>Salvar Pedido</button>
+            <button type="button" class="botao-cancelar-vermelho" id="botao-cancelar">Cancelar</button>
+          </div>
+        </div>
+      </div>
+
+      <form id="form-pedido" novalidate>
+
+        <section class="cartao">
+          <h2 class="cartao__titulo">Dados do Pedido</h2>
+          <div class="cartao-grade">
+
+            <div class="campo-form" id="grupo-fornecedor">
+              <label for="campo-fornecedor">Fornecedor *</label>
+              <select id="campo-fornecedor" disabled>
+                <option value="">Carregando...</option>
+              </select>
+              <span class="campo-erro-msg">Selecione o fornecedor.</span>
+            </div>
+
+            <div class="campo-form" id="grupo-forma">
+              <label for="campo-forma-pagamento">Forma de Pagamento *</label>
+              <select id="campo-forma-pagamento" disabled>
+                <option value="">Carregando...</option>
+              </select>
+              <span class="campo-erro-msg">Selecione a forma de pagamento.</span>
+              <div class="previa-pagamento" id="previa-pagamento" hidden></div>
+            </div>
+
+            <div class="campo-form" id="grupo-entrega">
+              <label for="campo-entrega">Entrega prevista</label>
+              <input type="date" id="campo-entrega">
+              <span class="dica dica--aviso" id="dica-entrega" hidden></span>
+            </div>
+
+            <div class="campo-form cartao-grade--cheia">
+              <label for="campo-observacao">Observação</label>
+              <textarea id="campo-observacao" maxlength="255"></textarea>
+              <span class="contador-caracteres" id="contador-observacao">0/255</span>
+            </div>
+
+          </div>
+        </section>
+
+        <section class="cartao">
+          <div class="cartao__topo">
+            <h2 class="cartao__titulo">Itens do Pedido</h2>
+            <button type="button" class="botao-secundario" id="botao-adicionar-item" disabled>+ Adicionar item</button>
+          </div>
+
+          <table class="tabela-itens-pedido">
+            <thead>
+              <tr>
+                <th class="col-produto">Produto</th>
+                <th class="col-qtd">Qtd.</th>
+                <th class="col-preco">R$ Un. (custo)</th>
+                <th class="col-subtotal">Subtotal</th>
+                <th class="col-acao"><span class="sr-only">Remover</span></th>
+              </tr>
+            </thead>
+            <tbody id="tabela-itens-corpo"></tbody>
+          </table>
+          <div class="itens-vazio-novo" id="itens-vazio">Nenhum item adicionado. Use “+ Adicionar item”.</div>
+
+          <div class="total-pedido">
+            <span class="total-pedido__rotulo">Total do Pedido</span>
+            <span class="total-pedido__valor" id="total-exibicao">R$ 0,00</span>
+          </div>
+        </section>
+
+      </form>
+
+    </main>
+  </div>
+
+  <script src="../js/core/config.js"></script>
+  <script src="../js/core/api.js"></script>
+  <script src="../js/core/auth.js"></script>
+  <script src="../js/core/formatadores.js"></script>
+  <script src="../js/components/sidebar.js"></script>
+  <script src="../js/components/feedback.js"></script>
+  <script src="../js/services/pedidoCompraService.js"></script>
+  <script src="../js/services/produtoService.js"></script>
+  <script src="../js/services/fornecedorService.js"></script>
+  <script src="../js/services/formaPagamentoService.js"></script>
+  <script src="../js/services/unidadeMedidaService.js"></script>
+  <script src="../js/pages/pedido-compra-novo.js"></script>
+</body>
+</html>

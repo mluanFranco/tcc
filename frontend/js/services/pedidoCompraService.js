@@ -18,10 +18,21 @@ const pedidoCompraService = {
     });
   },
 
-  async registrarRecebimento(id, itensRecebidos) {
+  // Contas a pagar geradas pelo pedido (nascem junto com ele). Exige financeiro.ver.
+  async listarTitulos(id) {
+    return apiFetch(`/pedidos-compra/${id}/titulos`);
+  },
+
+  // PDF do pedido, como Blob (a rota exige o token, por isso não dá para usar um link direto).
+  async baixarPdf(id) {
+    return apiFetchBlob(`/pedidos-compra/${id}/pdf`);
+  },
+
+  // Uma entrega (parcial ou total). itens: [{ item_id, quantidade_recebida_agora }] — a quantidade DESTA entrega, não o acumulado.
+  async registrarRecebimento(id, itens) {
     return apiFetch(`/pedidos-compra/${id}/receber`, {
       method: "POST",
-      body: JSON.stringify({ itens: itensRecebidos })
+      body: JSON.stringify({ itens })
     });
   },
 

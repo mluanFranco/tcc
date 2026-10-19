@@ -1,0 +1,129 @@
+/* ============================================
+   PEDIDO-COMPRA.CSS — complementa pedido-venda.css (cartões, topo, tabelas) nas telas de compra
+   ============================================ */
+
+/* Status (lista e cabeçalho do detalhe) */
+.badge-status--pendente  { background: #FEF9C3; color: #854D0E; }
+.badge-status--parcial   { background: #DBEAFE; color: #1E40AF; }
+.badge-status--recebido  { background: #DCFCE7; color: #166534; }
+.badge-status--atrasado  { background: #FFEDD5; color: #9A3412; margin-left: 6px; }
+
+.pilula-status--pendente { background: #FEF9C3; color: #854D0E; }
+.pilula-status--parcial  { background: #DBEAFE; color: #1E40AF; }
+.pilula-status--recebido { background: #DCFCE7; color: #166534; }
+.pilula-status--atrasado { background: #FFEDD5; color: #9A3412; }
+
+.tabela td.celula-atrasada { color: #9A3412; font-weight: 600; }
+
+/* Itens do detalhe: progresso recebido/pedido */
+.progresso-recebimento {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  min-width: 120px;
+}
+
+.progresso-recebimento__barra {
+  width: 100%;
+  height: 6px;
+  background: #E5E7EB;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.progresso-recebimento__preenchido {
+  height: 100%;
+  background: #22C55E;
+  border-radius: 999px;
+}
+
+.progresso-recebimento__preenchido--parcial {
+  background: var(--azul-acao);
+}
+
+/* Modal de recebimento */
+.modal--larga {
+  max-width: 780px;
+}
+
+.modal__corpo--tabela {
+  gap: 12px;
+}
+
+.modal__ajuda {
+  font-size: 13px;
+  color: var(--neutro-secundario);
+}
+
+.tabela-recebimento {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.tabela-recebimento th {
+  text-align: left;
+  padding: 8px 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--neutro-secundario);
+  border-bottom: 1px solid var(--neutro-borda);
+}
+
+.tabela-recebimento td {
+  padding: 10px;
+  vertical-align: top;
+  font-size: 14px;
+  border-bottom: 1px solid var(--neutro-borda);
+}
+
+.tabela-recebimento tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.tabela-recebimento th.num,
+.tabela-recebimento td.num {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.tabela-recebimento input {
+  width: 120px;
+  height: 38px;
+  padding: 0 10px;
+  font-size: 13.5px;
+  font-family: inherit;
+  text-align: right;
+  color: var(--neutro-texto);
+  background: var(--neutro-fundo);
+  border: 1.5px solid var(--neutro-borda);
+  border-radius: 8px;
+  box-sizing: border-box;
+}
+
+.tabela-recebimento input:focus {
+  border-color: var(--azul-acao);
+  outline: none;
+}
+
+.tabela-recebimento input.campo-invalido {
+  border-color: var(--erro);
+}
+
+.tabela-recebimento .item-aviso {
+  text-align: right;
+}
+
+.recebimento-atalho {
+  align-self: flex-start;
+}
+
+@media (max-width: 720px) {
+  .tabela-recebimento thead { display: none; }
+  .tabela-recebimento,
+  .tabela-recebimento tbody,
+  .tabela-recebimento tr,
+  .tabela-recebimento td { display: block; width: 100%; }
+  .tabela-recebimento td.num { text-align: left; }
+  .tabela-recebimento input { width: 100%; }
+}

@@ -1,393 +1,438 @@
-// Lógica da tela de detalhe de Pedido de Compra.
-// Sem ?id na URL: modo de criação (cabeçalho + itens editáveis).
-// Com ?id na URL: carrega o pedido existente. Editável apenas se status === "pendente"
-// E ainda não recebeu nada — uma vez que o primeiro recebimento parcial ocorre,
-// os itens deixam de ser editáveis (só se registra recebimento, não se edita a quantidade pedida).
-
-let pedidoAtual = null;
-let produtosDisponiveis = [];
-let fornecedoresDisponiveis = [];
-let formasPagamentoDisponiveis = [];
-let itensDoFormulario = []; // [{ produto_id, quantidade, preco_unitario }]
+// Detalhe do Pedido de Compra.
+// O pedido não é editado depois de criado: ele recebe mercadoria (parcial ou total) ou é cancelado.
+//  - Cada recebimento soma ao estoque só a quantidade informada; quando todos os itens chegam por completo,
+//    o backend muda o pedido para "recebido" sozinho;
+//  - Cancelar devolve do estoque o que já foi recebido e cancela as contas a pagar. O backend recusa se essa
+//    mercadoria já foi vendida/reservada ou se alguma parcela já tiver pagamento lançado.
 
 document.addEventListener("DOMContentLoaded", async () => {
-  if (!exigirAutenticacao()) return;
+  if (!exigirPermissao("compras.ver")) return;
 
   const params = new URLSearchParams(window.location.search);
-  const pedidoId = params.get("id");
+  const pedidoId = Number(params.get("id"));
+  const pedidoRecemCriado = params.get("novo") === "1";
 
-  const elementos = {
-    titulo: document.getElementById("detalhe-titulo"),
-    badgeStatus: document.getElementById("badge-status"),
-    botaoVoltar: document.getElementById("botao-voltar"),
-    campoFornecedor: document.getElementById("campo-fornecedor"),
-    campoFormaPagamento: document.getElementById("campo-forma-pagamento"),
-    campoDataEntrega: document.getElementById("campo-data-entrega"),
-    campoObservacao: document.getElementById("campo-observacao"),
-    cabecalhoItens: document.getElementById("cabecalho-itens"),
-    tabelaItensCorpo: document.getElementById("tabela-itens-corpo"),
-    itensVazio: document.getElementById("itens-vazio"),
-    botaoAdicionarItem: document.getElementById("botao-adicionar-item"),
-    totalExibicao: document.getElementById("total-exibicao"),
-    acoesContainer: document.getElementById("acoes-container"),
-    modalRecebimentoOverlay: document.getElementById("modal-recebimento"),
-    modalRecebimentoFechar: document.getElementById("modal-recebimento-fechar"),
-    modalRecebimentoCancelar: document.getElementById("modal-recebimento-cancelar"),
-    modalRecebimentoConfirmar: document.getElementById("modal-recebimento-confirmar"),
-    tabelaRecebimentoCorpo: document.getElementById("tabela-recebimento-corpo")
+  const podeEditar = temPermissao("compras.editar");
+  const podeVerFinanceiro = temPermissao("financeiro.ver");
+
+  const el = {
+    estadoPagina: document.getElementById("estado-pagina"),
+    conteudo: document.getElementById("conteudo-pedido"),
+    titulo: document.getElementById("titulo-pedido"),
+    pilula: document.getElementById("pilula-status"),
+    pilulaAtrasado: document.getElementById("pilula-atrasado"),
+    botaoPdf: document.getElementById("botao-pdf"),
+    botaoReceber: document.getElementById("botao-receber"),
+    botaoCancelar: document.getElementById("botao-cancelar-pedido"),
+    fornecedor: document.getElementById("vis-fornecedor"),
+    forma: document.getElementById("vis-forma"),
+    data: document.getElementById("vis-data"),
+    entrega: document.getElementById("vis-entrega"),
+    observacao: document.getElementById("vis-observacao"),
+    itensCorpo: document.getElementById("itens-corpo"),
+    total: document.getElementById("total-exibicao"),
+    cartaoTitulos: document.getElementById("cartao-titulos"),
+    titulosCorpo: document.getElementById("titulos-corpo"),
+    notaTitulos: document.getElementById("nota-titulos"),
+    modal: document.getElementById("modal-recebimento"),
+    modalFechar: document.getElementById("modal-recebimento-fechar"),
+    modalCancelar: document.getElementById("modal-recebimento-cancelar"),
+    modalConfirmar: document.getElementById("modal-recebimento-confirmar"),
+    formRecebimento: document.getElementById("form-recebimento"),
+    recebimentoCorpo: document.getElementById("recebimento-corpo"),
+    botaoReceberTudo: document.getElementById("botao-receber-tudo")
   };
 
-  function formatarMoeda(numero) {
-    return `R$ ${Number(numero || 0).toFixed(2).replace(".", ",")}`;
+  let pedido = null;
+  let fornecedor = null;
+  let forma = null;
+  let titulos = [];
+  let produtosPorId = {};
+  let siglasPorUnidade = {};
+  let ocupado = false;
+  let enviandoRecebimento = false;
+
+  const numeroDoPedido = () => formatarNumeroPedido(pedido.id);
+  // Quantidades têm até 3 casas: compara em milésimos (inteiros) para não errar por ponto flutuante.
+  const milesimos = (n) => Math.round((Number(n) || 0) * 1000);
+  const restanteMil = (item) => Math.max(0, milesimos(item.quantidade) - milesimos(item.quantidade_recebida));
+  const nomeDoProduto = (item) => produtosPorId[item.produto_id]?.nome ?? `Produto #${item.produto_id}`;
+  const siglaDoProduto = (item) => {
+    const produto = produtosPorId[item.produto_id];
+    return produto ? (siglasPorUnidade[produto.unidade_medida_id] || "") : "";
+  };
+  const comSigla = (valor, item) => {
+    const sigla = siglaDoProduto(item);
+    return `${formatarNumero(valor)}${sigla ? " " + sigla : ""}`;
+  };
+
+  function mostrarErroDePagina(mensagem) {
+    el.estadoPagina.textContent = mensagem;
+    el.estadoPagina.hidden = false;
+    el.conteudo.hidden = true;
   }
 
-  async function carregarDadosDeApoio() {
-    [produtosDisponiveis, fornecedoresDisponiveis, formasPagamentoDisponiveis] = await Promise.all([
-      produtoService.listar(),
-      fornecedorService.listar(),
-      formaPagamentoService.listar()
-    ]);
-
-    elementos.campoFornecedor.innerHTML = '<option value="">Selecione um fornecedor...</option>' +
-      fornecedoresDisponiveis.map(f => `<option value="${f.id}">${f.nome}</option>`).join("");
-
-    elementos.campoFormaPagamento.innerHTML = '<option value="">Selecione...</option>' +
-      formasPagamentoDisponiveis.map(fp => `<option value="${fp.id}">${fp.descricao}</option>`).join("");
-  }
-
-  function produtoPorId(id) {
-    return produtosDisponiveis.find(p => p.id === Number(id));
-  }
-
-  function calcularSubtotalItem(item) {
-    return (Number(item.quantidade) || 0) * (Number(item.preco_unitario) || 0);
-  }
-
-  function calcularTotal() {
-    return itensDoFormulario.reduce((soma, item) => soma + calcularSubtotalItem(item), 0);
-  }
-
-  // Em modo de criação não há ainda recebimento — uma vez que QUALQUER recebimento
-  // parcial foi registrado, a quantidade pedida do item não pode mais ser editada,
-  // pois alteraria a base de cálculo do que já foi recebido.
-  function modoSomenteLeitura() {
-    if (!pedidoAtual) return false;
-    if (pedidoAtual.status !== "pendente") return true;
-    return pedidoAtual.itens.some(item => item.quantidade_recebida > 0);
-  }
+  // ---------- Desenho ----------
 
   function renderizarItens() {
-    const modoLeitura = modoSomenteLeitura();
-    const exibirProgresso = !!pedidoAtual;
-
-    // Cabeçalho muda conforme exibe ou não a coluna de progresso de recebimento
-    elementos.cabecalhoItens.innerHTML = `
-      <th>Produto</th>
-      <th class="coluna-qtd">Qtd. pedida</th>
-      ${exibirProgresso ? '<th class="coluna-qtd">Recebido</th>' : ""}
-      <th class="coluna-preco">Preço unit.</th>
-      <th class="coluna-subtotal">Subtotal</th>
-      <th class="coluna-acao"></th>
-    `;
-
-    if (itensDoFormulario.length === 0) {
-      elementos.tabelaItensCorpo.innerHTML = "";
-      elementos.itensVazio.style.display = "block";
-    } else {
-      elementos.itensVazio.style.display = "none";
-
-      elementos.tabelaItensCorpo.innerHTML = itensDoFormulario.map((item, index) => {
-        const produtoSelecionado = produtoPorId(item.produto_id);
-        const nomeProduto = produtoSelecionado ? produtoSelecionado.nome : `Produto #${item.produto_id}`;
-
-        const colunaProgresso = exibirProgresso ? `
-          <td>
-            <div class="recebimento-progresso">
-              <div class="barra-progresso">
-                <div class="barra-progresso__preenchimento" style="width: ${Math.min(100, (item.quantidade_recebida / item.quantidade) * 100)}%;"></div>
+    el.itensCorpo.innerHTML = pedido.itens.slice().sort((a, b) => a.id - b.id).map(item => {
+      const pedidoMil = milesimos(item.quantidade);
+      const recebidoMil = milesimos(item.quantidade_recebida);
+      const percentual = pedidoMil > 0 ? Math.min(100, Math.round((recebidoMil / pedidoMil) * 100)) : 0;
+      const completo = recebidoMil >= pedidoMil;
+      return `
+        <tr>
+          <td>${escaparHtml(nomeDoProduto(item))}</td>
+          <td class="num">${escaparHtml(comSigla(item.quantidade, item))}</td>
+          <td class="num">
+            <div class="progresso-recebimento">
+              <span>${escaparHtml(formatarNumero(item.quantidade_recebida))} de ${escaparHtml(comSigla(item.quantidade, item))}</span>
+              <div class="progresso-recebimento__barra" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${percentual}">
+                <div class="progresso-recebimento__preenchido${completo ? "" : " progresso-recebimento__preenchido--parcial"}" style="width:${percentual}%"></div>
               </div>
-              <span>${item.quantidade_recebida}/${item.quantidade}</span>
             </div>
           </td>
-        ` : "";
-
-        if (modoLeitura) {
-          return `
-            <tr>
-              <td>${nomeProduto}</td>
-              <td>${item.quantidade}</td>
-              ${colunaProgresso}
-              <td>${formatarMoeda(item.preco_unitario)}</td>
-              <td class="subtotal-exibicao">${formatarMoeda(calcularSubtotalItem(item))}</td>
-              <td></td>
-            </tr>
-          `;
-        }
-
-        const opcoesProduto = produtosDisponiveis.map(p =>
-          `<option value="${p.id}" ${Number(item.produto_id) === p.id ? "selected" : ""}>${p.nome}</option>`
-        ).join("");
-
-        return `
-          <tr>
-            <td>
-              <select data-index="${index}" data-campo="produto_id">
-                <option value="">Selecione...</option>
-                ${opcoesProduto}
-              </select>
-            </td>
-            <td class="coluna-qtd">
-              <input type="number" min="1" data-index="${index}" data-campo="quantidade" value="${item.quantidade}">
-            </td>
-            ${colunaProgresso}
-            <td class="coluna-preco">
-              <input type="number" min="0" step="0.01" data-index="${index}" data-campo="preco_unitario" value="${item.preco_unitario}">
-            </td>
-            <td class="coluna-subtotal subtotal-exibicao">${formatarMoeda(calcularSubtotalItem(item))}</td>
-            <td class="coluna-acao">
-              <button type="button" class="botao-remover-item" data-remover="${index}" aria-label="Remover item">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="M3 6h18"></path><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path></svg>
-              </button>
-            </td>
-          </tr>
-        `;
-      }).join("");
-    }
-
-    elementos.totalExibicao.textContent = formatarMoeda(calcularTotal());
+          <td class="num">${formatarMoeda(item.preco_unitario)}</td>
+          <td class="num subtotal">${formatarMoeda(item.subtotal)}</td>
+        </tr>`;
+    }).join("");
+    el.total.textContent = formatarMoeda(pedido.valor_total);
   }
 
-  function adicionarLinhaItem() {
-    itensDoFormulario.push({ produto_id: "", quantidade: 1, preco_unitario: 0 });
-    renderizarItens();
+  function rotuloSituacao(titulo) {
+    if (titulo.status === "cancelado") return { classe: "cancelado", texto: "Cancelado" };
+    if (titulo.status === "pago") return { classe: "pago", texto: "Pago" };
+    if (titulo.vencido) return { classe: "vencido", texto: `Vencido (${titulo.dias_atraso} ${titulo.dias_atraso === 1 ? "dia" : "dias"})` };
+    if (titulo.status === "parcial") return { classe: "parcial", texto: "Parcial" };
+    return { classe: "aberto", texto: "Em aberto" };
   }
 
-  elementos.tabelaItensCorpo.addEventListener("input", (evento) => {
-    const campo = evento.target.dataset.campo;
-    const index = evento.target.dataset.index;
-    if (campo === undefined || index === undefined) return;
+  function renderizarTitulos() {
+    // Quem não tem financeiro.ver não vê o cartão. Ao contrário da venda, as contas existem desde a criação.
+    el.cartaoTitulos.hidden = !podeVerFinanceiro;
+    if (!podeVerFinanceiro) return;
 
-    itensDoFormulario[index][campo] = evento.target.value;
+    el.titulosCorpo.innerHTML = titulos.map(t => {
+      const situacao = rotuloSituacao(t);
+      return `
+        <tr>
+          <td>${t.numero_parcela}/${t.total_parcelas}</td>
+          <td>${formatarData(t.vencimento)}</td>
+          <td class="num">${formatarMoeda(t.valor)}</td>
+          <td class="num">${formatarMoeda(t.valor_pago)}</td>
+          <td><span class="situacao-titulo situacao-titulo--${situacao.classe}">${escaparHtml(situacao.texto)}</span></td>
+        </tr>`;
+    }).join("");
 
-    if (campo === "produto_id") {
-      const produto = produtoPorId(evento.target.value);
-      if (produto) {
-        itensDoFormulario[index].preco_unitario = produto.preco_custo;
-      }
+    el.notaTitulos.textContent = titulos.length === 0 ? "Nenhuma conta a pagar encontrada para este pedido." : "";
+    el.notaTitulos.hidden = titulos.length !== 0;
+  }
+
+  function renderizarPedido() {
+    const situacao = situacaoPedidoCompra(pedido);
+
+    el.titulo.textContent = `Pedido: ${numeroDoPedido()}`;
+    el.pilula.textContent = situacao.rotulo;
+    el.pilula.className = `pilula-status pilula-status--${situacao.chave}`;
+    el.pilulaAtrasado.hidden = !situacao.atrasado;
+
+    el.fornecedor.textContent = fornecedor
+      ? (fornecedor.cnpj ? `${fornecedor.nome} (${formatarDocumento(fornecedor.cnpj)})` : fornecedor.nome)
+      : `Fornecedor #${pedido.fornecedor_id}`;
+    el.forma.textContent = forma ? forma.descricao : "—";
+    el.data.textContent = formatarDataHora(pedido.data_pedido);
+    el.entrega.textContent = formatarData(pedido.data_entrega_prevista);
+    el.observacao.textContent = pedido.observacao || "—";
+
+    renderizarItens();
+    renderizarTitulos();
+
+    el.botaoReceber.hidden = !(podeEditar && pedido.status === "pendente");
+    el.botaoCancelar.hidden = !(podeEditar && pedido.status !== "cancelado");
+    definirOcupado(false);
+
+    el.estadoPagina.hidden = true;
+    el.conteudo.hidden = false;
+    document.title = `Pedido ${numeroDoPedido()} — Nova Sorvetes`;
+  }
+
+  function definirOcupado(valor) {
+    ocupado = valor;
+    el.botaoReceber.disabled = valor;
+    el.botaoCancelar.disabled = valor;
+  }
+
+  async function carregarTitulos() {
+    if (!podeVerFinanceiro) {
+      titulos = [];
+      return;
     }
+    try {
+      titulos = await pedidoCompraService.listarTitulos(pedido.id);
+    } catch (erro) {
+      titulos = [];
+      toast.erro(`Não foi possível carregar as contas a pagar. ${erro.message}`);
+    }
+  }
 
-    renderizarItens();
-  });
+  // Depois de um erro, mostra o estado real (o pedido pode ter mudado em outra aba/usuário).
+  async function recarregarPedido() {
+    try {
+      pedido = await pedidoCompraService.buscarPorId(pedido.id);
+      await carregarTitulos();
+      renderizarPedido();
+    } catch (e) {
+      definirOcupado(false);
+    }
+  }
 
-  elementos.tabelaItensCorpo.addEventListener("click", (evento) => {
-    const botao = evento.target.closest("button[data-remover]");
-    if (!botao) return;
-    itensDoFormulario.splice(Number(botao.dataset.remover), 1);
-    renderizarItens();
-  });
+  // ---------- Recebimento ----------
 
-  function renderizarAcoes() {
-    elementos.acoesContainer.innerHTML = "";
-
-    if (!pedidoAtual) {
-      elementos.acoesContainer.innerHTML = `<button class="botao-primario" id="botao-salvar-pedido">Salvar pedido</button>`;
-      document.getElementById("botao-salvar-pedido").addEventListener("click", salvarPedido);
+  function abrirModalRecebimento() {
+    if (ocupado || pedido.status !== "pendente") return;
+    const pendentes = pedido.itens.slice().sort((a, b) => a.id - b.id).filter(i => restanteMil(i) > 0);
+    if (pendentes.length === 0) {
+      toast.info("Todos os itens deste pedido já foram recebidos.");
       return;
     }
 
-    if (pedidoAtual.status === "pendente") {
-      elementos.acoesContainer.innerHTML = `
-        <button class="botao-perigo" id="botao-cancelar-pedido">Cancelar pedido</button>
-        <button class="botao-sucesso" id="botao-abrir-recebimento">Registrar recebimento</button>
-      `;
-      document.getElementById("botao-cancelar-pedido").addEventListener("click", cancelarPedido);
-      document.getElementById("botao-abrir-recebimento").addEventListener("click", abrirModalRecebimento);
-    }
+    el.recebimentoCorpo.innerHTML = pendentes.map(item => `
+      <tr data-item-id="${item.id}" data-restante="${restanteMil(item)}">
+        <td>${escaparHtml(nomeDoProduto(item))}</td>
+        <td class="num">${escaparHtml(comSigla(item.quantidade, item))}</td>
+        <td class="num">${escaparHtml(comSigla(item.quantidade_recebida, item))}</td>
+        <td class="num">${escaparHtml(comSigla(restanteMil(item) / 1000, item))}</td>
+        <td class="num">
+          <input type="number" min="0" step="0.001" inputmode="decimal" placeholder="0" aria-label="Quantidade recebida agora de ${escaparHtml(nomeDoProduto(item))}">
+          <span class="item-aviso" hidden></span>
+        </td>
+      </tr>`).join("");
 
-    if (pedidoAtual.status === "recebido") {
-      elementos.acoesContainer.innerHTML = `<button class="botao-perigo" id="botao-cancelar-pedido">Cancelar pedido</button>`;
-      document.getElementById("botao-cancelar-pedido").addEventListener("click", cancelarPedido);
-    }
-  }
-
-  async function cancelarPedido() {
-    if (!confirm("Cancelar este pedido? O estoque já recebido (se houver) será estornado. Esta ação não pode ser desfeita.")) return;
-
-    try {
-      pedidoAtual = await pedidoCompraService.cancelar(pedidoAtual.id);
-      aplicarModoVisualizacao();
-    } catch (erro) {
-      alert(erro.message);
-    }
-  }
-
-  function abrirModalRecebimento() {
-    const itensComRestante = pedidoAtual.itens.filter(item => item.quantidade_recebida < item.quantidade);
-
-    elementos.tabelaRecebimentoCorpo.innerHTML = itensComRestante.map(item => {
-      const produto = produtoPorId(item.produto_id);
-      const restante = item.quantidade - item.quantidade_recebida;
-      return `
-        <tr>
-          <td>${produto ? produto.nome : `Produto #${item.produto_id}`}</td>
-          <td class="coluna-qtd">${restante}</td>
-          <td class="coluna-qtd">
-            <input type="number" min="0" max="${restante}" value="0" data-item-id="${item.id}" data-restante="${restante}">
-          </td>
-        </tr>
-      `;
-    }).join("");
-
-    elementos.modalRecebimentoOverlay.classList.add("aberto");
+    el.modalConfirmar.disabled = false;
+    el.modalConfirmar.textContent = "Confirmar recebimento";
+    el.modal.classList.add("aberto");
+    const primeiro = el.recebimentoCorpo.querySelector("input");
+    if (primeiro) primeiro.focus();
   }
 
   function fecharModalRecebimento() {
-    elementos.modalRecebimentoOverlay.classList.remove("aberto");
+    if (enviandoRecebimento) return;
+    el.modal.classList.remove("aberto");
   }
 
-  async function confirmarRecebimento() {
-    const inputs = elementos.tabelaRecebimentoCorpo.querySelectorAll("input[data-item-id]");
+  function receberTudo() {
+    el.recebimentoCorpo.querySelectorAll("tr[data-item-id]").forEach(tr => {
+      const input = tr.querySelector("input");
+      input.value = String(Number(tr.dataset.restante) / 1000);
+      input.classList.remove("campo-invalido");
+      const aviso = tr.querySelector(".item-aviso");
+      aviso.hidden = true;
+    });
+  }
 
-    const itensRecebidos = [];
-    for (const input of inputs) {
-      const valor = parseInt(input.value, 10) || 0;
-      const restante = parseInt(input.dataset.restante, 10);
+  // Valida linha a linha e devolve só as entregas com quantidade > 0.
+  function lerRecebimento() {
+    const entregas = [];
+    let primeiroInvalido = null;
 
-      if (valor < 0 || valor > restante) {
-        alert(`Quantidade inválida: o valor não pode ser negativo ou maior que o restante (${restante}).`);
-        return;
+    el.recebimentoCorpo.querySelectorAll("tr[data-item-id]").forEach(tr => {
+      const input = tr.querySelector("input");
+      const aviso = tr.querySelector(".item-aviso");
+      const texto = input.value.trim();
+      let erro = "";
+
+      if (texto !== "") {
+        const valor = Number(texto);
+        const mil = Math.round(valor * 1000);
+        if (!(valor >= 0)) erro = "Informe um número válido.";
+        else if (Math.abs(valor * 1000 - mil) > 1e-6) erro = "No máximo 3 casas decimais.";
+        else if (mil > Number(tr.dataset.restante)) erro = `Maior que o que falta (${formatarNumero(Number(tr.dataset.restante) / 1000)}).`;
+        else if (mil > 0) entregas.push({ item_id: Number(tr.dataset.itemId), quantidade_recebida_agora: mil / 1000 });
       }
 
-      if (valor > 0) {
-        itensRecebidos.push({
-          item_id: parseInt(input.dataset.itemId, 10),
-          quantidade_recebida_agora: valor
-        });
-      }
+      aviso.textContent = erro;
+      aviso.hidden = !erro;
+      input.classList.toggle("campo-invalido", Boolean(erro));
+      if (erro && !primeiroInvalido) primeiroInvalido = input;
+    });
+
+    return { entregas, primeiroInvalido };
+  }
+
+  async function enviarRecebimento(evento) {
+    evento.preventDefault();
+    if (enviandoRecebimento) return;
+
+    const { entregas, primeiroInvalido } = lerRecebimento();
+    if (primeiroInvalido) {
+      toast.erro("Corrija as quantidades destacadas.");
+      primeiroInvalido.focus();
+      return;
     }
-
-    if (itensRecebidos.length === 0) {
-      alert("Informe ao menos uma quantidade recebida maior que zero.");
+    if (entregas.length === 0) {
+      toast.erro("Informe a quantidade recebida de pelo menos um item.");
+      const primeiro = el.recebimentoCorpo.querySelector("input");
+      if (primeiro) primeiro.focus();
       return;
     }
 
-    elementos.modalRecebimentoConfirmar.disabled = true;
-    elementos.modalRecebimentoConfirmar.textContent = "Registrando...";
+    enviandoRecebimento = true;
+    el.modalConfirmar.disabled = true;
+    el.modalConfirmar.textContent = "Registrando...";
+    definirOcupado(true);
 
     try {
-      pedidoAtual = await pedidoCompraService.registrarRecebimento(pedidoAtual.id, itensRecebidos);
-      fecharModalRecebimento();
-      aplicarModoVisualizacao();
+      pedido = await pedidoCompraService.registrarRecebimento(pedido.id, entregas);
+      enviandoRecebimento = false;
+      el.modal.classList.remove("aberto");
+      await carregarTitulos();
+      renderizarPedido();
+      toast.sucesso(pedido.status === "recebido"
+        ? `Pedido ${numeroDoPedido()} totalmente recebido. Estoque atualizado.`
+        : "Recebimento registrado. Estoque atualizado; o restante continua pendente.");
     } catch (erro) {
-      alert(erro.message);
+      enviandoRecebimento = false;
+      el.modalConfirmar.disabled = false;
+      el.modalConfirmar.textContent = "Confirmar recebimento";
+      toast.erro(erro.message);
+      // Se o pedido mudou por fora (cancelado, já recebido), fecha o modal e mostra o estado real.
+      try {
+        const atual = await pedidoCompraService.buscarPorId(pedido.id);
+        const mudou = atual.status !== "pendente" ||
+          JSON.stringify(atual.itens.map(i => i.quantidade_recebida)) !== JSON.stringify(pedido.itens.map(i => i.quantidade_recebida));
+        if (mudou) {
+          el.modal.classList.remove("aberto");
+          await recarregarPedido();
+        } else {
+          definirOcupado(false);
+        }
+      } catch (e) {
+        definirOcupado(false);
+      }
+    }
+  }
+
+  // ---------- Cancelamento ----------
+
+  async function cancelarPedido() {
+    if (ocupado) return;
+    const numero = numeroDoPedido();
+    const houveRecebimento = pedido.itens.some(i => milesimos(i.quantidade_recebida) > 0);
+
+    let mensagem = "As contas a pagar deste pedido serão canceladas, desde que nenhuma parcela tenha pagamento lançado.";
+    if (houveRecebimento) {
+      mensagem += " O que já foi recebido sai do estoque, desde que não tenha sido vendido nem reservado.";
+    }
+    mensagem += " Esta ação não pode ser desfeita.";
+
+    const confirmou = await confirmarAcao({
+      titulo: `Cancelar o pedido ${numero}?`,
+      mensagem,
+      textoConfirmar: "Cancelar pedido",
+      textoCancelar: "Voltar",
+      perigo: true
+    });
+    if (!confirmou) return;
+
+    definirOcupado(true);
+    try {
+      pedido = await pedidoCompraService.cancelar(pedido.id);
+      await carregarTitulos();
+      renderizarPedido();
+      toast.sucesso(`Pedido ${numero} cancelado.`);
+    } catch (erro) {
+      toast.erro(erro.message);
+      await recarregarPedido();
+    }
+  }
+
+  // ---------- PDF ----------
+
+  function baixarArquivo(url, nome) {
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = nome;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+  }
+
+  async function abrirPdf() {
+    // A aba é aberta já no clique (antes da espera pela API), senão o navegador a trata como pop-up.
+    const aba = window.open("", "_blank");
+    el.botaoPdf.disabled = true;
+    try {
+      const blob = await pedidoCompraService.baixarPdf(pedido.id);
+      const url = URL.createObjectURL(blob);
+      if (aba) aba.location.href = url;
+      else baixarArquivo(url, `pedido-compra-${pedido.id}.pdf`);
+      setTimeout(() => URL.revokeObjectURL(url), 5 * 60 * 1000);
+    } catch (erro) {
+      if (aba) aba.close();
+      toast.erro(erro.message);
     } finally {
-      elementos.modalRecebimentoConfirmar.disabled = false;
-      elementos.modalRecebimentoConfirmar.textContent = "Confirmar recebimento";
+      el.botaoPdf.disabled = false;
     }
   }
 
-  async function salvarPedido() {
-    if (!elementos.campoFornecedor.value) {
-      alert("Selecione um fornecedor.");
-      return;
+  // ---------- Eventos ----------
+
+  el.botaoReceber.addEventListener("click", abrirModalRecebimento);
+  el.botaoCancelar.addEventListener("click", cancelarPedido);
+  el.botaoPdf.addEventListener("click", abrirPdf);
+
+  el.botaoReceberTudo.addEventListener("click", receberTudo);
+  el.formRecebimento.addEventListener("submit", enviarRecebimento);
+  el.modalFechar.addEventListener("click", fecharModalRecebimento);
+  el.modalCancelar.addEventListener("click", fecharModalRecebimento);
+  el.modal.addEventListener("click", (e) => { if (e.target === el.modal) fecharModalRecebimento(); });
+  document.addEventListener("keydown", (e) => {
+    // O Esc do modal não deve disputar com a janela de confirmação, que tem o seu próprio.
+    if (e.key === "Escape" && el.modal.classList.contains("aberto") && !document.querySelector(".confirmacao-overlay")) {
+      fecharModalRecebimento();
     }
-
-    if (itensDoFormulario.length === 0) {
-      alert("Adicione ao menos um item ao pedido.");
-      return;
-    }
-
-    const temItemIncompleto = itensDoFormulario.some(item => !item.produto_id || !item.quantidade || item.preco_unitario == null);
-    if (temItemIncompleto) {
-      alert("Preencha produto, quantidade e preço de todos os itens antes de salvar.");
-      return;
-    }
-
-    const dados = {
-      fornecedor_id: parseInt(elementos.campoFornecedor.value, 10),
-      forma_pagamento_id: elementos.campoFormaPagamento.value ? parseInt(elementos.campoFormaPagamento.value, 10) : null,
-      data_entrega_prevista: elementos.campoDataEntrega.value || null,
-      observacao: elementos.campoObservacao.value || null,
-      itens: itensDoFormulario.map(item => ({
-        produto_id: parseInt(item.produto_id, 10),
-        quantidade: parseInt(item.quantidade, 10),
-        preco_unitario: parseFloat(item.preco_unitario)
-      }))
-    };
-
-    const botaoSalvar = document.getElementById("botao-salvar-pedido");
-    botaoSalvar.disabled = true;
-    botaoSalvar.textContent = "Salvando...";
-
-    try {
-      const pedidoCriado = await pedidoCompraService.criar(dados);
-      window.location.href = `pedido-compra-detalhe.html?id=${pedidoCriado.id}`;
-    } catch (erro) {
-      alert(erro.message);
-      botaoSalvar.disabled = false;
-      botaoSalvar.textContent = "Salvar pedido";
-    }
-  }
-
-  function aplicarModoVisualizacao() {
-    const modoLeitura = modoSomenteLeitura();
-
-    elementos.titulo.textContent = `Pedido de Compra #${pedidoAtual.id}`;
-    elementos.badgeStatus.textContent = pedidoAtual.status;
-    elementos.badgeStatus.className = `badge-status-grande badge-status-grande--${pedidoAtual.status}`;
-    elementos.badgeStatus.style.display = "inline-flex";
-
-    elementos.campoFornecedor.value = pedidoAtual.fornecedor_id;
-    elementos.campoFormaPagamento.value = pedidoAtual.forma_pagamento_id ?? "";
-    elementos.campoDataEntrega.value = pedidoAtual.data_entrega_prevista
-      ? pedidoAtual.data_entrega_prevista.slice(0, 10)
-      : "";
-    elementos.campoObservacao.value = pedidoAtual.observacao ?? "";
-
-    elementos.campoFornecedor.disabled = true; // fornecedor nunca é editável após criado
-    elementos.campoFormaPagamento.disabled = modoLeitura;
-    elementos.campoDataEntrega.disabled = modoLeitura;
-    elementos.campoObservacao.disabled = modoLeitura;
-    elementos.botaoAdicionarItem.style.display = modoLeitura ? "none" : "inline-flex";
-
-    itensDoFormulario = pedidoAtual.itens.map(item => ({
-      id: item.id,
-      produto_id: item.produto_id,
-      quantidade: item.quantidade,
-      quantidade_recebida: item.quantidade_recebida,
-      preco_unitario: item.preco_unitario
-    }));
-
-    renderizarItens();
-    renderizarAcoes();
-  }
-
-  elementos.botaoVoltar.addEventListener("click", () => {
-    window.location.href = "pedidos-compra.html";
+  });
+  el.recebimentoCorpo.addEventListener("input", (e) => {
+    const input = e.target.closest("input");
+    if (!input) return;
+    input.classList.remove("campo-invalido");
+    const aviso = input.closest("td").querySelector(".item-aviso");
+    aviso.hidden = true;
   });
 
-  elementos.botaoAdicionarItem.addEventListener("click", adicionarLinhaItem);
-  elementos.modalRecebimentoFechar.addEventListener("click", fecharModalRecebimento);
-  elementos.modalRecebimentoCancelar.addEventListener("click", fecharModalRecebimento);
-  elementos.modalRecebimentoConfirmar.addEventListener("click", confirmarRecebimento);
-  elementos.modalRecebimentoOverlay.addEventListener("click", (e) => {
-    if (e.target === elementos.modalRecebimentoOverlay) fecharModalRecebimento();
-  });
+  // ---------- Carga ----------
 
-  await carregarDadosDeApoio();
+  if (!Number.isInteger(pedidoId) || pedidoId <= 0) {
+    mostrarErroDePagina("Pedido não informado.");
+    toast.erro("Pedido não informado.");
+    return;
+  }
 
-  if (pedidoId) {
-    try {
-      pedidoAtual = await pedidoCompraService.buscarPorId(pedidoId);
-      aplicarModoVisualizacao();
-    } catch (erro) {
-      alert(erro.message);
-      window.location.href = "pedidos-compra.html";
-    }
-  } else {
-    elementos.titulo.textContent = "Novo pedido de compra";
-    elementos.badgeStatus.style.display = "none";
-    renderizarItens();
-    renderizarAcoes();
+  try {
+    pedido = await pedidoCompraService.buscarPorId(pedidoId);
+  } catch (erro) {
+    mostrarErroDePagina(erro.status === 404 ? "Pedido de compra não encontrado." : "Não foi possível carregar o pedido.");
+    toast.erro(erro.message);
+    return;
+  }
+
+  // O restante só enriquece a tela (nomes, unidades, forma). Se algo falhar, o pedido aparece com o que já se tem.
+  const [rFornecedor, rProdutos, rUnidades, rForma] = await Promise.allSettled([
+    fornecedorService.buscarPorId(pedido.fornecedor_id),
+    produtoService.listar({ incluirInativos: true }),
+    unidadeMedidaService.listar({ incluirInativos: true }),
+    pedido.forma_pagamento_id ? formaPagamentoService.buscarPorId(pedido.forma_pagamento_id) : Promise.resolve(null)
+  ]);
+  fornecedor = rFornecedor.status === "fulfilled" ? rFornecedor.value : null;
+  forma = rForma.status === "fulfilled" ? rForma.value : null;
+  if (rProdutos.status === "fulfilled") produtosPorId = Object.fromEntries(rProdutos.value.map(p => [p.id, p]));
+  if (rUnidades.status === "fulfilled") siglasPorUnidade = Object.fromEntries(rUnidades.value.map(u => [u.id, u.sigla]));
+
+  await carregarTitulos();
+  renderizarPedido();
+
+  if (pedidoRecemCriado) {
+    toast.sucesso(`Pedido ${numeroDoPedido()} criado. As contas a pagar já foram geradas; o estoque só aumenta quando o recebimento for registrado.`);
+    history.replaceState(null, "", `pedido-compra-detalhe.html?id=${pedido.id}`);
   }
 });

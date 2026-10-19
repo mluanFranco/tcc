@@ -76,3 +76,20 @@ function formatarNumeroPedido(id) {
 function rotuloStatusPedido(status) {
   return { aberto: "Aberto", confirmado: "Confirmado", cancelado: "Cancelado" }[status] || String(status ?? "—");
 }
+
+// Situação de tela do pedido de COMPRA. O backend só guarda pendente | recebido | cancelado;
+// "parcial" (pendente com algo já recebido) e "atrasado" (pendente com entrega prevista vencida) são derivados aqui.
+//   -> { chave: "pendente|parcial|recebido|cancelado", rotulo: "Pendente|Parcial|...", atrasado: boolean }
+function situacaoPedidoCompra(pedido) {
+  const rotulos = { pendente: "Pendente", parcial: "Parcial", recebido: "Recebido", cancelado: "Cancelado" };
+  let chave = pedido.status;
+  let atrasado = false;
+  if (pedido.status === "pendente") {
+    if ((pedido.itens || []).some(i => Number(i.quantidade_recebida) > 0)) chave = "parcial";
+    const hoje = new Date();
+    const hojeTexto = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, "0")}-${String(hoje.getDate()).padStart(2, "0")}`;
+    const previsto = pedido.data_entrega_prevista ? String(pedido.data_entrega_prevista).slice(0, 10) : "";
+    atrasado = Boolean(previsto) && previsto < hojeTexto;
+  }
+  return { chave, rotulo: rotulos[chave] || String(pedido.status ?? "—"), atrasado };
+}

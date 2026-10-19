@@ -1,16 +1,22 @@
-// Lógica da tela de listagem de Pedidos de Compra.
-// A criação/edição/ações sobre um pedido específico ficam em pedido-compra-detalhe.js.
+// Lista de Pedidos de Compra. Criar um pedido é em pedido-compra-novo.html;
+// ver, receber e cancelar é em pedido-compra-detalhe.html.
+// O backend só filtra por status (pendente | recebido | cancelado); busca por fornecedor/número e período são feitos aqui.
+// "Parcial" e "Atrasado" são indicações derivadas (ver situacaoPedidoCompra); a aba Pendentes inclui os parciais.
 
-let pedidosCompraCache = [];
-let fornecedoresMapCache = {}; // { id: nome }
-let filtroStatusAtivoCompra = "todos";
+let pedidosCache = [];
+let fornecedoresMapCache = {};   // { id: nome }
+let filtroStatusAtivo = "todos";
+let requisicaoAtual = 0;     // descarta respostas antigas se o usuário trocar de aba rápido
 
 document.addEventListener("DOMContentLoaded", async () => {
-  if (!exigirAutenticacao()) return;
+  if (!exigirPermissao("compras.ver")) return;
+
+  const podeEditar = temPermissao("compras.editar");
 
   const elementos = {
     tabelaCorpo: document.getElementById("tabela-pedidos-corpo"),
     estadoVazio: document.getElementById("estado-vazio"),
+    estadoCarregando: document.getElementById("estado-carregando"),
     botaoIncluir: document.getElementById("botao-incluir"),
     abas: document.querySelectorAll(".aba-status[data-status]"),
     campoBusca: document.getElementById("campo-busca"),
@@ -18,100 +24,133 @@ document.addEventListener("DOMContentLoaded", async () => {
     campoDataFim: document.getElementById("campo-data-fim")
   };
 
-  function formatarMoeda(numero) {
-    return `R$ ${Number(numero).toFixed(2).replace(".", ",")}`;
-  }
-
-  function formatarData(isoString) {
-    if (!isoString) return "—";
-    return new Date(isoString).toLocaleDateString("pt-BR");
-  }
-
-  async function carregarFornecedoresMap() {
-    const fornecedores = await fornecedorService.listar({ incluirInativos: true });
-    fornecedoresMapCache = fornecedores.reduce((mapa, fornecedor) => {
-      mapa[fornecedor.id] = fornecedor.nome;
-      return mapa;
-    }, {});
-  }
+  elementos.botaoIncluir.hidden = !podeEditar;
 
   function nomeFornecedor(fornecedorId) {
     return fornecedoresMapCache[fornecedorId] ?? `Fornecedor #${fornecedorId}`;
   }
 
-  async function carregarPedidos() {
-    try {
-      const status = filtroStatusAtivoCompra === "todos" ? null : filtroStatusAtivoCompra;
-      pedidosCompraCache = await pedidoCompraService.listar({ status });
-      renderizarTabela();
-    } catch (erro) {
-      alert(erro.message);
-    }
+  function periodoInvalido() {
+    const inicio = elementos.campoDataInicio.value;
+    const fim = elementos.campoDataFim.value;
+    return Boolean(inicio && fim && inicio > fim);
   }
 
   function pedidosFiltrados() {
-    const termoBusca = elementos.campoBusca.value.trim().toLowerCase();
-    const dataInicio = elementos.campoDataInicio.value;
-    const dataFim = elementos.campoDataFim.value;
+    const termo = elementos.campoBusca.value.trim().toLowerCase();
+    const termoNumerico = termo.replace(/^#/, "");
+    const inicio = elementos.campoDataInicio.value;
+    const fim = elementos.campoDataFim.value;
 
-    return pedidosCompraCache.filter(pedido => {
-      if (termoBusca) {
+    return pedidosCache.filter(pedido => {
+      if (termo) {
         const nome = nomeFornecedor(pedido.fornecedor_id).toLowerCase();
-        const idTexto = String(pedido.id);
-        const correspondeTermo = nome.includes(termoBusca) || idTexto.includes(termoBusca);
-        if (!correspondeTermo) return false;
+        const numero = formatarNumeroPedido(pedido.id);
+        const casaNumero = /^\d+$/.test(termoNumerico) && (numero.includes(termoNumerico) || String(pedido.id).includes(termoNumerico));
+        if (!nome.includes(termo) && !casaNumero) return false;
       }
-
-      const dataPedido = pedido.data_pedido.slice(0, 10);
-
-      if (dataInicio && dataPedido < dataInicio) return false;
-      if (dataFim && dataPedido > dataFim) return false;
-
+      const dia = String(pedido.data_pedido).slice(0, 10);   // AAAA-MM-DD
+      if (inicio && dia < inicio) return false;
+      if (fim && dia > fim) return false;
       return true;
     });
   }
 
-  function renderizarTabela() {
-    const lista = pedidosFiltrados();
+  function mostrarVazio(texto, aviso = false) {
+    elementos.tabelaCorpo.innerHTML = "";
+    elementos.estadoVazio.textContent = texto;
+    elementos.estadoVazio.classList.toggle("aviso-periodo", aviso);
+    elementos.estadoVazio.hidden = false;
+  }
 
-    if (lista.length === 0) {
-      elementos.tabelaCorpo.innerHTML = "";
-      elementos.estadoVazio.style.display = "block";
+  function renderizarTabela() {
+    elementos.estadoCarregando.hidden = true;
+
+    if (periodoInvalido()) {
+      mostrarVazio("Período inválido: a data inicial é posterior à data final.", true);
       return;
     }
 
-    elementos.estadoVazio.style.display = "none";
+    const lista = pedidosFiltrados();
+    if (lista.length === 0) {
+      const filtrando = pedidosCache.length > 0;
+      mostrarVazio(filtrando ? "Nenhum pedido encontrado com esses filtros." : "Nenhum pedido encontrado.");
+      return;
+    }
 
+    elementos.estadoVazio.hidden = true;
     elementos.tabelaCorpo.innerHTML = lista
       .slice()
       .sort((a, b) => b.id - a.id)
-      .map(pedido => `
-        <tr class="linha-clicavel" data-id="${pedido.id}">
-          <td class="celula-nome">#${pedido.id}</td>
-          <td>${nomeFornecedor(pedido.fornecedor_id)}</td>
-          <td>${formatarData(pedido.data_pedido)}</td>
-          <td>${formatarData(pedido.data_entrega_prevista)}</td>
-          <td>${formatarMoeda(pedido.valor_total)}</td>
-          <td><span class="badge-status-grande badge-status-grande--${pedido.status}">${pedido.status}</span></td>
-        </tr>
-      `).join("");
+      .map(pedido => {
+        const quantidadeLinhas = pedido.itens.length;
+        const situacao = situacaoPedidoCompra(pedido);
+        const selo = situacao.atrasado ? '<span class="badge-status badge-status--atrasado">Atrasado</span>' : "";
+        return `
+          <tr class="linha-clicavel" data-id="${pedido.id}" tabindex="0">
+            <td class="celula-nome">${formatarNumeroPedido(pedido.id)}</td>
+            <td>${escaparHtml(nomeFornecedor(pedido.fornecedor_id))}</td>
+            <td>${formatarData(pedido.data_pedido)}</td>
+            <td${situacao.atrasado ? ' class="celula-atrasada"' : ""}>${formatarData(pedido.data_entrega_prevista)}</td>
+            <td>${quantidadeLinhas} ${quantidadeLinhas === 1 ? "item" : "itens"}</td>
+            <td class="celula-numero">${formatarMoeda(pedido.valor_total)}</td>
+            <td><span class="badge-status badge-status--${escaparHtml(situacao.chave)}">${escaparHtml(situacao.rotulo)}</span>${selo}</td>
+          </tr>
+        `;
+      }).join("");
+  }
+
+  async function carregarFornecedores() {
+    try {
+      const fornecedores = await fornecedorService.listar({ incluirInativos: true });
+      fornecedoresMapCache = fornecedores.reduce((mapa, fornecedor) => {
+        mapa[fornecedor.id] = fornecedor.nome;
+        return mapa;
+      }, {});
+    } catch (erro) {
+      // Sem o nome o pedido ainda aparece como "Fornecedor #id"; avisa e segue.
+      toast.erro(`Não foi possível carregar os nomes dos fornecedores. ${erro.message}`);
+    }
+  }
+
+  async function carregarPedidos() {
+    const minha = ++requisicaoAtual;
+    elementos.tabelaCorpo.innerHTML = "";
+    elementos.estadoVazio.hidden = true;
+    elementos.estadoCarregando.hidden = false;
+
+    try {
+      const status = filtroStatusAtivo === "todos" ? null : filtroStatusAtivo;
+      const dados = await pedidoCompraService.listar({ status });
+      if (minha !== requisicaoAtual) return;
+      pedidosCache = dados;
+      renderizarTabela();
+    } catch (erro) {
+      if (minha !== requisicaoAtual) return;
+      pedidosCache = [];
+      mostrarVazio("Não foi possível carregar os pedidos.");
+      toast.erro(erro.message);
+    }
+  }
+
+  function abrirPedido(linha) {
+    if (linha) window.location.href = `pedido-compra-detalhe.html?id=${linha.dataset.id}`;
   }
 
   elementos.botaoIncluir.addEventListener("click", () => {
-    window.location.href = "pedido-compra-detalhe.html";
+    window.location.href = "pedido-compra-novo.html";
   });
 
-  elementos.tabelaCorpo.addEventListener("click", (evento) => {
-    const linha = evento.target.closest("tr[data-id]");
-    if (!linha) return;
-    window.location.href = `pedido-compra-detalhe.html?id=${linha.dataset.id}`;
+  elementos.tabelaCorpo.addEventListener("click", (evento) => abrirPedido(evento.target.closest("tr[data-id]")));
+  elementos.tabelaCorpo.addEventListener("keydown", (evento) => {
+    if (evento.key === "Enter") abrirPedido(evento.target.closest("tr[data-id]"));
   });
 
   elementos.abas.forEach(aba => {
     aba.addEventListener("click", () => {
       elementos.abas.forEach(a => a.classList.remove("aba-status--ativa"));
       aba.classList.add("aba-status--ativa");
-      filtroStatusAtivoCompra = aba.dataset.status;
+      filtroStatusAtivo = aba.dataset.status;
       carregarPedidos();
     });
   });
@@ -120,6 +159,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   elementos.campoDataInicio.addEventListener("change", renderizarTabela);
   elementos.campoDataFim.addEventListener("change", renderizarTabela);
 
-  await carregarFornecedoresMap();
+  await carregarFornecedores();
   await carregarPedidos();
 });

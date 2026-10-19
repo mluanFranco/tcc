@@ -10,6 +10,9 @@
   <link rel="stylesheet" href="../css/sidebar.css">
   <link rel="stylesheet" href="../css/listagem-crud.css">
   <link rel="stylesheet" href="../css/detalhe-pedido.css">
+  <link rel="stylesheet" href="../css/pedido-venda.css">
+  <link rel="stylesheet" href="../css/pedido-compra.css">
+  <link rel="stylesheet" href="../css/feedback.css">
 </head>
 <body>
 
@@ -20,21 +23,21 @@
 
       <div class="pagina-topo">
         <h1>Pedidos de Compra</h1>
-        <button class="botao-primario" id="botao-incluir">
+        <button class="botao-primario" id="botao-incluir" hidden>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-          Novo pedido
+          Novo Pedido
         </button>
       </div>
 
       <div class="barra-filtros">
         <div class="campo-busca">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-          <input type="text" id="campo-busca" placeholder="Buscar por fornecedor ou nº do pedido...">
+          <input type="text" id="campo-busca" placeholder="Buscar por fornecedor ou nº do pedido" aria-label="Buscar por fornecedor ou número do pedido">
         </div>
         <div class="filtro-data">
-          <input type="date" id="campo-data-inicio" title="Data inicial">
-          <span class="filtro-data__separador">até</span>
-          <input type="date" id="campo-data-fim" title="Data final">
+          <input type="date" id="campo-data-inicio" title="Data inicial" aria-label="Data inicial">
+          <span class="filtro-data__separador">Até</span>
+          <input type="date" id="campo-data-fim" title="Data final" aria-label="Data final">
         </div>
         <div class="abas-status">
           <button class="aba-status aba-status--ativa" data-status="todos">Todos</button>
@@ -52,15 +55,15 @@
               <th>Fornecedor</th>
               <th>Data</th>
               <th>Entrega prevista</th>
-              <th>Total</th>
+              <th>Itens</th>
+              <th class="coluna-numero">Total</th>
               <th>Status</th>
             </tr>
           </thead>
           <tbody id="tabela-pedidos-corpo"></tbody>
         </table>
-        <div class="estado-vazio" id="estado-vazio" style="display: none;">
-          Nenhum pedido encontrado.
-        </div>
+        <div class="estado-carregando" id="estado-carregando">Carregando pedidos...</div>
+        <div class="estado-vazio" id="estado-vazio" hidden></div>
       </div>
 
     </main>
@@ -69,7 +72,9 @@
   <script src="../js/core/config.js"></script>
   <script src="../js/core/api.js"></script>
   <script src="../js/core/auth.js"></script>
+  <script src="../js/core/formatadores.js"></script>
   <script src="../js/components/sidebar.js"></script>
+  <script src="../js/components/feedback.js"></script>
   <script src="../js/services/pedidoCompraService.js"></script>
   <script src="../js/services/fornecedorService.js"></script>
   <script src="../js/pages/pedidos-compra.js"></script>

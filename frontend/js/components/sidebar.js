@@ -23,7 +23,7 @@ const ITENS_MENU = [
     tipo: "grupo", label: "Pedidos", icone: "venda",
     subitens: [
       { label: "Pedidos de Venda",  href: "pedidos-venda.html",  tambem: ["pedido-venda-novo.html", "pedido-venda-detalhe.html"],  permissao: "vendas.ver" },
-      { label: "Pedidos de Compra", href: "pedidos-compra.html", tambem: ["pedido-compra-detalhe.html"], permissao: "compras.ver" }
+      { label: "Pedidos de Compra", href: "pedidos-compra.html", tambem: ["pedido-compra-novo.html", "pedido-compra-detalhe.html"], permissao: "compras.ver" }
     ]
   },
   { label: "Cotações",            href: "cotacoes.html",         tambem: ["cotacao-detalhe.html"],   permissao: "cotacoes.ver",   icone: "cotacao" },
