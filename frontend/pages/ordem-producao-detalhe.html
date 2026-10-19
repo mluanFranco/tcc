@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ordem de Produção — Nova Sorvetes</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/base.css">
+  <link rel="stylesheet" href="../css/sidebar.css">
+  <link rel="stylesheet" href="../css/listagem-crud.css">
+  <link rel="stylesheet" href="../css/detalhe-pedido.css">
+  <link rel="stylesheet" href="../css/pedido-venda.css">
+  <link rel="stylesheet" href="../css/cotacoes.css">
+  <link rel="stylesheet" href="../css/producao.css">
+  <link rel="stylesheet" href="../css/feedback.css">
+</head>
+<body>
+
+  <div class="app-layout">
+    <aside id="sidebar" class="sidebar"></aside>
+
+    <main class="conteudo-principal">
+
+
+      <div class="estado-pagina" id="estado-pagina">Carregando ordem de produção...</div>
+
+      <div id="conteudo-ordem" hidden>
+
+        <div class="pedido-topo">
+          <a class="pedido-topo__voltar" href="producao.html" id="link-voltar">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            Produção
+          </a>
+          <div class="pedido-topo__linha">
+            <h1 id="titulo-ordem">Ordem de Produção: </h1>
+            <div class="pedido-acoes">
+              <span class="pilula-status" id="pilula-status"></span>
+              <button type="button" class="botao-sucesso" id="botao-confirmar" hidden>Confirmar produção</button>
+              <button type="button" class="botao-secundario botao-secundario--perigo" id="botao-cancelar" hidden>Cancelar ordem</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="faixa-aviso" id="faixa-aviso" hidden></div>
+
+        <section class="cartao">
+          <h2 class="cartao__titulo">Dados da Ordem</h2>
+          <div class="cartao-grade">
+            <div class="visualizacao-item">
+              <span class="visualizacao-label">Produto fabricado</span>
+              <span class="visualizacao-valor" id="vis-produto">—</span>
+            </div>
+            <div class="visualizacao-item">
+              <span class="visualizacao-label">Quantidade</span>
+              <span class="visualizacao-valor" id="vis-quantidade">—</span>
+            </div>
+            <div class="visualizacao-item">
+              <span class="visualizacao-label">Criada por</span>
+              <span class="visualizacao-valor" id="vis-usuario">—</span>
+            </div>
+            <div class="visualizacao-item">
+              <span class="visualizacao-label">Histórico</span>
+              <span class="visualizacao-valor lista-linha-do-tempo" id="vis-historico">—</span>
+            </div>
+            <div class="visualizacao-item cartao-grade--cheia">
+              <span class="visualizacao-label">Observação</span>
+              <span class="visualizacao-valor" id="vis-observacao">—</span>
+            </div>
+          </div>
+        </section>
+
+        <section class="cartao">
+          <h2 class="cartao__titulo" id="titulo-insumos">Insumos</h2>
+          <div id="insumos"></div>
+          <p class="nota-cartao" id="nota-insumos"></p>
+        </section>
+
+      </div>
+
+    </main>
+  </div>
+
+  <script src="../js/core/config.js"></script>
+  <script src="../js/core/api.js"></script>
+  <script src="../js/core/auth.js"></script>
+  <script src="../js/core/formatadores.js"></script>
+  <script src="../js/components/sidebar.js"></script>
+  <script src="../js/components/feedback.js"></script>
+  <script src="../js/services/receitaService.js"></script>
+  <script src="../js/services/ordemProducaoService.js"></script>
+  <script src="../js/components/simulacao-producao.js"></script>
+  <script src="../js/pages/ordem-producao-detalhe.js"></script>
+</body>
+</html>

@@ -27,6 +27,7 @@ const ITENS_MENU = [
     ]
   },
   { label: "Cotações",            href: "cotacoes.html",         tambem: ["cotacao-nova.html", "cotacao-detalhe.html"],   permissao: "cotacoes.ver",   icone: "cotacao" },
+  { label: "Produção",            href: "producao.html",         tambem: ["receita-nova.html", "receita-detalhe.html", "ordem-producao-nova.html", "ordem-producao-detalhe.html"], permissao: "producao.ver", icone: "producao" },
   { label: "Formas de Pagamento", href: "formas-pagamento.html", icone: "pagamento" },
   { label: "Geladeiras",          href: "geladeiras.html",       tambem: ["geladeira-detalhe.html"], permissao: "geladeiras.ver", icone: "geladeira" },
   { label: "Usuários",            href: "usuarios.html",         apenasAdmin: true, icone: "usuario" }
@@ -39,6 +40,7 @@ const ICONES_SVG = {
   cadastro:  _svg('<path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>'),
   venda:     _svg('<circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>'),
   cotacao:   _svg('<line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>'),
+  producao:  _svg('<path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line>'),
   geladeira: _svg('<rect x="2" y="3" width="20" height="8" rx="2"></rect><rect x="2" y="13" width="20" height="8" rx="2"></rect><line x1="6" y1="7" x2="6.01" y2="7"></line><line x1="6" y1="17" x2="6.01" y2="17"></line>'),
   pagamento: _svg('<rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line>'),
   usuario:   _svg('<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle>')

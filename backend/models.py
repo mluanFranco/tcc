@@ -468,6 +468,7 @@ class OrdemProducao(Base):
     updated_at     = Column(DateTime, default=datetime.now, onupdate=datetime.now)
     receita = relationship("Receita")
     produto = relationship("Produto")
+    usuario = relationship("Usuario")
     itens   = relationship("OrdemProducaoItem", back_populates="ordem",
                            cascade="all, delete-orphan", order_by="OrdemProducaoItem.id")
 

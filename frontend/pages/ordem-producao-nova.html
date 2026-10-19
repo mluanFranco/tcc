@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nova Ordem de Produção — Nova Sorvetes</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/base.css">
+  <link rel="stylesheet" href="../css/sidebar.css">
+  <link rel="stylesheet" href="../css/listagem-crud.css">
+  <link rel="stylesheet" href="../css/detalhe-pedido.css">
+  <link rel="stylesheet" href="../css/pedido-venda.css">
+  <link rel="stylesheet" href="../css/cotacoes.css">
+  <link rel="stylesheet" href="../css/producao.css">
+  <link rel="stylesheet" href="../css/feedback.css">
+</head>
+<body>
+
+  <div class="app-layout">
+    <aside id="sidebar" class="sidebar"></aside>
+
+    <main class="conteudo-principal">
+
+
+      <div class="pedido-topo">
+        <a class="pedido-topo__voltar" href="producao.html" id="link-voltar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><polyline points="15 18 9 12 15 6"></polyline></svg>
+          Produção
+        </a>
+        <div class="pedido-topo__linha">
+          <h1>Nova Ordem de Produção</h1>
+          <div class="pedido-acoes">
+            <button type="button" class="botao-primario" id="botao-salvar" disabled>Criar Ordem</button>
+            <button type="button" class="botao-cancelar-vermelho" id="botao-cancelar">Cancelar</button>
+          </div>
+        </div>
+      </div>
+
+      <form id="form-ordem" novalidate>
+
+        <section class="cartao">
+          <h2 class="cartao__titulo">Dados da Ordem</h2>
+          <div class="cartao-grade">
+
+            <div class="campo-form" id="grupo-receita">
+              <label for="campo-receita">Receita (produto fabricado) *</label>
+              <select id="campo-receita" disabled><option value="">Carregando...</option></select>
+              <span class="campo-erro-msg">Selecione a receita.</span>
+              <span class="dica" id="dica-receita"></span>
+            </div>
+
+            <div class="campo-form" id="grupo-quantidade">
+              <label for="campo-quantidade">Quantidade a produzir *</label>
+              <div class="campo-com-sigla">
+                <input type="number" id="campo-quantidade" min="0" step="0.001" inputmode="decimal" placeholder="Ex.: 20">
+                <span class="campo-com-sigla__sigla" id="sigla-quantidade"></span>
+              </div>
+              <span class="campo-erro-msg" id="erro-quantidade">Informe uma quantidade maior que zero.</span>
+              <span class="dica" id="dica-rendimento"></span>
+            </div>
+
+            <div class="campo-form cartao-grade--cheia">
+              <label for="campo-observacao">Observação</label>
+              <textarea id="campo-observacao" maxlength="255"></textarea>
+              <span class="contador-caracteres" id="contador-observacao">0/255</span>
+            </div>
+
+          </div>
+        </section>
+
+        <section class="cartao">
+          <h2 class="cartao__titulo">Consumo de insumos</h2>
+          <div id="simulacao"><div class="simulacao-vazia">Escolha a receita e a quantidade para ver o consumo de insumos.</div></div>
+          <p class="nota-cartao">A ordem nasce aberta e não reserva estoque. Os insumos só são consumidos quando você confirma a produção.</p>
+        </section>
+
+      </form>
+
+    </main>
+  </div>
+
+  <script src="../js/core/config.js"></script>
+  <script src="../js/core/api.js"></script>
+  <script src="../js/core/auth.js"></script>
+  <script src="../js/core/formatadores.js"></script>
+  <script src="../js/components/sidebar.js"></script>
+  <script src="../js/components/feedback.js"></script>
+  <script src="../js/services/receitaService.js"></script>
+  <script src="../js/services/ordemProducaoService.js"></script>
+  <script src="../js/components/simulacao-producao.js"></script>
+  <script src="../js/pages/ordem-producao-nova.js"></script>
+</body>
+</html>

@@ -32,6 +32,7 @@ class OrdemProducaoResponse(BaseModel):
     quantidade: QuantidadeSaida
     status: str
     usuario_id: int
+    usuario_nome: Optional[str]
     observacao: Optional[str]
     itens_previa: bool          # True = ordem aberta: itens calculados pela receita atual (ainda não congelados)
     itens: List[OrdemProducaoItemResponse]

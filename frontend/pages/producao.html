@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Produção — Nova Sorvetes</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/base.css">
+  <link rel="stylesheet" href="../css/sidebar.css">
+  <link rel="stylesheet" href="../css/listagem-crud.css">
+  <link rel="stylesheet" href="../css/detalhe-pedido.css">
+  <link rel="stylesheet" href="../css/pedido-venda.css">
+  <link rel="stylesheet" href="../css/cotacoes.css">
+  <link rel="stylesheet" href="../css/producao.css">
+  <link rel="stylesheet" href="../css/feedback.css">
+</head>
+<body>
+
+  <div class="app-layout">
+    <aside id="sidebar" class="sidebar"></aside>
+
+    <main class="conteudo-principal">
+
+      <div class="pagina-topo">
+        <h1>Produção</h1>
+        <button class="botao-primario" id="botao-incluir" hidden>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+          <span id="texto-botao-incluir">Nova ordem de produção</span>
+        </button>
+      </div>
+
+      <div class="abas-secundarias">
+        <button class="aba-secundaria aba-secundaria--ativa" id="aba-ordens">Ordens de Produção</button>
+        <button class="aba-secundaria" id="aba-receitas">Receitas</button>
+      </div>
+
+      <!-- Aba: Ordens de Produção -->
+      <div id="painel-ordens">
+        <div class="barra-filtros">
+          <div class="campo-busca">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            <input type="text" id="campo-busca-ordens" placeholder="Buscar por produto" aria-label="Buscar ordem por produto" maxlength="100">
+          </div>
+          <div class="filtro-data">
+            <input type="date" id="campo-data-inicio" title="Data inicial" aria-label="Data inicial">
+            <span class="filtro-data__separador">Até</span>
+            <input type="date" id="campo-data-fim" title="Data final" aria-label="Data final">
+          </div>
+          <div class="abas-status">
+            <button class="aba-status aba-status--ativa" data-status="todos">Todas</button>
+            <button class="aba-status" data-status="aberta">Abertas</button>
+            <button class="aba-status" data-status="confirmada">Confirmadas</button>
+            <button class="aba-status" data-status="cancelada">Canceladas</button>
+          </div>
+        </div>
+
+        <div class="tabela-container">
+          <table class="tabela">
+            <thead>
+              <tr>
+                <th>Ordem</th>
+                <th>Produto</th>
+                <th class="coluna-numero">Quantidade</th>
+                <th class="coluna-numero">Custo total</th>
+                <th>Criada em</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="tabela-ordens-corpo"></tbody>
+          </table>
+          <div class="estado-carregando" id="estado-carregando-ordens">Carregando ordens...</div>
+          <div class="estado-vazio" id="estado-vazio-ordens" hidden></div>
+        </div>
+      </div>
+
+      <!-- Aba: Receitas -->
+      <div id="painel-receitas" hidden>
+        <div class="barra-filtros">
+          <div class="campo-busca">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            <input type="text" id="campo-busca-receitas" placeholder="Buscar por produto" aria-label="Buscar receita por produto" maxlength="100">
+          </div>
+          <div class="abas-status">
+            <button class="aba-status aba-status--ativa" data-situacao="ativas">Ativas</button>
+            <button class="aba-status" data-situacao="inativas">Inativas</button>
+            <button class="aba-status" data-situacao="todas">Todas</button>
+          </div>
+        </div>
+
+        <div class="tabela-container">
+          <table class="tabela">
+            <thead>
+              <tr>
+                <th>Produto</th>
+                <th class="coluna-numero">Rendimento</th>
+                <th class="coluna-numero">Insumos</th>
+                <th class="coluna-numero">Custo da receita</th>
+                <th class="coluna-numero">Custo unitário</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="tabela-receitas-corpo"></tbody>
+          </table>
+          <div class="estado-carregando" id="estado-carregando-receitas">Carregando receitas...</div>
+          <div class="estado-vazio" id="estado-vazio-receitas" hidden></div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <script src="../js/core/config.js"></script>
+  <script src="../js/core/api.js"></script>
+  <script src="../js/core/auth.js"></script>
+  <script src="../js/core/formatadores.js"></script>
+  <script src="../js/components/sidebar.js"></script>
+  <script src="../js/components/feedback.js"></script>
+  <script src="../js/services/ordemProducaoService.js"></script>
+  <script src="../js/services/receitaService.js"></script>
+  <script src="../js/pages/producao.js"></script>
+</body>
+</html>

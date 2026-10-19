@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Receita — Nova Sorvetes</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/base.css">
+  <link rel="stylesheet" href="../css/sidebar.css">
+  <link rel="stylesheet" href="../css/listagem-crud.css">
+  <link rel="stylesheet" href="../css/detalhe-pedido.css">
+  <link rel="stylesheet" href="../css/pedido-venda.css">
+  <link rel="stylesheet" href="../css/cotacoes.css">
+  <link rel="stylesheet" href="../css/producao.css">
+  <link rel="stylesheet" href="../css/feedback.css">
+</head>
+<body>
+
+  <div class="app-layout">
+    <aside id="sidebar" class="sidebar"></aside>
+
+    <main class="conteudo-principal">
+
+
+      <div class="estado-pagina" id="estado-pagina">Carregando receita...</div>
+
+      <div id="conteudo-receita" hidden>
+
+        <div class="pedido-topo">
+          <a class="pedido-topo__voltar" href="producao.html?aba=receitas" id="link-voltar">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            Produção
+          </a>
+          <div class="pedido-topo__linha">
+            <h1 id="titulo-receita">Receita: </h1>
+            <div class="pedido-acoes">
+              <span class="pilula-status" id="pilula-status"></span>
+              <button type="button" class="botao-sucesso" id="botao-produzir" hidden>Produzir</button>
+              <button type="button" class="botao-secundario" id="botao-editar" hidden>Editar</button>
+              <button type="button" class="botao-secundario botao-secundario--perigo" id="botao-desativar" hidden>Desativar</button>
+              <button type="button" class="botao-secundario" id="botao-reativar" hidden>Reativar</button>
+              <button type="button" class="botao-primario" id="botao-salvar" hidden>Salvar alterações</button>
+              <button type="button" class="botao-cancelar-vermelho" id="botao-cancelar-edicao" hidden>Cancelar edição</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="faixa-aviso" id="faixa-aviso" hidden></div>
+
+        <!-- Modo leitura -->
+        <div id="vista">
+
+          <section class="cartao">
+            <h2 class="cartao__titulo">Dados da Receita</h2>
+            <div class="cartao-grade">
+              <div class="visualizacao-item">
+                <span class="visualizacao-label">Produto fabricado</span>
+                <span class="visualizacao-valor" id="vis-produto">—</span>
+              </div>
+              <div class="visualizacao-item">
+                <span class="visualizacao-label">Rendimento</span>
+                <span class="visualizacao-valor" id="vis-rendimento">—</span>
+              </div>
+              <div class="visualizacao-item">
+                <span class="visualizacao-label">Ordens abertas</span>
+                <span class="visualizacao-valor" id="vis-abertas">—</span>
+              </div>
+              <div class="visualizacao-item">
+                <span class="visualizacao-label">Atualizada em</span>
+                <span class="visualizacao-valor" id="vis-atualizada">—</span>
+              </div>
+              <div class="visualizacao-item cartao-grade--cheia">
+                <span class="visualizacao-label">Observação</span>
+                <span class="visualizacao-valor" id="vis-observacao">—</span>
+              </div>
+            </div>
+          </section>
+
+          <section class="cartao">
+            <h2 class="cartao__titulo">Insumos</h2>
+            <table class="tabela-itens-leitura">
+              <thead>
+                <tr>
+                  <th>Insumo</th>
+                  <th class="num">Quantidade</th>
+                  <th class="num">R$ Un.</th>
+                  <th class="num">Subtotal</th>
+                </tr>
+              </thead>
+              <tbody id="itens-corpo"></tbody>
+            </table>
+            <div class="resumo-custos">
+              <div class="resumo-custos__bloco">
+                <span class="resumo-custos__rotulo">Custo da receita</span>
+                <span class="resumo-custos__valor" id="vis-custo-total">R$ 0,00</span>
+              </div>
+              <div class="resumo-custos__bloco">
+                <span class="resumo-custos__rotulo" id="vis-rotulo-unitario">Custo por unidade</span>
+                <span class="resumo-custos__valor resumo-custos__valor--secundario" id="vis-custo-unitario">—</span>
+              </div>
+            </div>
+          </section>
+
+          <section class="cartao" id="cartao-simulador">
+            <h2 class="cartao__titulo">Simulador de produção</h2>
+            <div class="simulador-linha">
+              <div class="campo-form">
+                <label for="simulador-quantidade" id="rotulo-simulador">Quanto quero produzir</label>
+                <input type="number" id="simulador-quantidade" min="0" step="0.001" inputmode="decimal" placeholder="Ex.: 20">
+              </div>
+            </div>
+            <div id="simulador-resultado"></div>
+            <p class="nota-cartao">Somente consulta: não reserva nem altera o estoque. Para produzir de fato, crie uma ordem de produção.</p>
+          </section>
+
+        </div>
+
+        <!-- Modo edição (o mesmo formulário da Nova Receita) -->
+        <form id="edicao" hidden novalidate>
+          <div id="receita-form"></div>
+        </form>
+
+      </div>
+
+    </main>
+  </div>
+
+  <script src="../js/core/config.js"></script>
+  <script src="../js/core/api.js"></script>
+  <script src="../js/core/auth.js"></script>
+  <script src="../js/core/formatadores.js"></script>
+  <script src="../js/components/sidebar.js"></script>
+  <script src="../js/components/feedback.js"></script>
+  <script src="../js/services/receitaService.js"></script>
+  <script src="../js/services/ordemProducaoService.js"></script>
+  <script src="../js/services/produtoService.js"></script>
+  <script src="../js/services/unidadeMedidaService.js"></script>
+  <script src="../js/components/simulacao-producao.js"></script>
+  <script src="../js/components/receita-form.js"></script>
+  <script src="../js/pages/receita-detalhe.js"></script>
+</body>
+</html>

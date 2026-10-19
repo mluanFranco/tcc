@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from database import get_db
 from models import OrdemProducao, OrdemProducaoItem, Receita, Produto, Usuario
@@ -11,7 +11,7 @@ from core.estoque import travar_produtos
 from core.receita import calcular_consumo
 from typing import List, Optional
 from decimal import Decimal
-from datetime import datetime
+from datetime import datetime, date, time, timedelta
 
 router = APIRouter(prefix="/ordens-producao", tags=["Ordens de Produção"])
 
@@ -58,6 +58,7 @@ def _montar_resposta(ordem: OrdemProducao) -> OrdemProducaoResponse:
         quantidade=ordem.quantidade,
         status=ordem.status,
         usuario_id=ordem.usuario_id,
+        usuario_nome=ordem.usuario.nome if ordem.usuario else None,
         observacao=ordem.observacao,
         itens_previa=previa,
         itens=itens,
@@ -105,14 +106,29 @@ def criar_ordem_producao(
 def listar_ordens_producao(
     status: Optional[str] = None,
     produto_id: Optional[int] = None,
+    busca: Optional[str] = Query(default=None, max_length=100),
+    data_inicio: Optional[date] = None,
+    data_fim: Optional[date] = None,
     db: Session = Depends(get_db),
     _=Depends(get_current_user),
 ):
+    if status and status not in ("aberta", "confirmada", "cancelada"):
+        raise HTTPException(status_code=400, detail="Status inválido")
+    if data_inicio and data_fim and data_inicio > data_fim:
+        raise HTTPException(status_code=400, detail="A data inicial não pode ser posterior à data final")
+
     query = db.query(OrdemProducao)
     if status:
         query = query.filter(OrdemProducao.status == status)
     if produto_id:
         query = query.filter(OrdemProducao.produto_id == produto_id)
+    if busca:
+        query = query.join(Produto, Produto.id == OrdemProducao.produto_id).filter(Produto.nome.ilike(f"%{busca}%"))
+    # Período pela data de criação da ordem (o dia final entra por inteiro)
+    if data_inicio:
+        query = query.filter(OrdemProducao.created_at >= datetime.combine(data_inicio, time.min))
+    if data_fim:
+        query = query.filter(OrdemProducao.created_at < datetime.combine(data_fim + timedelta(days=1), time.min))
     return [_montar_resposta(o) for o in query.order_by(OrdemProducao.id.desc()).all()]
 
 
