@@ -27,6 +27,7 @@ const formaPagamentoService = {
     });
   },
 
+  // Campos omitidos não mudam; se "parcelas" for enviado, a lista inteira é substituída.
   async atualizar(id, dados) {
     return apiFetch(`/formas-pagamento/${id}`, {
       method: "PUT",
@@ -41,9 +42,6 @@ const formaPagamentoService = {
   },
 
   async reativar(id) {
-    return apiFetch(`/formas-pagamento/${id}`, {
-      method: "PUT",
-      body: JSON.stringify({ ativo: true })
-    });
+    return apiFetch(`/formas-pagamento/${id}/reativar`, { method: "PATCH" });
   }
-};
+};

@@ -9,6 +9,9 @@
   <link rel="stylesheet" href="../css/base.css">
   <link rel="stylesheet" href="../css/sidebar.css">
   <link rel="stylesheet" href="../css/listagem-crud.css">
+  <link rel="stylesheet" href="../css/pedido-compra.css">
+  <link rel="stylesheet" href="../css/formas-pagamento.css">
+  <link rel="stylesheet" href="../css/feedback.css">
 </head>
 <body>
 
@@ -19,7 +22,7 @@
 
       <div class="pagina-topo">
         <h1>Formas de Pagamento</h1>
-        <button class="botao-primario" id="botao-incluir">
+        <button class="botao-primario" id="botao-incluir" hidden>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
           Incluir
         </button>
@@ -28,7 +31,7 @@
       <div class="barra-filtros">
         <div class="campo-busca">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-          <input type="text" id="campo-busca" placeholder="Buscar por descrição...">
+          <input type="text" id="campo-busca" placeholder="Buscar por descrição..." aria-label="Buscar por descrição">
         </div>
         <div class="abas-status">
           <button class="aba-status aba-status--ativa" id="aba-ativos">Ativas</button>
@@ -42,17 +45,16 @@
             <tr>
               <th>Descrição</th>
               <th>Tipo</th>
-              <th>Prazo (dias)</th>
-              <th>Taxa (%)</th>
+              <th>Parcelas</th>
+              <th class="coluna-numero">Taxa</th>
               <th>Status</th>
-              <th>Ações</th>
+              <th><span class="sr-only">Ações</span></th>
             </tr>
           </thead>
           <tbody id="tabela-formas-corpo"></tbody>
         </table>
-        <div class="estado-vazio" id="estado-vazio" style="display: none;">
-          Nenhuma forma de pagamento encontrada.
-        </div>
+        <div class="estado-carregando" id="estado-carregando">Carregando formas de pagamento...</div>
+        <div class="estado-vazio" id="estado-vazio" hidden></div>
       </div>
 
     </main>
@@ -60,44 +62,67 @@
 
   <!-- Modal de criação/edição -->
   <div class="modal-overlay" id="modal-forma">
-    <div class="modal">
+    <div class="modal modal--larga" role="dialog" aria-modal="true" aria-labelledby="modal-titulo">
       <div class="modal__topo">
         <span class="modal__titulo" id="modal-titulo">Nova forma de pagamento</span>
-        <button class="modal__fechar" id="modal-fechar" aria-label="Fechar">
+        <button type="button" class="modal__fechar" id="modal-fechar" aria-label="Fechar">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
         </button>
       </div>
 
-      <form id="form-forma">
+      <form id="form-forma" novalidate>
         <div class="modal__corpo">
 
-          <div class="campo-form">
-            <label for="campo-descricao">Descrição *</label>
-            <input type="text" id="campo-descricao" placeholder="Ex: À vista, 30 dias, Parcelado 3x..." required>
-            <span class="campo-erro-msg">Informe a descrição.</span>
-          </div>
-
-          <div class="campo-form">
-            <label for="campo-tipo">Tipo *</label>
-            <select id="campo-tipo" required>
-              <option value="">Selecione...</option>
-              <option value="vista">À vista</option>
-              <option value="parcelado">Parcelado</option>
-              <option value="prazo">A prazo</option>
-            </select>
-            <span class="campo-erro-msg">Selecione o tipo.</span>
-          </div>
-
           <div class="campo-form-linha">
-            <div class="campo-form">
-              <label for="campo-prazo">Prazo (dias)</label>
-              <input type="number" id="campo-prazo" min="0" value="0">
+            <div class="campo-form" id="grupo-descricao">
+              <label for="campo-descricao">Descrição *</label>
+              <input type="text" id="campo-descricao" maxlength="100" placeholder="Ex.: À vista, 30 dias, Cartão 3x...">
+              <span class="campo-erro-msg" id="erro-descricao">Informe a descrição.</span>
             </div>
-            <div class="campo-form">
+            <div class="campo-form" id="grupo-taxa">
               <label for="campo-taxa">Taxa (%)</label>
-              <input type="number" id="campo-taxa" min="0" step="0.01" value="0">
+              <input type="number" id="campo-taxa" min="0" max="100" step="0.01" inputmode="decimal" value="0">
+              <span class="campo-erro-msg" id="erro-taxa">A taxa deve ficar entre 0 e 100.</span>
             </div>
           </div>
+          <p class="dica-modal">A taxa é a cobrada pela operadora (cartão, por exemplo) e só desconta do valor líquido nas contas a receber (vendas).</p>
+
+          <div class="secao-parcelas__topo">
+            <span class="secao-parcelas__titulo">Parcelas</span>
+            <button type="button" class="botao-secundario" id="botao-adicionar-parcela">+ Adicionar parcela</button>
+          </div>
+
+          <div class="gerador-parcelas" id="gerador-parcelas">
+            <div class="campo-form">
+              <label for="gerar-quantidade">Nº de parcelas</label>
+              <input type="number" id="gerar-quantidade" min="1" max="24" step="1" value="3" inputmode="numeric">
+            </div>
+            <div class="campo-form">
+              <label for="gerar-intervalo">Intervalo (dias)</label>
+              <input type="number" id="gerar-intervalo" min="0" max="3650" step="1" value="30" inputmode="numeric">
+            </div>
+            <div class="campo-form">
+              <label for="gerar-primeira">1ª parcela em (dias)</label>
+              <input type="number" id="gerar-primeira" min="0" max="3650" step="1" value="30" inputmode="numeric">
+            </div>
+            <button type="button" class="botao-secundario" id="botao-gerar-parcelas">Gerar parcelas</button>
+          </div>
+
+          <table class="tabela-parcelas">
+            <thead>
+              <tr>
+                <th class="col-numero">Parcela</th>
+                <th class="col-prazo">Prazo (dias)</th>
+                <th class="col-perc">Percentual (%)</th>
+                <th class="col-dados">Descrição</th>
+                <th class="col-acao"><span class="sr-only">Remover</span></th>
+              </tr>
+            </thead>
+            <tbody id="parcelas-corpo"></tbody>
+          </table>
+
+          <div class="soma-parcelas" id="soma-parcelas" aria-live="polite"></div>
+          <p class="dica-modal" id="aviso-edicao" hidden>A alteração vale para novos pedidos e cotações; as contas já geradas não mudam. Pedidos de venda ainda abertos geram as contas na confirmação, já com as parcelas novas.</p>
 
         </div>
 
@@ -111,10 +136,10 @@
 
   <!-- Modal de visualização (somente leitura) -->
   <div class="modal-overlay" id="modal-visualizar-forma">
-    <div class="modal">
+    <div class="modal modal--larga" role="dialog" aria-modal="true" aria-labelledby="vis-titulo">
       <div class="modal__topo">
-        <span class="modal__titulo">Detalhes da forma de pagamento</span>
-        <button class="modal__fechar" id="modal-visualizar-fechar" aria-label="Fechar">
+        <span class="modal__titulo" id="vis-titulo">Detalhes da forma de pagamento</span>
+        <button type="button" class="modal__fechar" id="modal-visualizar-fechar" aria-label="Fechar">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
         </button>
       </div>
@@ -134,13 +159,32 @@
             <span class="visualizacao-valor" id="vis-tipo">—</span>
           </div>
           <div class="visualizacao-item">
-            <span class="visualizacao-label">Prazo</span>
-            <span class="visualizacao-valor" id="vis-prazo">—</span>
-          </div>
-          <div class="visualizacao-item">
             <span class="visualizacao-label">Taxa</span>
             <span class="visualizacao-valor" id="vis-taxa">—</span>
           </div>
+        </div>
+
+        <table class="tabela-parcelas">
+          <thead>
+            <tr>
+              <th class="col-numero">Parcela</th>
+              <th>Prazo</th>
+              <th class="num">Percentual</th>
+            </tr>
+          </thead>
+          <tbody id="vis-parcelas-corpo"></tbody>
+        </table>
+
+        <div class="simulacao-forma">
+          <span class="secao-parcelas__titulo">Simular um valor</span>
+          <div class="simulacao-forma__linha">
+            <div class="campo-form">
+              <label for="vis-simular-valor">Valor (R$)</label>
+              <input type="number" id="vis-simular-valor" min="0.01" step="0.01" inputmode="decimal" value="1000.00">
+            </div>
+          </div>
+          <div class="simulacao-forma__resultado" id="vis-simulacao"></div>
+          <p class="dica-modal">Somente consulta. Os vencimentos contam a partir de hoje; nos pedidos, a data base é a do pedido (compra) ou a da confirmação (venda).</p>
         </div>
       </div>
 
@@ -153,7 +197,9 @@
   <script src="../js/core/config.js"></script>
   <script src="../js/core/api.js"></script>
   <script src="../js/core/auth.js"></script>
+  <script src="../js/core/formatadores.js"></script>
   <script src="../js/components/sidebar.js"></script>
+  <script src="../js/components/feedback.js"></script>
   <script src="../js/services/formaPagamentoService.js"></script>
   <script src="../js/pages/formas-pagamento.js"></script>
 </body>
