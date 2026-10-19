@@ -1,0 +1,8 @@
+# Arquivos lidos por programas Linux dentro dos containers: sempre com LF.
+# No Windows, CRLF quebraria scripts .sh e continuações de linha ("\") em Dockerfile.
+*.sh text eol=lf
+Dockerfile text eol=lf
+*.conf text eol=lf
+docker-compose*.yml text eol=lf
+.dockerignore text eol=lf
+.env.example text eol=lf

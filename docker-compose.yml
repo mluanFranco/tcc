@@ -1,0 +1,68 @@
+# Sistema de Gestão de Estoque — Nova Sorvetes.
+# Modo "banca/produção": o código vai DENTRO das imagens e sobe com um comando:
+#     docker compose up -d --build
+# Modo desenvolvimento (código espelhado + recarga automática): veja docker-compose.dev.yml.
+# Antes da primeira vez: copie .env.example para .env e preencha os valores.
+
+name: nova-sorvetes
+
+services:
+  db:
+    image: mysql:8.0
+    restart: unless-stopped
+    command: ["--character-set-server=utf8mb4", "--collation-server=utf8mb4_unicode_ci"]
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Defina MYSQL_ROOT_PASSWORD no arquivo .env}
+      MYSQL_DATABASE: ${DB_NAME:?Defina DB_NAME no arquivo .env}
+      MYSQL_USER: ${DB_USER:?Defina DB_USER no arquivo .env (não use root)}
+      MYSQL_PASSWORD: ${DB_PASSWORD:?Defina DB_PASSWORD no arquivo .env}
+      TZ: America/Sao_Paulo
+    ports:
+      # Opcional: acesso de fora (DBeaver etc.) em localhost:3307. Apague a linha se não precisar.
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p\"$$MYSQL_ROOT_PASSWORD\" --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 20s
+
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      # Dentro do Docker o banco é o serviço "db" (nunca localhost).
+      DB_HOST: db
+      DB_PORT: "3306"
+      UPLOADS_DIR: /data/uploads
+      TZ: America/Sao_Paulo
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    volumes:
+      - uploads_data:/data/uploads
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/docs')"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 60s
+
+  frontend:
+    build:
+      context: .
+      dockerfile: docker/frontend/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "8080:80"
+
+volumes:
+  mysql_data:
+  uploads_data:

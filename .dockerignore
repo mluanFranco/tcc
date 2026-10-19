@@ -1,0 +1,9 @@
+# Contexto do build do frontend (raiz do repositório): só precisa de frontend/ e docker/.
+backend
+backups
+.git
+.gitignore
+.env
+.env.*
+README.md
+docker-compose*.yml

@@ -1,0 +1,1156 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2840" height="1798" viewBox="0 0 2840 1798" font-family="Inter, 'DejaVu Sans', Arial, sans-serif">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<text x="1420.0" y="52" text-anchor="middle" font-size="34" font-weight="700" fill="#0f172a">DER — Sistema de Gestão de Estoque — Nova Sorvetes</text>
+<text x="1420.0" y="84" text-anchor="middle" font-size="18" fill="#475569">Banco sist_gest_est_mon (MySQL 8) · 32 tabelas · 56 relacionamentos</text>
+<rect x="70" y="100" width="16" height="16" rx="3" fill="#2563eb"/>
+<text x="94" y="113" font-size="15" fill="#334155">Controle de acesso</text>
+<rect x="278.79999999999995" y="100" width="16" height="16" rx="3" fill="#16a34a"/>
+<text x="302.79999999999995" y="113" font-size="15" fill="#334155">Cadastros</text>
+<rect x="410.19999999999993" y="100" width="16" height="16" rx="3" fill="#ea580c"/>
+<text x="434.19999999999993" y="113" font-size="15" fill="#334155">Pedidos e cotações</text>
+<rect x="618.9999999999999" y="100" width="16" height="16" rx="3" fill="#0891b2"/>
+<text x="642.9999999999999" y="113" font-size="15" fill="#334155">Geladeiras</text>
+<rect x="758.9999999999999" y="100" width="16" height="16" rx="3" fill="#7c3aed"/>
+<text x="782.9999999999999" y="113" font-size="15" fill="#334155">Produção</text>
+<rect x="881.7999999999998" y="100" width="16" height="16" rx="3" fill="#ca8a04"/>
+<text x="905.7999999999998" y="113" font-size="15" fill="#334155">Financeiro</text>
+<rect x="1021.7999999999998" y="100" width="16" height="16" rx="3" fill="#db2777"/>
+<text x="1045.7999999999997" y="113" font-size="15" fill="#334155">Assistente de IA</text>
+<path d="M 870.0,1330.0 L 850.0,1330.0 L 850.0,1150.0 L 870.0,1150.0" fill="none" stroke="#16a34a" stroke-width="1.5" stroke-linejoin="round" opacity="0.85"/>
+<path d="M 2070.0,430.0 L 2050.0,430.0 L 2050.0,190.0 L 2070.0,190.0" fill="none" stroke="#db2777" stroke-width="1.5" stroke-linejoin="round" opacity="0.85"/>
+<path d="M 2070.0,1450.0 L 2050.0,1450.0 L 2050.0,1190.0 L 2070.0,1190.0" fill="none" stroke="#7c3aed" stroke-width="1.5" stroke-linejoin="round" opacity="0.85"/>
+<path d="M 870.0,600.0 L 850.0,600.0 L 850.0,190.0 L 870.0,190.0" fill="none" stroke="#ea580c" stroke-width="1.5" stroke-linejoin="round" opacity="0.85"/>
+<path d="M 70.0,1350.0 L 50.0,1350.0 L 50.0,930.0 L 70.0,930.0" fill="none" stroke="#0891b2" stroke-width="1.5" stroke-linejoin="round" opacity="0.85"/>
+<path d="M 870.0,310.0 L 830.0,310.0 L 830.0,190.0 L 770.0,190.0" fill="none" stroke="#2563eb" stroke-width="1.5" stroke-linejoin="round" opacity="0.85"/>
+<path d="M 370.0,190.0 L 470.0,190.0" fill="none" stroke="#2563eb" stroke-width="1.5" stroke-linejoin="round" opacity="0.85"/>
+<path d="M 1270.0,190.0 L 1170.0,190.0" fill="none" stroke="#2563eb" stroke-width="1.5" stroke-linejoin="round" opacity="0.85"/>
+<path d="M 1570.0,210.0 L 1590.0,210.0 L 1590.0,190.0 L 1670.0,190.0" fill="none" stroke="#2563eb" stroke-width="1.5" stroke-linejoin="round" opacity="0.85"/>
+<path d="M 1670.0,1390.0 L 1650.0,1390.0 L 1650.0,1370.0 L 1570.0,1370.0" fill="none" stroke="#16a34a" stroke-width="1.5" stroke-linejoin="round" opacity="0.85"/>
+<path d="M 370.0,950.0 L 390.0,950.0 L 390.0,930.0 L 470.0,930.0" fill="none" stroke="#16a34a" stroke-width="1.5" stroke-linejoin="round" opacity="0.85"/>
+<path d="M 370.0,540.0 L 390.0,540.0 L 390.0,520.0 L 470.0,520.0" fill="none" stroke="#ea580c" stroke-width="1.5" stroke-linejoin="round" opacity="0.85"/>
+<path d="M 1670.0,540.0 L 1650.0,540.0 L 1650.0,520.0 L 1570.0,520.0" fill="none" stroke="#ea580c" stroke-width="1.5" stroke-linejoin="round" opacity="0.85"/>
+<path d="M 870.0,720.0 L 840.0,720.0 L 840.0,520.0 L 770.0,520.0" fill="none" stroke="#ea580c" stroke-width="1.5" stroke-linejoin="round" opacity="0.85"/>
+<path d="M 1170.0,740.0 L 1190.0,740.0 L 1190.0,520.0 L 1270.0,520.0" fill="none" stroke="#ea580c" stroke-width="1.5" stroke-linejoin="round" opacity="0.85"/>
+<path d="M 1170.0,970.0 L 1190.0,970.0 L 1190.0,930.0 L 1270.0,930.0" fill="none" stroke="#ea580c" stroke-width="1.5" stroke-linejoin="round" opacity="0.85"/>
+<path d="M 2370.0,870.0 L 2390.0,870.0 L 2390.0,750.0 L 2470.0,750.0" fill="none" stroke="#ca8a04" stroke-width="1.5" stroke-linejoin="round" opacity="0.85"/>
+<path d="M 2470.0,210.0 L 2450.0,210.0 L 2450.0,190.0 L 2370.0,190.0" fill="none" stroke="#db2777" stroke-width="1.5" stroke-linejoin="round" opacity="0.85"/>
+<path d="M 470.0,540.0 L 440.0,540.0 L 440.0,930.0 L 470.0,930.0" fill="none" stroke="#ea580c" stroke-width="1.5" stroke-linejoin="round" opacity="0.85"/>
+<path d="M 1170.0,950.0 L 1200.0,950.0 L 1200.0,520.0 L 1170.0,520.0" fill="none" stroke="#ea580c" stroke-width="1.5" stroke-linejoin="round" opacity="0.85"/>
+<path d="M 2470.0,1470.0 L 2450.0,1470.0 L 2450.0,1430.0 L 2370.0,1430.0" fill="none" stroke="#7c3aed" stroke-width="1.5" stroke-linejoin="round" opacity="0.85"/>
+<path d="M 1270.0,990.0 L 1250.0,990.0 L 1250.0,1370.0 L 1270.0,1370.0" fill="none" stroke="#16a34a" stroke-width="1.5" stroke-linejoin="round" opacity="0.85"/>
+<path d="M 470.0,1230.0 L 450.0,1230.0 L 450.0,1310.0 L 370.0,1310.0" fill="none" stroke="#0891b2" stroke-width="1.5" stroke-linejoin="round" opacity="0.85"/>
+<path d="M 2470.0,1310.0 L 2450.0,1310.0 L 2450.0,1190.0 L 2370.0,1190.0" fill="none" stroke="#7c3aed" stroke-width="1.5" stroke-linejoin="round" opacity="0.85"/>
+<path d="M 2070.0,850.0 L 2050.0,850.0 L 2050.0,930.0 L 1970.0,930.0" fill="none" stroke="#ca8a04" stroke-width="1.5" stroke-linejoin="round" opacity="0.85"/>
+<path d="M 2370.0,450.0 L 2440.0,450.0 L 2440.0,190.0 L 2470.0,190.0" fill="none" stroke="#db2777" stroke-width="1.5" stroke-linejoin="round" opacity="0.85"/>
+<path d="M 1570.0,1030.0 L 1590.0,1030.0 L 1590.0,1550.0 L 1570.0,1550.0" fill="none" stroke="#16a34a" stroke-width="1.5" stroke-linejoin="round" opacity="0.85"/>
+<path d="M 870.0,620.0 L 830.0,620.0 L 830.0,1150.0 L 870.0,1150.0" fill="none" stroke="#ea580c" stroke-width="1.5" stroke-linejoin="round" opacity="0.85"/>
+<path d="M 2470.0,1030.0 L 2400.0,1030.0 L 2400.0,750.0 L 2370.0,750.0" fill="none" stroke="#ca8a04" stroke-width="1.5" stroke-linejoin="round" opacity="0.85"/>
+<path d="M 770.0,560.0 L 820.0,560.0 L 820.0,190.0 L 870.0,190.0" fill="none" stroke="#ea580c" stroke-width="1.5" stroke-linejoin="round" opacity="0.85"/>
+<path d="M 1270.0,560.0 L 1210.0,560.0 L 1210.0,190.0 L 1170.0,190.0" fill="none" stroke="#ea580c" stroke-width="1.5" stroke-linejoin="round" opacity="0.85"/>
+<path d="M 370.0,1330.0 L 440.0,1330.0 L 440.0,930.0 L 470.0,930.0" fill="none" stroke="#0891b2" stroke-width="1.5" stroke-linejoin="round" opacity="0.85"/>
+<path d="M 470.0,660.0 L 400.0,660.0 L 400.0,930.0 L 370.0,930.0" fill="none" stroke="#ea580c" stroke-width="1.5" stroke-linejoin="round" opacity="0.85"/>
+<path d="M 1570.0,540.0 L 1590.0,540.0 L 1590.0,930.0 L 1670.0,930.0" fill="none" stroke="#ea580c" stroke-width="1.5" stroke-linejoin="round" opacity="0.85"/>
+<path d="M 1670.0,560.0 L 1600.0,560.0 L 1600.0,930.0 L 1570.0,930.0" fill="none" stroke="#ea580c" stroke-width="1.5" stroke-linejoin="round" opacity="0.85"/>
+<path d="M 870.0,580.0 L 820.0,580.0 L 820.0,930.0 L 770.0,930.0" fill="none" stroke="#ea580c" stroke-width="1.5" stroke-linejoin="round" opacity="0.85"/>
+<path d="M 1570.0,1010.0 L 1640.0,1010.0 L 1640.0,1370.0 L 1670.0,1370.0" fill="none" stroke="#16a34a" stroke-width="1.5" stroke-linejoin="round" opacity="0.85"/>
+<path d="M 770.0,640.0 L 790.0,640.0 L 790.0,1150.0 L 870.0,1150.0" fill="none" stroke="#ea580c" stroke-width="1.5" stroke-linejoin="round" opacity="0.85"/>
+<path d="M 1270.0,580.0 L 1240.0,580.0 L 1240.0,1150.0 L 1170.0,1150.0" fill="none" stroke="#ea580c" stroke-width="1.5" stroke-linejoin="round" opacity="0.85"/>
+<path d="M 2070.0,810.0 L 1610.0,810.0 L 1610.0,520.0 L 1570.0,520.0" fill="none" stroke="#ca8a04" stroke-width="1.5" stroke-linejoin="round" opacity="0.85"/>
+<path d="M 2070.0,1210.0 L 2040.0,1210.0 L 2040.0,1260.0 L 1600.0,1260.0 L 1600.0,930.0 L 1570.0,930.0" fill="none" stroke="#7c3aed" stroke-width="1.5" stroke-linejoin="round" opacity="0.85"/>
+<path d="M 2070.0,210.0 L 2030.0,210.0 L 2030.0,130.0 L 1200.0,130.0 L 1200.0,190.0 L 1170.0,190.0" fill="none" stroke="#db2777" stroke-width="1.5" stroke-linejoin="round" opacity="0.85"/>
+<path d="M 1170.0,560.0 L 1210.0,560.0 L 1210.0,870.0 L 1640.0,870.0 L 1640.0,930.0 L 1670.0,930.0" fill="none" stroke="#ea580c" stroke-width="1.5" stroke-linejoin="round" opacity="0.85"/>
+<path d="M 870.0,780.0 L 410.0,780.0 L 410.0,930.0 L 370.0,930.0" fill="none" stroke="#ea580c" stroke-width="1.5" stroke-linejoin="round" opacity="0.85"/>
+<path d="M 2070.0,1470.0 L 2040.0,1470.0 L 2040.0,1270.0 L 1610.0,1270.0 L 1610.0,930.0 L 1570.0,930.0" fill="none" stroke="#7c3aed" stroke-width="1.5" stroke-linejoin="round" opacity="0.85"/>
+<path d="M 2070.0,410.0 L 1200.0,410.0 L 1200.0,190.0 L 1170.0,190.0" fill="none" stroke="#db2777" stroke-width="1.5" stroke-linejoin="round" opacity="0.85"/>
+<path d="M 770.0,1250.0 L 800.0,1250.0 L 800.0,180.0 L 840.0,180.0 L 840.0,190.0 L 870.0,190.0" fill="none" stroke="#0891b2" stroke-width="1.5" stroke-linejoin="round" opacity="0.85"/>
+<path d="M 2470.0,1330.0 L 2440.0,1330.0 L 2440.0,1100.0 L 2040.0,1100.0 L 2040.0,860.0 L 1610.0,860.0 L 1610.0,930.0 L 1570.0,930.0" fill="none" stroke="#7c3aed" stroke-width="1.5" stroke-linejoin="round" opacity="0.85"/>
+<path d="M 370.0,210.0 L 390.0,210.0 L 390.0,120.0 L 1640.0,120.0 L 1640.0,190.0 L 1670.0,190.0" fill="none" stroke="#2563eb" stroke-width="1.5" stroke-linejoin="round" opacity="0.85"/>
+<path d="M 370.0,560.0 L 450.0,560.0 L 450.0,860.0 L 1230.0,860.0 L 1230.0,930.0 L 1270.0,930.0" fill="none" stroke="#ea580c" stroke-width="1.5" stroke-linejoin="round" opacity="0.85"/>
+<path d="M 2470.0,1490.0 L 2440.0,1490.0 L 2440.0,1340.0 L 2030.0,1340.0 L 2030.0,1280.0 L 1650.0,1280.0 L 1650.0,940.0 L 1600.0,940.0 L 1600.0,930.0 L 1570.0,930.0" fill="none" stroke="#7c3aed" stroke-width="1.5" stroke-linejoin="round" opacity="0.85"/>
+<path d="M 2070.0,830.0 L 1190.0,830.0 L 1190.0,870.0 L 810.0,870.0 L 810.0,930.0 L 770.0,930.0" fill="none" stroke="#ca8a04" stroke-width="1.5" stroke-linejoin="round" opacity="0.85"/>
+<path d="M 2070.0,790.0 L 2050.0,790.0 L 2050.0,460.0 L 810.0,460.0 L 810.0,520.0 L 770.0,520.0" fill="none" stroke="#ca8a04" stroke-width="1.5" stroke-linejoin="round" opacity="0.85"/>
+<path d="M 2470.0,1090.0 L 2450.0,1090.0 L 2450.0,320.0 L 1220.0,320.0 L 1220.0,190.0 L 1170.0,190.0" fill="none" stroke="#ca8a04" stroke-width="1.5" stroke-linejoin="round" opacity="0.85"/>
+<path d="M 2470.0,1170.0 L 2430.0,1170.0 L 2430.0,330.0 L 1250.0,330.0 L 1250.0,180.0 L 1200.0,180.0 L 1200.0,190.0 L 1170.0,190.0" fill="none" stroke="#ca8a04" stroke-width="1.5" stroke-linejoin="round" opacity="0.85"/>
+<path d="M 2070.0,1530.0 L 2020.0,1530.0 L 2020.0,420.0 L 1190.0,420.0 L 1190.0,200.0 L 1200.0,200.0 L 1200.0,190.0 L 1170.0,190.0" fill="none" stroke="#7c3aed" stroke-width="1.5" stroke-linejoin="round" opacity="0.85"/>
+<g>
+<rect x="872" y="153" width="300" height="238" rx="7" fill="#0f172a" opacity="0.10"/>
+<rect x="870" y="150" width="300" height="238" rx="7" fill="#ffffff" stroke="#2563eb" stroke-width="1.8"/>
+<path d="M 870 180 L 870 157 Q 870 150 877 150 L 1163 150 Q 1170 150 1170 157 L 1170 180 Z" fill="#2563eb"/>
+<text x="1020.0" y="170" text-anchor="middle" font-size="16" font-weight="700" fill="#fff">usuario</text>
+<text x="880" y="194.5" font-size="10.5" font-weight="700" fill="#2563eb">PK</text>
+<text x="920" y="194.5" font-size="13.5" font-weight="700" font-style="normal" fill="#0f172a">id</text>
+<text x="1160" y="194.5" text-anchor="end" font-size="11.5" fill="#64748b">INT</text>
+<rect x="871" y="200" width="298" height="20" fill="#f8fafc"/>
+<text x="920" y="214.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">nome</text>
+<text x="1160" y="214.5" text-anchor="end" font-size="11.5" fill="#64748b">VARCHAR(100)</text>
+<text x="920" y="234.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">email</text>
+<text x="1160" y="234.5" text-anchor="end" font-size="11.5" fill="#64748b">VARCHAR(100) UQ</text>
+<rect x="871" y="240" width="298" height="20" fill="#f8fafc"/>
+<text x="920" y="254.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">senha_hash</text>
+<text x="1160" y="254.5" text-anchor="end" font-size="11.5" fill="#64748b">VARCHAR(255)</text>
+<text x="920" y="274.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">ativo</text>
+<text x="1160" y="274.5" text-anchor="end" font-size="11.5" fill="#64748b">BOOLEAN</text>
+<rect x="871" y="280" width="298" height="20" fill="#f8fafc"/>
+<text x="920" y="294.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">admin</text>
+<text x="1160" y="294.5" text-anchor="end" font-size="11.5" fill="#64748b">BOOLEAN</text>
+<text x="880" y="314.5" font-size="10.5" font-weight="700" fill="#2563eb">FK</text>
+<text x="920" y="314.5" font-size="13.5" font-weight="400" font-style="italic" fill="#0f172a">grupo_id</text>
+<text x="1160" y="314.5" text-anchor="end" font-size="11.5" fill="#64748b">INT</text>
+<rect x="871" y="320" width="298" height="20" fill="#f8fafc"/>
+<text x="920" y="334.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">foto</text>
+<text x="1160" y="334.5" text-anchor="end" font-size="11.5" fill="#64748b">VARCHAR(80)</text>
+<text x="920" y="354.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">created_at</text>
+<text x="1160" y="354.5" text-anchor="end" font-size="11.5" fill="#64748b">DATETIME</text>
+<rect x="871" y="360" width="298" height="20" fill="#f8fafc"/>
+<text x="920" y="374.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">updated_at</text>
+<text x="1160" y="374.5" text-anchor="end" font-size="11.5" fill="#64748b">DATETIME</text>
+</g>
+<g>
+<rect x="1672" y="153" width="300" height="138" rx="7" fill="#0f172a" opacity="0.10"/>
+<rect x="1670" y="150" width="300" height="138" rx="7" fill="#ffffff" stroke="#2563eb" stroke-width="1.8"/>
+<path d="M 1670 180 L 1670 157 Q 1670 150 1677 150 L 1963 150 Q 1970 150 1970 157 L 1970 180 Z" fill="#2563eb"/>
+<text x="1820.0" y="170" text-anchor="middle" font-size="16" font-weight="700" fill="#fff">permissao</text>
+<text x="1680" y="194.5" font-size="10.5" font-weight="700" fill="#2563eb">PK</text>
+<text x="1720" y="194.5" font-size="13.5" font-weight="700" font-style="normal" fill="#0f172a">id</text>
+<text x="1960" y="194.5" text-anchor="end" font-size="11.5" fill="#64748b">INT</text>
+<rect x="1671" y="200" width="298" height="20" fill="#f8fafc"/>
+<text x="1720" y="214.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">codigo</text>
+<text x="1960" y="214.5" text-anchor="end" font-size="11.5" fill="#64748b">VARCHAR(40) UQ</text>
+<text x="1720" y="234.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">modulo</text>
+<text x="1960" y="234.5" text-anchor="end" font-size="11.5" fill="#64748b">VARCHAR(30)</text>
+<rect x="1671" y="240" width="298" height="20" fill="#f8fafc"/>
+<text x="1720" y="254.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">acao</text>
+<text x="1960" y="254.5" text-anchor="end" font-size="11.5" fill="#64748b">VARCHAR(10)</text>
+<text x="1720" y="274.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">descricao</text>
+<text x="1960" y="274.5" text-anchor="end" font-size="11.5" fill="#64748b">VARCHAR(200)</text>
+</g>
+<g>
+<rect x="472" y="153" width="300" height="158" rx="7" fill="#0f172a" opacity="0.10"/>
+<rect x="470" y="150" width="300" height="158" rx="7" fill="#ffffff" stroke="#2563eb" stroke-width="1.8"/>
+<path d="M 470 180 L 470 157 Q 470 150 477 150 L 763 150 Q 770 150 770 157 L 770 180 Z" fill="#2563eb"/>
+<text x="620.0" y="170" text-anchor="middle" font-size="16" font-weight="700" fill="#fff">grupo_acesso</text>
+<text x="480" y="194.5" font-size="10.5" font-weight="700" fill="#2563eb">PK</text>
+<text x="520" y="194.5" font-size="13.5" font-weight="700" font-style="normal" fill="#0f172a">id</text>
+<text x="760" y="194.5" text-anchor="end" font-size="11.5" fill="#64748b">INT</text>
+<rect x="471" y="200" width="298" height="20" fill="#f8fafc"/>
+<text x="520" y="214.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">nome</text>
+<text x="760" y="214.5" text-anchor="end" font-size="11.5" fill="#64748b">VARCHAR(60) UQ</text>
+<text x="520" y="234.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">descricao</text>
+<text x="760" y="234.5" text-anchor="end" font-size="11.5" fill="#64748b">VARCHAR(255)</text>
+<rect x="471" y="240" width="298" height="20" fill="#f8fafc"/>
+<text x="520" y="254.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">ativo</text>
+<text x="760" y="254.5" text-anchor="end" font-size="11.5" fill="#64748b">BOOLEAN</text>
+<text x="520" y="274.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">created_at</text>
+<text x="760" y="274.5" text-anchor="end" font-size="11.5" fill="#64748b">DATETIME</text>
+<rect x="471" y="280" width="298" height="20" fill="#f8fafc"/>
+<text x="520" y="294.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">updated_at</text>
+<text x="760" y="294.5" text-anchor="end" font-size="11.5" fill="#64748b">DATETIME</text>
+</g>
+<g>
+<rect x="72" y="153" width="300" height="78" rx="7" fill="#0f172a" opacity="0.10"/>
+<rect x="70" y="150" width="300" height="78" rx="7" fill="#ffffff" stroke="#2563eb" stroke-width="1.8"/>
+<path d="M 70 180 L 70 157 Q 70 150 77 150 L 363 150 Q 370 150 370 157 L 370 180 Z" fill="#2563eb"/>
+<text x="220.0" y="170" text-anchor="middle" font-size="16" font-weight="700" fill="#fff">grupo_permissao</text>
+<text x="80" y="194.5" font-size="10.5" font-weight="700" fill="#2563eb">PK,FK</text>
+<text x="120" y="194.5" font-size="13.5" font-weight="700" font-style="normal" fill="#0f172a">grupo_id</text>
+<text x="360" y="194.5" text-anchor="end" font-size="11.5" fill="#64748b">INT</text>
+<rect x="71" y="200" width="298" height="20" fill="#f8fafc"/>
+<text x="80" y="214.5" font-size="10.5" font-weight="700" fill="#2563eb">PK,FK</text>
+<text x="120" y="214.5" font-size="13.5" font-weight="700" font-style="normal" fill="#0f172a">permissao_id</text>
+<text x="360" y="214.5" text-anchor="end" font-size="11.5" fill="#64748b">INT</text>
+</g>
+<g>
+<rect x="1272" y="153" width="300" height="78" rx="7" fill="#0f172a" opacity="0.10"/>
+<rect x="1270" y="150" width="300" height="78" rx="7" fill="#ffffff" stroke="#2563eb" stroke-width="1.8"/>
+<path d="M 1270 180 L 1270 157 Q 1270 150 1277 150 L 1563 150 Q 1570 150 1570 157 L 1570 180 Z" fill="#2563eb"/>
+<text x="1420.0" y="170" text-anchor="middle" font-size="16" font-weight="700" fill="#fff">usuario_permissao</text>
+<text x="1280" y="194.5" font-size="10.5" font-weight="700" fill="#2563eb">PK,FK</text>
+<text x="1320" y="194.5" font-size="13.5" font-weight="700" font-style="normal" fill="#0f172a">usuario_id</text>
+<text x="1560" y="194.5" text-anchor="end" font-size="11.5" fill="#64748b">INT</text>
+<rect x="1271" y="200" width="298" height="20" fill="#f8fafc"/>
+<text x="1280" y="214.5" font-size="10.5" font-weight="700" fill="#2563eb">PK,FK</text>
+<text x="1320" y="214.5" font-size="13.5" font-weight="700" font-style="normal" fill="#0f172a">permissao_id</text>
+<text x="1560" y="214.5" text-anchor="end" font-size="11.5" fill="#64748b">INT</text>
+</g>
+<g>
+<rect x="1272" y="1333" width="300" height="138" rx="7" fill="#0f172a" opacity="0.10"/>
+<rect x="1270" y="1330" width="300" height="138" rx="7" fill="#ffffff" stroke="#16a34a" stroke-width="1.8"/>
+<path d="M 1270 1360 L 1270 1337 Q 1270 1330 1277 1330 L 1563 1330 Q 1570 1330 1570 1337 L 1570 1360 Z" fill="#16a34a"/>
+<text x="1420.0" y="1350" text-anchor="middle" font-size="16" font-weight="700" fill="#fff">categoria</text>
+<text x="1280" y="1374.5" font-size="10.5" font-weight="700" fill="#16a34a">PK</text>
+<text x="1320" y="1374.5" font-size="13.5" font-weight="700" font-style="normal" fill="#0f172a">id</text>
+<text x="1560" y="1374.5" text-anchor="end" font-size="11.5" fill="#64748b">INT</text>
+<rect x="1271" y="1380" width="298" height="20" fill="#f8fafc"/>
+<text x="1320" y="1394.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">nome</text>
+<text x="1560" y="1394.5" text-anchor="end" font-size="11.5" fill="#64748b">VARCHAR(80) UQ</text>
+<text x="1320" y="1414.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">ativo</text>
+<text x="1560" y="1414.5" text-anchor="end" font-size="11.5" fill="#64748b">BOOLEAN</text>
+<rect x="1271" y="1420" width="298" height="20" fill="#f8fafc"/>
+<text x="1320" y="1434.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">created_at</text>
+<text x="1560" y="1434.5" text-anchor="end" font-size="11.5" fill="#64748b">DATETIME</text>
+<text x="1320" y="1454.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">updated_at</text>
+<text x="1560" y="1454.5" text-anchor="end" font-size="11.5" fill="#64748b">DATETIME</text>
+</g>
+<g>
+<rect x="1672" y="1333" width="300" height="158" rx="7" fill="#0f172a" opacity="0.10"/>
+<rect x="1670" y="1330" width="300" height="158" rx="7" fill="#ffffff" stroke="#16a34a" stroke-width="1.8"/>
+<path d="M 1670 1360 L 1670 1337 Q 1670 1330 1677 1330 L 1963 1330 Q 1970 1330 1970 1337 L 1970 1360 Z" fill="#16a34a"/>
+<text x="1820.0" y="1350" text-anchor="middle" font-size="16" font-weight="700" fill="#fff">subcategoria</text>
+<text x="1680" y="1374.5" font-size="10.5" font-weight="700" fill="#16a34a">PK</text>
+<text x="1720" y="1374.5" font-size="13.5" font-weight="700" font-style="normal" fill="#0f172a">id</text>
+<text x="1960" y="1374.5" text-anchor="end" font-size="11.5" fill="#64748b">INT</text>
+<rect x="1671" y="1380" width="298" height="20" fill="#f8fafc"/>
+<text x="1680" y="1394.5" font-size="10.5" font-weight="700" fill="#16a34a">FK</text>
+<text x="1720" y="1394.5" font-size="13.5" font-weight="400" font-style="italic" fill="#0f172a">categoria_id</text>
+<text x="1960" y="1394.5" text-anchor="end" font-size="11.5" fill="#64748b">INT</text>
+<text x="1720" y="1414.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">nome</text>
+<text x="1960" y="1414.5" text-anchor="end" font-size="11.5" fill="#64748b">VARCHAR(80)</text>
+<rect x="1671" y="1420" width="298" height="20" fill="#f8fafc"/>
+<text x="1720" y="1434.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">ativo</text>
+<text x="1960" y="1434.5" text-anchor="end" font-size="11.5" fill="#64748b">BOOLEAN</text>
+<text x="1720" y="1454.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">created_at</text>
+<text x="1960" y="1454.5" text-anchor="end" font-size="11.5" fill="#64748b">DATETIME</text>
+<rect x="1671" y="1460" width="298" height="20" fill="#f8fafc"/>
+<text x="1720" y="1474.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">updated_at</text>
+<text x="1960" y="1474.5" text-anchor="end" font-size="11.5" fill="#64748b">DATETIME</text>
+</g>
+<g>
+<rect x="1272" y="1513" width="300" height="158" rx="7" fill="#0f172a" opacity="0.10"/>
+<rect x="1270" y="1510" width="300" height="158" rx="7" fill="#ffffff" stroke="#16a34a" stroke-width="1.8"/>
+<path d="M 1270 1540 L 1270 1517 Q 1270 1510 1277 1510 L 1563 1510 Q 1570 1510 1570 1517 L 1570 1540 Z" fill="#16a34a"/>
+<text x="1420.0" y="1530" text-anchor="middle" font-size="16" font-weight="700" fill="#fff">unidade_medida</text>
+<text x="1280" y="1554.5" font-size="10.5" font-weight="700" fill="#16a34a">PK</text>
+<text x="1320" y="1554.5" font-size="13.5" font-weight="700" font-style="normal" fill="#0f172a">id</text>
+<text x="1560" y="1554.5" text-anchor="end" font-size="11.5" fill="#64748b">INT</text>
+<rect x="1271" y="1560" width="298" height="20" fill="#f8fafc"/>
+<text x="1320" y="1574.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">nome</text>
+<text x="1560" y="1574.5" text-anchor="end" font-size="11.5" fill="#64748b">VARCHAR(50)</text>
+<text x="1320" y="1594.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">sigla</text>
+<text x="1560" y="1594.5" text-anchor="end" font-size="11.5" fill="#64748b">VARCHAR(10) UQ</text>
+<rect x="1271" y="1600" width="298" height="20" fill="#f8fafc"/>
+<text x="1320" y="1614.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">ativo</text>
+<text x="1560" y="1614.5" text-anchor="end" font-size="11.5" fill="#64748b">BOOLEAN</text>
+<text x="1320" y="1634.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">created_at</text>
+<text x="1560" y="1634.5" text-anchor="end" font-size="11.5" fill="#64748b">DATETIME</text>
+<rect x="1271" y="1640" width="298" height="20" fill="#f8fafc"/>
+<text x="1320" y="1654.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">updated_at</text>
+<text x="1560" y="1654.5" text-anchor="end" font-size="11.5" fill="#64748b">DATETIME</text>
+</g>
+<g>
+<rect x="1272" y="893" width="300" height="378" rx="7" fill="#0f172a" opacity="0.10"/>
+<rect x="1270" y="890" width="300" height="378" rx="7" fill="#ffffff" stroke="#16a34a" stroke-width="1.8"/>
+<path d="M 1270 920 L 1270 897 Q 1270 890 1277 890 L 1563 890 Q 1570 890 1570 897 L 1570 920 Z" fill="#16a34a"/>
+<text x="1420.0" y="910" text-anchor="middle" font-size="16" font-weight="700" fill="#fff">produto</text>
+<text x="1280" y="934.5" font-size="10.5" font-weight="700" fill="#16a34a">PK</text>
+<text x="1320" y="934.5" font-size="13.5" font-weight="700" font-style="normal" fill="#0f172a">id</text>
+<text x="1560" y="934.5" text-anchor="end" font-size="11.5" fill="#64748b">INT</text>
+<rect x="1271" y="940" width="298" height="20" fill="#f8fafc"/>
+<text x="1320" y="954.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">nome</text>
+<text x="1560" y="954.5" text-anchor="end" font-size="11.5" fill="#64748b">VARCHAR(100)</text>
+<text x="1320" y="974.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">descricao</text>
+<text x="1560" y="974.5" text-anchor="end" font-size="11.5" fill="#64748b">VARCHAR(255)</text>
+<rect x="1271" y="980" width="298" height="20" fill="#f8fafc"/>
+<text x="1280" y="994.5" font-size="10.5" font-weight="700" fill="#16a34a">FK</text>
+<text x="1320" y="994.5" font-size="13.5" font-weight="400" font-style="italic" fill="#0f172a">categoria_id</text>
+<text x="1560" y="994.5" text-anchor="end" font-size="11.5" fill="#64748b">INT</text>
+<text x="1280" y="1014.5" font-size="10.5" font-weight="700" fill="#16a34a">FK</text>
+<text x="1320" y="1014.5" font-size="13.5" font-weight="400" font-style="italic" fill="#0f172a">subcategoria_id</text>
+<text x="1560" y="1014.5" text-anchor="end" font-size="11.5" fill="#64748b">INT</text>
+<rect x="1271" y="1020" width="298" height="20" fill="#f8fafc"/>
+<text x="1280" y="1034.5" font-size="10.5" font-weight="700" fill="#16a34a">FK</text>
+<text x="1320" y="1034.5" font-size="13.5" font-weight="400" font-style="italic" fill="#0f172a">unidade_medida_id</text>
+<text x="1560" y="1034.5" text-anchor="end" font-size="11.5" fill="#64748b">INT</text>
+<text x="1320" y="1054.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">e_insumo</text>
+<text x="1560" y="1054.5" text-anchor="end" font-size="11.5" fill="#64748b">BOOLEAN</text>
+<rect x="1271" y="1060" width="298" height="20" fill="#f8fafc"/>
+<text x="1320" y="1074.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">e_vendavel</text>
+<text x="1560" y="1074.5" text-anchor="end" font-size="11.5" fill="#64748b">BOOLEAN</text>
+<text x="1320" y="1094.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">preco_custo</text>
+<text x="1560" y="1094.5" text-anchor="end" font-size="11.5" fill="#64748b">FLOAT</text>
+<rect x="1271" y="1100" width="298" height="20" fill="#f8fafc"/>
+<text x="1320" y="1114.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">porcentagem</text>
+<text x="1560" y="1114.5" text-anchor="end" font-size="11.5" fill="#64748b">FLOAT</text>
+<text x="1320" y="1134.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">preco_venda</text>
+<text x="1560" y="1134.5" text-anchor="end" font-size="11.5" fill="#64748b">FLOAT</text>
+<rect x="1271" y="1140" width="298" height="20" fill="#f8fafc"/>
+<text x="1320" y="1154.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">estoque_atual</text>
+<text x="1560" y="1154.5" text-anchor="end" font-size="11.5" fill="#64748b">DECIMAL(12,3)</text>
+<text x="1320" y="1174.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">estoque_reservado</text>
+<text x="1560" y="1174.5" text-anchor="end" font-size="11.5" fill="#64748b">DECIMAL(12,3)</text>
+<rect x="1271" y="1180" width="298" height="20" fill="#f8fafc"/>
+<text x="1320" y="1194.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">estoque_minimo</text>
+<text x="1560" y="1194.5" text-anchor="end" font-size="11.5" fill="#64748b">DECIMAL(12,3)</text>
+<text x="1320" y="1214.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">ativo</text>
+<text x="1560" y="1214.5" text-anchor="end" font-size="11.5" fill="#64748b">BOOLEAN</text>
+<rect x="1271" y="1220" width="298" height="20" fill="#f8fafc"/>
+<text x="1320" y="1234.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">created_at</text>
+<text x="1560" y="1234.5" text-anchor="end" font-size="11.5" fill="#64748b">DATETIME</text>
+<text x="1320" y="1254.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">updated_at</text>
+<text x="1560" y="1254.5" text-anchor="end" font-size="11.5" fill="#64748b">DATETIME</text>
+</g>
+<g>
+<rect x="472" y="893" width="300" height="218" rx="7" fill="#0f172a" opacity="0.10"/>
+<rect x="470" y="890" width="300" height="218" rx="7" fill="#ffffff" stroke="#16a34a" stroke-width="1.8"/>
+<path d="M 470 920 L 470 897 Q 470 890 477 890 L 763 890 Q 770 890 770 897 L 770 920 Z" fill="#16a34a"/>
+<text x="620.0" y="910" text-anchor="middle" font-size="16" font-weight="700" fill="#fff">cliente</text>
+<text x="480" y="934.5" font-size="10.5" font-weight="700" fill="#16a34a">PK</text>
+<text x="520" y="934.5" font-size="13.5" font-weight="700" font-style="normal" fill="#0f172a">id</text>
+<text x="760" y="934.5" text-anchor="end" font-size="11.5" fill="#64748b">INT</text>
+<rect x="471" y="940" width="298" height="20" fill="#f8fafc"/>
+<text x="520" y="954.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">nome</text>
+<text x="760" y="954.5" text-anchor="end" font-size="11.5" fill="#64748b">VARCHAR(100)</text>
+<text x="520" y="974.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">cpf_cnpj</text>
+<text x="760" y="974.5" text-anchor="end" font-size="11.5" fill="#64748b">VARCHAR(20) UQ</text>
+<rect x="471" y="980" width="298" height="20" fill="#f8fafc"/>
+<text x="520" y="994.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">tipo</text>
+<text x="760" y="994.5" text-anchor="end" font-size="11.5" fill="#64748b">VARCHAR(2)</text>
+<text x="520" y="1014.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">telefone</text>
+<text x="760" y="1014.5" text-anchor="end" font-size="11.5" fill="#64748b">VARCHAR(20)</text>
+<rect x="471" y="1020" width="298" height="20" fill="#f8fafc"/>
+<text x="520" y="1034.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">email</text>
+<text x="760" y="1034.5" text-anchor="end" font-size="11.5" fill="#64748b">VARCHAR(100)</text>
+<text x="520" y="1054.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">ativo</text>
+<text x="760" y="1054.5" text-anchor="end" font-size="11.5" fill="#64748b">BOOLEAN</text>
+<rect x="471" y="1060" width="298" height="20" fill="#f8fafc"/>
+<text x="520" y="1074.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">created_at</text>
+<text x="760" y="1074.5" text-anchor="end" font-size="11.5" fill="#64748b">DATETIME</text>
+<text x="520" y="1094.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">updated_at</text>
+<text x="760" y="1094.5" text-anchor="end" font-size="11.5" fill="#64748b">DATETIME</text>
+</g>
+<g>
+<rect x="72" y="893" width="300" height="318" rx="7" fill="#0f172a" opacity="0.10"/>
+<rect x="70" y="890" width="300" height="318" rx="7" fill="#ffffff" stroke="#16a34a" stroke-width="1.8"/>
+<path d="M 70 920 L 70 897 Q 70 890 77 890 L 363 890 Q 370 890 370 897 L 370 920 Z" fill="#16a34a"/>
+<text x="220.0" y="910" text-anchor="middle" font-size="16" font-weight="700" fill="#fff">cliente_endereco</text>
+<text x="80" y="934.5" font-size="10.5" font-weight="700" fill="#16a34a">PK</text>
+<text x="120" y="934.5" font-size="13.5" font-weight="700" font-style="normal" fill="#0f172a">id</text>
+<text x="360" y="934.5" text-anchor="end" font-size="11.5" fill="#64748b">INT</text>
+<rect x="71" y="940" width="298" height="20" fill="#f8fafc"/>
+<text x="80" y="954.5" font-size="10.5" font-weight="700" fill="#16a34a">FK</text>
+<text x="120" y="954.5" font-size="13.5" font-weight="400" font-style="italic" fill="#0f172a">cliente_id</text>
+<text x="360" y="954.5" text-anchor="end" font-size="11.5" fill="#64748b">INT</text>
+<text x="120" y="974.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">tipo</text>
+<text x="360" y="974.5" text-anchor="end" font-size="11.5" fill="#64748b">VARCHAR(10)</text>
+<rect x="71" y="980" width="298" height="20" fill="#f8fafc"/>
+<text x="120" y="994.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">cep</text>
+<text x="360" y="994.5" text-anchor="end" font-size="11.5" fill="#64748b">VARCHAR(9)</text>
+<text x="120" y="1014.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">logradouro</text>
+<text x="360" y="1014.5" text-anchor="end" font-size="11.5" fill="#64748b">VARCHAR(150)</text>
+<rect x="71" y="1020" width="298" height="20" fill="#f8fafc"/>
+<text x="120" y="1034.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">numero</text>
+<text x="360" y="1034.5" text-anchor="end" font-size="11.5" fill="#64748b">VARCHAR(10)</text>
+<text x="120" y="1054.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">complemento</text>
+<text x="360" y="1054.5" text-anchor="end" font-size="11.5" fill="#64748b">VARCHAR(100)</text>
+<rect x="71" y="1060" width="298" height="20" fill="#f8fafc"/>
+<text x="120" y="1074.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">bairro</text>
+<text x="360" y="1074.5" text-anchor="end" font-size="11.5" fill="#64748b">VARCHAR(80)</text>
+<text x="120" y="1094.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">cidade</text>
+<text x="360" y="1094.5" text-anchor="end" font-size="11.5" fill="#64748b">VARCHAR(80)</text>
+<rect x="71" y="1100" width="298" height="20" fill="#f8fafc"/>
+<text x="120" y="1114.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">uf</text>
+<text x="360" y="1114.5" text-anchor="end" font-size="11.5" fill="#64748b">VARCHAR(2)</text>
+<text x="120" y="1134.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">ddd</text>
+<text x="360" y="1134.5" text-anchor="end" font-size="11.5" fill="#64748b">VARCHAR(3)</text>
+<rect x="71" y="1140" width="298" height="20" fill="#f8fafc"/>
+<text x="120" y="1154.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">ativo</text>
+<text x="360" y="1154.5" text-anchor="end" font-size="11.5" fill="#64748b">BOOLEAN</text>
+<text x="120" y="1174.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">created_at</text>
+<text x="360" y="1174.5" text-anchor="end" font-size="11.5" fill="#64748b">DATETIME</text>
+<rect x="71" y="1180" width="298" height="20" fill="#f8fafc"/>
+<text x="120" y="1194.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">updated_at</text>
+<text x="360" y="1194.5" text-anchor="end" font-size="11.5" fill="#64748b">DATETIME</text>
+</g>
+<g>
+<rect x="1672" y="893" width="300" height="358" rx="7" fill="#0f172a" opacity="0.10"/>
+<rect x="1670" y="890" width="300" height="358" rx="7" fill="#ffffff" stroke="#16a34a" stroke-width="1.8"/>
+<path d="M 1670 920 L 1670 897 Q 1670 890 1677 890 L 1963 890 Q 1970 890 1970 897 L 1970 920 Z" fill="#16a34a"/>
+<text x="1820.0" y="910" text-anchor="middle" font-size="16" font-weight="700" fill="#fff">fornecedor</text>
+<text x="1680" y="934.5" font-size="10.5" font-weight="700" fill="#16a34a">PK</text>
+<text x="1720" y="934.5" font-size="13.5" font-weight="700" font-style="normal" fill="#0f172a">id</text>
+<text x="1960" y="934.5" text-anchor="end" font-size="11.5" fill="#64748b">INT</text>
+<rect x="1671" y="940" width="298" height="20" fill="#f8fafc"/>
+<text x="1720" y="954.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">nome</text>
+<text x="1960" y="954.5" text-anchor="end" font-size="11.5" fill="#64748b">VARCHAR(100)</text>
+<text x="1720" y="974.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">cnpj</text>
+<text x="1960" y="974.5" text-anchor="end" font-size="11.5" fill="#64748b">VARCHAR(20) UQ</text>
+<rect x="1671" y="980" width="298" height="20" fill="#f8fafc"/>
+<text x="1720" y="994.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">telefone</text>
+<text x="1960" y="994.5" text-anchor="end" font-size="11.5" fill="#64748b">VARCHAR(20)</text>
+<text x="1720" y="1014.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">email</text>
+<text x="1960" y="1014.5" text-anchor="end" font-size="11.5" fill="#64748b">VARCHAR(100)</text>
+<rect x="1671" y="1020" width="298" height="20" fill="#f8fafc"/>
+<text x="1720" y="1034.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">cep</text>
+<text x="1960" y="1034.5" text-anchor="end" font-size="11.5" fill="#64748b">VARCHAR(9)</text>
+<text x="1720" y="1054.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">logradouro</text>
+<text x="1960" y="1054.5" text-anchor="end" font-size="11.5" fill="#64748b">VARCHAR(150)</text>
+<rect x="1671" y="1060" width="298" height="20" fill="#f8fafc"/>
+<text x="1720" y="1074.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">numero</text>
+<text x="1960" y="1074.5" text-anchor="end" font-size="11.5" fill="#64748b">VARCHAR(10)</text>
+<text x="1720" y="1094.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">complemento</text>
+<text x="1960" y="1094.5" text-anchor="end" font-size="11.5" fill="#64748b">VARCHAR(100)</text>
+<rect x="1671" y="1100" width="298" height="20" fill="#f8fafc"/>
+<text x="1720" y="1114.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">bairro</text>
+<text x="1960" y="1114.5" text-anchor="end" font-size="11.5" fill="#64748b">VARCHAR(80)</text>
+<text x="1720" y="1134.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">cidade</text>
+<text x="1960" y="1134.5" text-anchor="end" font-size="11.5" fill="#64748b">VARCHAR(80)</text>
+<rect x="1671" y="1140" width="298" height="20" fill="#f8fafc"/>
+<text x="1720" y="1154.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">uf</text>
+<text x="1960" y="1154.5" text-anchor="end" font-size="11.5" fill="#64748b">VARCHAR(2)</text>
+<text x="1720" y="1174.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">ddd</text>
+<text x="1960" y="1174.5" text-anchor="end" font-size="11.5" fill="#64748b">VARCHAR(3)</text>
+<rect x="1671" y="1180" width="298" height="20" fill="#f8fafc"/>
+<text x="1720" y="1194.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">ativo</text>
+<text x="1960" y="1194.5" text-anchor="end" font-size="11.5" fill="#64748b">BOOLEAN</text>
+<text x="1720" y="1214.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">created_at</text>
+<text x="1960" y="1214.5" text-anchor="end" font-size="11.5" fill="#64748b">DATETIME</text>
+<rect x="1671" y="1220" width="298" height="20" fill="#f8fafc"/>
+<text x="1720" y="1234.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">updated_at</text>
+<text x="1960" y="1234.5" text-anchor="end" font-size="11.5" fill="#64748b">DATETIME</text>
+</g>
+<g>
+<rect x="872" y="1113" width="300" height="118" rx="7" fill="#0f172a" opacity="0.10"/>
+<rect x="870" y="1110" width="300" height="118" rx="7" fill="#ffffff" stroke="#16a34a" stroke-width="1.8"/>
+<path d="M 870 1140 L 870 1117 Q 870 1110 877 1110 L 1163 1110 Q 1170 1110 1170 1117 L 1170 1140 Z" fill="#16a34a"/>
+<text x="1020.0" y="1130" text-anchor="middle" font-size="16" font-weight="700" fill="#fff">forma_pagamento</text>
+<text x="880" y="1154.5" font-size="10.5" font-weight="700" fill="#16a34a">PK</text>
+<text x="920" y="1154.5" font-size="13.5" font-weight="700" font-style="normal" fill="#0f172a">id</text>
+<text x="1160" y="1154.5" text-anchor="end" font-size="11.5" fill="#64748b">INT</text>
+<rect x="871" y="1160" width="298" height="20" fill="#f8fafc"/>
+<text x="920" y="1174.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">descricao</text>
+<text x="1160" y="1174.5" text-anchor="end" font-size="11.5" fill="#64748b">VARCHAR(100)</text>
+<text x="920" y="1194.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">taxa_percentual</text>
+<text x="1160" y="1194.5" text-anchor="end" font-size="11.5" fill="#64748b">FLOAT</text>
+<rect x="871" y="1200" width="298" height="20" fill="#f8fafc"/>
+<text x="920" y="1214.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">ativo</text>
+<text x="1160" y="1214.5" text-anchor="end" font-size="11.5" fill="#64748b">BOOLEAN</text>
+</g>
+<g>
+<rect x="872" y="1273" width="300" height="138" rx="7" fill="#0f172a" opacity="0.10"/>
+<rect x="870" y="1270" width="300" height="138" rx="7" fill="#ffffff" stroke="#16a34a" stroke-width="1.8"/>
+<path d="M 870 1300 L 870 1277 Q 870 1270 877 1270 L 1163 1270 Q 1170 1270 1170 1277 L 1170 1300 Z" fill="#16a34a"/>
+<text x="1020.0" y="1290" text-anchor="middle" font-size="16" font-weight="700" fill="#fff">forma_pagamento_parcela</text>
+<text x="880" y="1314.5" font-size="10.5" font-weight="700" fill="#16a34a">PK</text>
+<text x="920" y="1314.5" font-size="13.5" font-weight="700" font-style="normal" fill="#0f172a">id</text>
+<text x="1160" y="1314.5" text-anchor="end" font-size="11.5" fill="#64748b">INT</text>
+<rect x="871" y="1320" width="298" height="20" fill="#f8fafc"/>
+<text x="880" y="1334.5" font-size="10.5" font-weight="700" fill="#16a34a">FK</text>
+<text x="920" y="1334.5" font-size="13.5" font-weight="400" font-style="italic" fill="#0f172a">forma_pagamento_id</text>
+<text x="1160" y="1334.5" text-anchor="end" font-size="11.5" fill="#64748b">INT</text>
+<text x="920" y="1354.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">numero</text>
+<text x="1160" y="1354.5" text-anchor="end" font-size="11.5" fill="#64748b">INT</text>
+<rect x="871" y="1360" width="298" height="20" fill="#f8fafc"/>
+<text x="920" y="1374.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">prazo_dias</text>
+<text x="1160" y="1374.5" text-anchor="end" font-size="11.5" fill="#64748b">INT</text>
+<text x="920" y="1394.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">percentual</text>
+<text x="1160" y="1394.5" text-anchor="end" font-size="11.5" fill="#64748b">DECIMAL(5,2)</text>
+</g>
+<g>
+<rect x="472" y="483" width="300" height="278" rx="7" fill="#0f172a" opacity="0.10"/>
+<rect x="470" y="480" width="300" height="278" rx="7" fill="#ffffff" stroke="#ea580c" stroke-width="1.8"/>
+<path d="M 470 510 L 470 487 Q 470 480 477 480 L 763 480 Q 770 480 770 487 L 770 510 Z" fill="#ea580c"/>
+<text x="620.0" y="500" text-anchor="middle" font-size="16" font-weight="700" fill="#fff">pedido_venda</text>
+<text x="480" y="524.5" font-size="10.5" font-weight="700" fill="#ea580c">PK</text>
+<text x="520" y="524.5" font-size="13.5" font-weight="700" font-style="normal" fill="#0f172a">id</text>
+<text x="760" y="524.5" text-anchor="end" font-size="11.5" fill="#64748b">INT</text>
+<rect x="471" y="530" width="298" height="20" fill="#f8fafc"/>
+<text x="480" y="544.5" font-size="10.5" font-weight="700" fill="#ea580c">FK</text>
+<text x="520" y="544.5" font-size="13.5" font-weight="400" font-style="italic" fill="#0f172a">cliente_id</text>
+<text x="760" y="544.5" text-anchor="end" font-size="11.5" fill="#64748b">INT</text>
+<text x="480" y="564.5" font-size="10.5" font-weight="700" fill="#ea580c">FK</text>
+<text x="520" y="564.5" font-size="13.5" font-weight="400" font-style="italic" fill="#0f172a">usuario_id</text>
+<text x="760" y="564.5" text-anchor="end" font-size="11.5" fill="#64748b">INT</text>
+<rect x="471" y="570" width="298" height="20" fill="#f8fafc"/>
+<text x="520" y="584.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">data_pedido</text>
+<text x="760" y="584.5" text-anchor="end" font-size="11.5" fill="#64748b">DATETIME</text>
+<text x="520" y="604.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">valor_total</text>
+<text x="760" y="604.5" text-anchor="end" font-size="11.5" fill="#64748b">FLOAT</text>
+<rect x="471" y="610" width="298" height="20" fill="#f8fafc"/>
+<text x="520" y="624.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">status</text>
+<text x="760" y="624.5" text-anchor="end" font-size="11.5" fill="#64748b">VARCHAR(20)</text>
+<text x="480" y="644.5" font-size="10.5" font-weight="700" fill="#ea580c">FK</text>
+<text x="520" y="644.5" font-size="13.5" font-weight="400" font-style="italic" fill="#0f172a">forma_pagamento_id</text>
+<text x="760" y="644.5" text-anchor="end" font-size="11.5" fill="#64748b">INT</text>
+<rect x="471" y="650" width="298" height="20" fill="#f8fafc"/>
+<text x="480" y="664.5" font-size="10.5" font-weight="700" fill="#ea580c">FK</text>
+<text x="520" y="664.5" font-size="13.5" font-weight="400" font-style="italic" fill="#0f172a">endereco_entrega_id</text>
+<text x="760" y="664.5" text-anchor="end" font-size="11.5" fill="#64748b">INT</text>
+<text x="520" y="684.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">observacao</text>
+<text x="760" y="684.5" text-anchor="end" font-size="11.5" fill="#64748b">VARCHAR(255)</text>
+<rect x="471" y="690" width="298" height="20" fill="#f8fafc"/>
+<text x="520" y="704.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">confirmado_em</text>
+<text x="760" y="704.5" text-anchor="end" font-size="11.5" fill="#64748b">DATETIME</text>
+<text x="520" y="724.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">created_at</text>
+<text x="760" y="724.5" text-anchor="end" font-size="11.5" fill="#64748b">DATETIME</text>
+<rect x="471" y="730" width="298" height="20" fill="#f8fafc"/>
+<text x="520" y="744.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">updated_at</text>
+<text x="760" y="744.5" text-anchor="end" font-size="11.5" fill="#64748b">DATETIME</text>
+</g>
+<g>
+<rect x="72" y="483" width="300" height="198" rx="7" fill="#0f172a" opacity="0.10"/>
+<rect x="70" y="480" width="300" height="198" rx="7" fill="#ffffff" stroke="#ea580c" stroke-width="1.8"/>
+<path d="M 70 510 L 70 487 Q 70 480 77 480 L 363 480 Q 370 480 370 487 L 370 510 Z" fill="#ea580c"/>
+<text x="220.0" y="500" text-anchor="middle" font-size="16" font-weight="700" fill="#fff">item_pedido_venda</text>
+<text x="80" y="524.5" font-size="10.5" font-weight="700" fill="#ea580c">PK</text>
+<text x="120" y="524.5" font-size="13.5" font-weight="700" font-style="normal" fill="#0f172a">id</text>
+<text x="360" y="524.5" text-anchor="end" font-size="11.5" fill="#64748b">INT</text>
+<rect x="71" y="530" width="298" height="20" fill="#f8fafc"/>
+<text x="80" y="544.5" font-size="10.5" font-weight="700" fill="#ea580c">FK</text>
+<text x="120" y="544.5" font-size="13.5" font-weight="400" font-style="italic" fill="#0f172a">pedido_venda_id</text>
+<text x="360" y="544.5" text-anchor="end" font-size="11.5" fill="#64748b">INT</text>
+<text x="80" y="564.5" font-size="10.5" font-weight="700" fill="#ea580c">FK</text>
+<text x="120" y="564.5" font-size="13.5" font-weight="400" font-style="italic" fill="#0f172a">produto_id</text>
+<text x="360" y="564.5" text-anchor="end" font-size="11.5" fill="#64748b">INT</text>
+<rect x="71" y="570" width="298" height="20" fill="#f8fafc"/>
+<text x="120" y="584.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">quantidade</text>
+<text x="360" y="584.5" text-anchor="end" font-size="11.5" fill="#64748b">DECIMAL(12,3)</text>
+<text x="120" y="604.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">preco_unitario</text>
+<text x="360" y="604.5" text-anchor="end" font-size="11.5" fill="#64748b">FLOAT</text>
+<rect x="71" y="610" width="298" height="20" fill="#f8fafc"/>
+<text x="120" y="624.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">desconto</text>
+<text x="360" y="624.5" text-anchor="end" font-size="11.5" fill="#64748b">FLOAT</text>
+<text x="120" y="644.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">subtotal</text>
+<text x="360" y="644.5" text-anchor="end" font-size="11.5" fill="#64748b">FLOAT</text>
+<rect x="71" y="650" width="298" height="20" fill="#f8fafc"/>
+<text x="120" y="664.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">custo_unitario</text>
+<text x="360" y="664.5" text-anchor="end" font-size="11.5" fill="#64748b">DECIMAL(12,4)</text>
+</g>
+<g>
+<rect x="1272" y="483" width="300" height="258" rx="7" fill="#0f172a" opacity="0.10"/>
+<rect x="1270" y="480" width="300" height="258" rx="7" fill="#ffffff" stroke="#ea580c" stroke-width="1.8"/>
+<path d="M 1270 510 L 1270 487 Q 1270 480 1277 480 L 1563 480 Q 1570 480 1570 487 L 1570 510 Z" fill="#ea580c"/>
+<text x="1420.0" y="500" text-anchor="middle" font-size="16" font-weight="700" fill="#fff">pedido_compra</text>
+<text x="1280" y="524.5" font-size="10.5" font-weight="700" fill="#ea580c">PK</text>
+<text x="1320" y="524.5" font-size="13.5" font-weight="700" font-style="normal" fill="#0f172a">id</text>
+<text x="1560" y="524.5" text-anchor="end" font-size="11.5" fill="#64748b">INT</text>
+<rect x="1271" y="530" width="298" height="20" fill="#f8fafc"/>
+<text x="1280" y="544.5" font-size="10.5" font-weight="700" fill="#ea580c">FK</text>
+<text x="1320" y="544.5" font-size="13.5" font-weight="400" font-style="italic" fill="#0f172a">fornecedor_id</text>
+<text x="1560" y="544.5" text-anchor="end" font-size="11.5" fill="#64748b">INT</text>
+<text x="1280" y="564.5" font-size="10.5" font-weight="700" fill="#ea580c">FK</text>
+<text x="1320" y="564.5" font-size="13.5" font-weight="400" font-style="italic" fill="#0f172a">usuario_id</text>
+<text x="1560" y="564.5" text-anchor="end" font-size="11.5" fill="#64748b">INT</text>
+<rect x="1271" y="570" width="298" height="20" fill="#f8fafc"/>
+<text x="1280" y="584.5" font-size="10.5" font-weight="700" fill="#ea580c">FK</text>
+<text x="1320" y="584.5" font-size="13.5" font-weight="400" font-style="italic" fill="#0f172a">forma_pagamento_id</text>
+<text x="1560" y="584.5" text-anchor="end" font-size="11.5" fill="#64748b">INT</text>
+<text x="1320" y="604.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">data_pedido</text>
+<text x="1560" y="604.5" text-anchor="end" font-size="11.5" fill="#64748b">DATETIME</text>
+<rect x="1271" y="610" width="298" height="20" fill="#f8fafc"/>
+<text x="1320" y="624.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">data_entrega_prevista</text>
+<text x="1560" y="624.5" text-anchor="end" font-size="11.5" fill="#64748b">DATETIME</text>
+<text x="1320" y="644.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">valor_total</text>
+<text x="1560" y="644.5" text-anchor="end" font-size="11.5" fill="#64748b">FLOAT</text>
+<rect x="1271" y="650" width="298" height="20" fill="#f8fafc"/>
+<text x="1320" y="664.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">status</text>
+<text x="1560" y="664.5" text-anchor="end" font-size="11.5" fill="#64748b">VARCHAR(20)</text>
+<text x="1320" y="684.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">observacao</text>
+<text x="1560" y="684.5" text-anchor="end" font-size="11.5" fill="#64748b">VARCHAR(255)</text>
+<rect x="1271" y="690" width="298" height="20" fill="#f8fafc"/>
+<text x="1320" y="704.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">created_at</text>
+<text x="1560" y="704.5" text-anchor="end" font-size="11.5" fill="#64748b">DATETIME</text>
+<text x="1320" y="724.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">updated_at</text>
+<text x="1560" y="724.5" text-anchor="end" font-size="11.5" fill="#64748b">DATETIME</text>
+</g>
+<g>
+<rect x="1672" y="483" width="300" height="178" rx="7" fill="#0f172a" opacity="0.10"/>
+<rect x="1670" y="480" width="300" height="178" rx="7" fill="#ffffff" stroke="#ea580c" stroke-width="1.8"/>
+<path d="M 1670 510 L 1670 487 Q 1670 480 1677 480 L 1963 480 Q 1970 480 1970 487 L 1970 510 Z" fill="#ea580c"/>
+<text x="1820.0" y="500" text-anchor="middle" font-size="16" font-weight="700" fill="#fff">item_pedido_compra</text>
+<text x="1680" y="524.5" font-size="10.5" font-weight="700" fill="#ea580c">PK</text>
+<text x="1720" y="524.5" font-size="13.5" font-weight="700" font-style="normal" fill="#0f172a">id</text>
+<text x="1960" y="524.5" text-anchor="end" font-size="11.5" fill="#64748b">INT</text>
+<rect x="1671" y="530" width="298" height="20" fill="#f8fafc"/>
+<text x="1680" y="544.5" font-size="10.5" font-weight="700" fill="#ea580c">FK</text>
+<text x="1720" y="544.5" font-size="13.5" font-weight="400" font-style="italic" fill="#0f172a">pedido_compra_id</text>
+<text x="1960" y="544.5" text-anchor="end" font-size="11.5" fill="#64748b">INT</text>
+<text x="1680" y="564.5" font-size="10.5" font-weight="700" fill="#ea580c">FK</text>
+<text x="1720" y="564.5" font-size="13.5" font-weight="400" font-style="italic" fill="#0f172a">produto_id</text>
+<text x="1960" y="564.5" text-anchor="end" font-size="11.5" fill="#64748b">INT</text>
+<rect x="1671" y="570" width="298" height="20" fill="#f8fafc"/>
+<text x="1720" y="584.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">quantidade</text>
+<text x="1960" y="584.5" text-anchor="end" font-size="11.5" fill="#64748b">DECIMAL(12,3)</text>
+<text x="1720" y="604.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">quantidade_recebida</text>
+<text x="1960" y="604.5" text-anchor="end" font-size="11.5" fill="#64748b">DECIMAL(12,3)</text>
+<rect x="1671" y="610" width="298" height="20" fill="#f8fafc"/>
+<text x="1720" y="624.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">preco_unitario</text>
+<text x="1960" y="624.5" text-anchor="end" font-size="11.5" fill="#64748b">FLOAT</text>
+<text x="1720" y="644.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">subtotal</text>
+<text x="1960" y="644.5" text-anchor="end" font-size="11.5" fill="#64748b">FLOAT</text>
+</g>
+<g>
+<rect x="872" y="483" width="300" height="358" rx="7" fill="#0f172a" opacity="0.10"/>
+<rect x="870" y="480" width="300" height="358" rx="7" fill="#ffffff" stroke="#ea580c" stroke-width="1.8"/>
+<path d="M 870 510 L 870 487 Q 870 480 877 480 L 1163 480 Q 1170 480 1170 487 L 1170 510 Z" fill="#ea580c"/>
+<text x="1020.0" y="500" text-anchor="middle" font-size="16" font-weight="700" fill="#fff">cotacao</text>
+<text x="880" y="524.5" font-size="10.5" font-weight="700" fill="#ea580c">PK</text>
+<text x="920" y="524.5" font-size="13.5" font-weight="700" font-style="normal" fill="#0f172a">id</text>
+<text x="1160" y="524.5" text-anchor="end" font-size="11.5" fill="#64748b">INT</text>
+<rect x="871" y="530" width="298" height="20" fill="#f8fafc"/>
+<text x="920" y="544.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">tipo</text>
+<text x="1160" y="544.5" text-anchor="end" font-size="11.5" fill="#64748b">VARCHAR(10)</text>
+<text x="880" y="564.5" font-size="10.5" font-weight="700" fill="#ea580c">FK</text>
+<text x="920" y="564.5" font-size="13.5" font-weight="400" font-style="italic" fill="#0f172a">fornecedor_id</text>
+<text x="1160" y="564.5" text-anchor="end" font-size="11.5" fill="#64748b">INT</text>
+<rect x="871" y="570" width="298" height="20" fill="#f8fafc"/>
+<text x="880" y="584.5" font-size="10.5" font-weight="700" fill="#ea580c">FK</text>
+<text x="920" y="584.5" font-size="13.5" font-weight="400" font-style="italic" fill="#0f172a">cliente_id</text>
+<text x="1160" y="584.5" text-anchor="end" font-size="11.5" fill="#64748b">INT</text>
+<text x="880" y="604.5" font-size="10.5" font-weight="700" fill="#ea580c">FK</text>
+<text x="920" y="604.5" font-size="13.5" font-weight="400" font-style="italic" fill="#0f172a">usuario_id</text>
+<text x="1160" y="604.5" text-anchor="end" font-size="11.5" fill="#64748b">INT</text>
+<rect x="871" y="610" width="298" height="20" fill="#f8fafc"/>
+<text x="880" y="624.5" font-size="10.5" font-weight="700" fill="#ea580c">FK</text>
+<text x="920" y="624.5" font-size="13.5" font-weight="400" font-style="italic" fill="#0f172a">forma_pagamento_id</text>
+<text x="1160" y="624.5" text-anchor="end" font-size="11.5" fill="#64748b">INT</text>
+<text x="920" y="644.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">data_cotacao</text>
+<text x="1160" y="644.5" text-anchor="end" font-size="11.5" fill="#64748b">DATETIME</text>
+<rect x="871" y="650" width="298" height="20" fill="#f8fafc"/>
+<text x="920" y="664.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">validade</text>
+<text x="1160" y="664.5" text-anchor="end" font-size="11.5" fill="#64748b">DATE</text>
+<text x="920" y="684.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">status</text>
+<text x="1160" y="684.5" text-anchor="end" font-size="11.5" fill="#64748b">VARCHAR(20)</text>
+<rect x="871" y="690" width="298" height="20" fill="#f8fafc"/>
+<text x="920" y="704.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">observacao</text>
+<text x="1160" y="704.5" text-anchor="end" font-size="11.5" fill="#64748b">VARCHAR(255)</text>
+<text x="880" y="724.5" font-size="10.5" font-weight="700" fill="#ea580c">FK</text>
+<text x="920" y="724.5" font-size="13.5" font-weight="400" font-style="italic" fill="#0f172a">pedido_venda_id</text>
+<text x="1160" y="724.5" text-anchor="end" font-size="11.5" fill="#64748b">INT</text>
+<rect x="871" y="730" width="298" height="20" fill="#f8fafc"/>
+<text x="880" y="744.5" font-size="10.5" font-weight="700" fill="#ea580c">FK</text>
+<text x="920" y="744.5" font-size="13.5" font-weight="400" font-style="italic" fill="#0f172a">pedido_compra_id</text>
+<text x="1160" y="744.5" text-anchor="end" font-size="11.5" fill="#64748b">INT</text>
+<text x="920" y="764.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">data_entrega_prevista</text>
+<text x="1160" y="764.5" text-anchor="end" font-size="11.5" fill="#64748b">DATE</text>
+<rect x="871" y="770" width="298" height="20" fill="#f8fafc"/>
+<text x="880" y="784.5" font-size="10.5" font-weight="700" fill="#ea580c">FK</text>
+<text x="920" y="784.5" font-size="13.5" font-weight="400" font-style="italic" fill="#0f172a">endereco_entrega_id</text>
+<text x="1160" y="784.5" text-anchor="end" font-size="11.5" fill="#64748b">INT</text>
+<text x="920" y="804.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">created_at</text>
+<text x="1160" y="804.5" text-anchor="end" font-size="11.5" fill="#64748b">DATETIME</text>
+<rect x="871" y="810" width="298" height="20" fill="#f8fafc"/>
+<text x="920" y="824.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">updated_at</text>
+<text x="1160" y="824.5" text-anchor="end" font-size="11.5" fill="#64748b">DATETIME</text>
+</g>
+<g>
+<rect x="872" y="893" width="300" height="178" rx="7" fill="#0f172a" opacity="0.10"/>
+<rect x="870" y="890" width="300" height="178" rx="7" fill="#ffffff" stroke="#ea580c" stroke-width="1.8"/>
+<path d="M 870 920 L 870 897 Q 870 890 877 890 L 1163 890 Q 1170 890 1170 897 L 1170 920 Z" fill="#ea580c"/>
+<text x="1020.0" y="910" text-anchor="middle" font-size="16" font-weight="700" fill="#fff">item_cotacao</text>
+<text x="880" y="934.5" font-size="10.5" font-weight="700" fill="#ea580c">PK</text>
+<text x="920" y="934.5" font-size="13.5" font-weight="700" font-style="normal" fill="#0f172a">id</text>
+<text x="1160" y="934.5" text-anchor="end" font-size="11.5" fill="#64748b">INT</text>
+<rect x="871" y="940" width="298" height="20" fill="#f8fafc"/>
+<text x="880" y="954.5" font-size="10.5" font-weight="700" fill="#ea580c">FK</text>
+<text x="920" y="954.5" font-size="13.5" font-weight="400" font-style="italic" fill="#0f172a">cotacao_id</text>
+<text x="1160" y="954.5" text-anchor="end" font-size="11.5" fill="#64748b">INT</text>
+<text x="880" y="974.5" font-size="10.5" font-weight="700" fill="#ea580c">FK</text>
+<text x="920" y="974.5" font-size="13.5" font-weight="400" font-style="italic" fill="#0f172a">produto_id</text>
+<text x="1160" y="974.5" text-anchor="end" font-size="11.5" fill="#64748b">INT</text>
+<rect x="871" y="980" width="298" height="20" fill="#f8fafc"/>
+<text x="920" y="994.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">quantidade</text>
+<text x="1160" y="994.5" text-anchor="end" font-size="11.5" fill="#64748b">DECIMAL(12,3)</text>
+<text x="920" y="1014.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">preco_unitario</text>
+<text x="1160" y="1014.5" text-anchor="end" font-size="11.5" fill="#64748b">FLOAT</text>
+<rect x="871" y="1020" width="298" height="20" fill="#f8fafc"/>
+<text x="920" y="1034.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">desconto</text>
+<text x="1160" y="1034.5" text-anchor="end" font-size="11.5" fill="#64748b">FLOAT</text>
+<text x="920" y="1054.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">observacao</text>
+<text x="1160" y="1054.5" text-anchor="end" font-size="11.5" fill="#64748b">VARCHAR(255)</text>
+</g>
+<g>
+<rect x="72" y="1273" width="300" height="218" rx="7" fill="#0f172a" opacity="0.10"/>
+<rect x="70" y="1270" width="300" height="218" rx="7" fill="#ffffff" stroke="#0891b2" stroke-width="1.8"/>
+<path d="M 70 1300 L 70 1277 Q 70 1270 77 1270 L 363 1270 Q 370 1270 370 1277 L 370 1300 Z" fill="#0891b2"/>
+<text x="220.0" y="1290" text-anchor="middle" font-size="16" font-weight="700" fill="#fff">geladeira</text>
+<text x="80" y="1314.5" font-size="10.5" font-weight="700" fill="#0891b2">PK</text>
+<text x="120" y="1314.5" font-size="13.5" font-weight="700" font-style="normal" fill="#0f172a">id</text>
+<text x="360" y="1314.5" text-anchor="end" font-size="11.5" fill="#64748b">INT</text>
+<rect x="71" y="1320" width="298" height="20" fill="#f8fafc"/>
+<text x="80" y="1334.5" font-size="10.5" font-weight="700" fill="#0891b2">FK</text>
+<text x="120" y="1334.5" font-size="13.5" font-weight="400" font-style="italic" fill="#0f172a">cliente_id</text>
+<text x="360" y="1334.5" text-anchor="end" font-size="11.5" fill="#64748b">INT</text>
+<text x="80" y="1354.5" font-size="10.5" font-weight="700" fill="#0891b2">FK</text>
+<text x="120" y="1354.5" font-size="13.5" font-weight="400" font-style="italic" fill="#0f172a">endereco_id</text>
+<text x="360" y="1354.5" text-anchor="end" font-size="11.5" fill="#64748b">INT</text>
+<rect x="71" y="1360" width="298" height="20" fill="#f8fafc"/>
+<text x="120" y="1374.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">tipo</text>
+<text x="360" y="1374.5" text-anchor="end" font-size="11.5" fill="#64748b">VARCHAR(50)</text>
+<text x="120" y="1394.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">modelo</text>
+<text x="360" y="1394.5" text-anchor="end" font-size="11.5" fill="#64748b">VARCHAR(100)</text>
+<rect x="71" y="1400" width="298" height="20" fill="#f8fafc"/>
+<text x="120" y="1414.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">marca</text>
+<text x="360" y="1414.5" text-anchor="end" font-size="11.5" fill="#64748b">VARCHAR(50)</text>
+<text x="120" y="1434.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">numero_serie</text>
+<text x="360" y="1434.5" text-anchor="end" font-size="11.5" fill="#64748b">VARCHAR(100) UQ</text>
+<rect x="71" y="1440" width="298" height="20" fill="#f8fafc"/>
+<text x="120" y="1454.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">data_alocacao</text>
+<text x="360" y="1454.5" text-anchor="end" font-size="11.5" fill="#64748b">DATETIME</text>
+<text x="120" y="1474.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">status</text>
+<text x="360" y="1474.5" text-anchor="end" font-size="11.5" fill="#64748b">VARCHAR(20)</text>
+</g>
+<g>
+<rect x="472" y="1173" width="300" height="178" rx="7" fill="#0f172a" opacity="0.10"/>
+<rect x="470" y="1170" width="300" height="178" rx="7" fill="#ffffff" stroke="#0891b2" stroke-width="1.8"/>
+<path d="M 470 1200 L 470 1177 Q 470 1170 477 1170 L 763 1170 Q 770 1170 770 1177 L 770 1200 Z" fill="#0891b2"/>
+<text x="620.0" y="1190" text-anchor="middle" font-size="16" font-weight="700" fill="#fff">historico_manutencao</text>
+<text x="480" y="1214.5" font-size="10.5" font-weight="700" fill="#0891b2">PK</text>
+<text x="520" y="1214.5" font-size="13.5" font-weight="700" font-style="normal" fill="#0f172a">id</text>
+<text x="760" y="1214.5" text-anchor="end" font-size="11.5" fill="#64748b">INT</text>
+<rect x="471" y="1220" width="298" height="20" fill="#f8fafc"/>
+<text x="480" y="1234.5" font-size="10.5" font-weight="700" fill="#0891b2">FK</text>
+<text x="520" y="1234.5" font-size="13.5" font-weight="400" font-style="italic" fill="#0f172a">geladeira_id</text>
+<text x="760" y="1234.5" text-anchor="end" font-size="11.5" fill="#64748b">INT</text>
+<text x="480" y="1254.5" font-size="10.5" font-weight="700" fill="#0891b2">FK</text>
+<text x="520" y="1254.5" font-size="13.5" font-weight="400" font-style="italic" fill="#0f172a">usuario_id</text>
+<text x="760" y="1254.5" text-anchor="end" font-size="11.5" fill="#64748b">INT</text>
+<rect x="471" y="1260" width="298" height="20" fill="#f8fafc"/>
+<text x="520" y="1274.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">data</text>
+<text x="760" y="1274.5" text-anchor="end" font-size="11.5" fill="#64748b">DATETIME</text>
+<text x="520" y="1294.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">tipo</text>
+<text x="760" y="1294.5" text-anchor="end" font-size="11.5" fill="#64748b">VARCHAR(50)</text>
+<rect x="471" y="1300" width="298" height="20" fill="#f8fafc"/>
+<text x="520" y="1314.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">descricao</text>
+<text x="760" y="1314.5" text-anchor="end" font-size="11.5" fill="#64748b">TEXT</text>
+<text x="520" y="1334.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">custo</text>
+<text x="760" y="1334.5" text-anchor="end" font-size="11.5" fill="#64748b">FLOAT</text>
+</g>
+<g>
+<rect x="2072" y="1153" width="300" height="178" rx="7" fill="#0f172a" opacity="0.10"/>
+<rect x="2070" y="1150" width="300" height="178" rx="7" fill="#ffffff" stroke="#7c3aed" stroke-width="1.8"/>
+<path d="M 2070 1180 L 2070 1157 Q 2070 1150 2077 1150 L 2363 1150 Q 2370 1150 2370 1157 L 2370 1180 Z" fill="#7c3aed"/>
+<text x="2220.0" y="1170" text-anchor="middle" font-size="16" font-weight="700" fill="#fff">receita</text>
+<text x="2080" y="1194.5" font-size="10.5" font-weight="700" fill="#7c3aed">PK</text>
+<text x="2120" y="1194.5" font-size="13.5" font-weight="700" font-style="normal" fill="#0f172a">id</text>
+<text x="2360" y="1194.5" text-anchor="end" font-size="11.5" fill="#64748b">INT</text>
+<rect x="2071" y="1200" width="298" height="20" fill="#f8fafc"/>
+<text x="2080" y="1214.5" font-size="10.5" font-weight="700" fill="#7c3aed">FK</text>
+<text x="2120" y="1214.5" font-size="13.5" font-weight="400" font-style="italic" fill="#0f172a">produto_id</text>
+<text x="2360" y="1214.5" text-anchor="end" font-size="11.5" fill="#64748b">INT UQ</text>
+<text x="2120" y="1234.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">rendimento</text>
+<text x="2360" y="1234.5" text-anchor="end" font-size="11.5" fill="#64748b">DECIMAL(12,3)</text>
+<rect x="2071" y="1240" width="298" height="20" fill="#f8fafc"/>
+<text x="2120" y="1254.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">observacao</text>
+<text x="2360" y="1254.5" text-anchor="end" font-size="11.5" fill="#64748b">VARCHAR(255)</text>
+<text x="2120" y="1274.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">ativo</text>
+<text x="2360" y="1274.5" text-anchor="end" font-size="11.5" fill="#64748b">BOOLEAN</text>
+<rect x="2071" y="1280" width="298" height="20" fill="#f8fafc"/>
+<text x="2120" y="1294.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">created_at</text>
+<text x="2360" y="1294.5" text-anchor="end" font-size="11.5" fill="#64748b">DATETIME</text>
+<text x="2120" y="1314.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">updated_at</text>
+<text x="2360" y="1314.5" text-anchor="end" font-size="11.5" fill="#64748b">DATETIME</text>
+</g>
+<g>
+<rect x="2472" y="1253" width="300" height="118" rx="7" fill="#0f172a" opacity="0.10"/>
+<rect x="2470" y="1250" width="300" height="118" rx="7" fill="#ffffff" stroke="#7c3aed" stroke-width="1.8"/>
+<path d="M 2470 1280 L 2470 1257 Q 2470 1250 2477 1250 L 2763 1250 Q 2770 1250 2770 1257 L 2770 1280 Z" fill="#7c3aed"/>
+<text x="2620.0" y="1270" text-anchor="middle" font-size="16" font-weight="700" fill="#fff">receita_item</text>
+<text x="2480" y="1294.5" font-size="10.5" font-weight="700" fill="#7c3aed">PK</text>
+<text x="2520" y="1294.5" font-size="13.5" font-weight="700" font-style="normal" fill="#0f172a">id</text>
+<text x="2760" y="1294.5" text-anchor="end" font-size="11.5" fill="#64748b">INT</text>
+<rect x="2471" y="1300" width="298" height="20" fill="#f8fafc"/>
+<text x="2480" y="1314.5" font-size="10.5" font-weight="700" fill="#7c3aed">FK</text>
+<text x="2520" y="1314.5" font-size="13.5" font-weight="400" font-style="italic" fill="#0f172a">receita_id</text>
+<text x="2760" y="1314.5" text-anchor="end" font-size="11.5" fill="#64748b">INT</text>
+<text x="2480" y="1334.5" font-size="10.5" font-weight="700" fill="#7c3aed">FK</text>
+<text x="2520" y="1334.5" font-size="13.5" font-weight="400" font-style="italic" fill="#0f172a">produto_id</text>
+<text x="2760" y="1334.5" text-anchor="end" font-size="11.5" fill="#64748b">INT</text>
+<rect x="2471" y="1340" width="298" height="20" fill="#f8fafc"/>
+<text x="2520" y="1354.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">quantidade</text>
+<text x="2760" y="1354.5" text-anchor="end" font-size="11.5" fill="#64748b">DECIMAL(12,3)</text>
+</g>
+<g>
+<rect x="2072" y="1393" width="300" height="298" rx="7" fill="#0f172a" opacity="0.10"/>
+<rect x="2070" y="1390" width="300" height="298" rx="7" fill="#ffffff" stroke="#7c3aed" stroke-width="1.8"/>
+<path d="M 2070 1420 L 2070 1397 Q 2070 1390 2077 1390 L 2363 1390 Q 2370 1390 2370 1397 L 2370 1420 Z" fill="#7c3aed"/>
+<text x="2220.0" y="1410" text-anchor="middle" font-size="16" font-weight="700" fill="#fff">ordem_producao</text>
+<text x="2080" y="1434.5" font-size="10.5" font-weight="700" fill="#7c3aed">PK</text>
+<text x="2120" y="1434.5" font-size="13.5" font-weight="700" font-style="normal" fill="#0f172a">id</text>
+<text x="2360" y="1434.5" text-anchor="end" font-size="11.5" fill="#64748b">INT</text>
+<rect x="2071" y="1440" width="298" height="20" fill="#f8fafc"/>
+<text x="2080" y="1454.5" font-size="10.5" font-weight="700" fill="#7c3aed">FK</text>
+<text x="2120" y="1454.5" font-size="13.5" font-weight="400" font-style="italic" fill="#0f172a">receita_id</text>
+<text x="2360" y="1454.5" text-anchor="end" font-size="11.5" fill="#64748b">INT</text>
+<text x="2080" y="1474.5" font-size="10.5" font-weight="700" fill="#7c3aed">FK</text>
+<text x="2120" y="1474.5" font-size="13.5" font-weight="400" font-style="italic" fill="#0f172a">produto_id</text>
+<text x="2360" y="1474.5" text-anchor="end" font-size="11.5" fill="#64748b">INT</text>
+<rect x="2071" y="1480" width="298" height="20" fill="#f8fafc"/>
+<text x="2120" y="1494.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">quantidade</text>
+<text x="2360" y="1494.5" text-anchor="end" font-size="11.5" fill="#64748b">DECIMAL(12,3)</text>
+<text x="2120" y="1514.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">status</text>
+<text x="2360" y="1514.5" text-anchor="end" font-size="11.5" fill="#64748b">VARCHAR(20)</text>
+<rect x="2071" y="1520" width="298" height="20" fill="#f8fafc"/>
+<text x="2080" y="1534.5" font-size="10.5" font-weight="700" fill="#7c3aed">FK</text>
+<text x="2120" y="1534.5" font-size="13.5" font-weight="400" font-style="italic" fill="#0f172a">usuario_id</text>
+<text x="2360" y="1534.5" text-anchor="end" font-size="11.5" fill="#64748b">INT</text>
+<text x="2120" y="1554.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">observacao</text>
+<text x="2360" y="1554.5" text-anchor="end" font-size="11.5" fill="#64748b">VARCHAR(255)</text>
+<rect x="2071" y="1560" width="298" height="20" fill="#f8fafc"/>
+<text x="2120" y="1574.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">custo_total</text>
+<text x="2360" y="1574.5" text-anchor="end" font-size="11.5" fill="#64748b">FLOAT</text>
+<text x="2120" y="1594.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">custo_unitario</text>
+<text x="2360" y="1594.5" text-anchor="end" font-size="11.5" fill="#64748b">FLOAT</text>
+<rect x="2071" y="1600" width="298" height="20" fill="#f8fafc"/>
+<text x="2120" y="1614.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">confirmada_em</text>
+<text x="2360" y="1614.5" text-anchor="end" font-size="11.5" fill="#64748b">DATETIME</text>
+<text x="2120" y="1634.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">cancelada_em</text>
+<text x="2360" y="1634.5" text-anchor="end" font-size="11.5" fill="#64748b">DATETIME</text>
+<rect x="2071" y="1640" width="298" height="20" fill="#f8fafc"/>
+<text x="2120" y="1654.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">created_at</text>
+<text x="2360" y="1654.5" text-anchor="end" font-size="11.5" fill="#64748b">DATETIME</text>
+<text x="2120" y="1674.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">updated_at</text>
+<text x="2360" y="1674.5" text-anchor="end" font-size="11.5" fill="#64748b">DATETIME</text>
+</g>
+<g>
+<rect x="2472" y="1413" width="300" height="158" rx="7" fill="#0f172a" opacity="0.10"/>
+<rect x="2470" y="1410" width="300" height="158" rx="7" fill="#ffffff" stroke="#7c3aed" stroke-width="1.8"/>
+<path d="M 2470 1440 L 2470 1417 Q 2470 1410 2477 1410 L 2763 1410 Q 2770 1410 2770 1417 L 2770 1440 Z" fill="#7c3aed"/>
+<text x="2620.0" y="1430" text-anchor="middle" font-size="16" font-weight="700" fill="#fff">ordem_producao_item</text>
+<text x="2480" y="1454.5" font-size="10.5" font-weight="700" fill="#7c3aed">PK</text>
+<text x="2520" y="1454.5" font-size="13.5" font-weight="700" font-style="normal" fill="#0f172a">id</text>
+<text x="2760" y="1454.5" text-anchor="end" font-size="11.5" fill="#64748b">INT</text>
+<rect x="2471" y="1460" width="298" height="20" fill="#f8fafc"/>
+<text x="2480" y="1474.5" font-size="10.5" font-weight="700" fill="#7c3aed">FK</text>
+<text x="2520" y="1474.5" font-size="13.5" font-weight="400" font-style="italic" fill="#0f172a">ordem_id</text>
+<text x="2760" y="1474.5" text-anchor="end" font-size="11.5" fill="#64748b">INT</text>
+<text x="2480" y="1494.5" font-size="10.5" font-weight="700" fill="#7c3aed">FK</text>
+<text x="2520" y="1494.5" font-size="13.5" font-weight="400" font-style="italic" fill="#0f172a">produto_id</text>
+<text x="2760" y="1494.5" text-anchor="end" font-size="11.5" fill="#64748b">INT</text>
+<rect x="2471" y="1500" width="298" height="20" fill="#f8fafc"/>
+<text x="2520" y="1514.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">quantidade</text>
+<text x="2760" y="1514.5" text-anchor="end" font-size="11.5" fill="#64748b">DECIMAL(12,3)</text>
+<text x="2520" y="1534.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">custo_unitario</text>
+<text x="2760" y="1534.5" text-anchor="end" font-size="11.5" fill="#64748b">FLOAT</text>
+<rect x="2471" y="1540" width="298" height="20" fill="#f8fafc"/>
+<text x="2520" y="1554.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">subtotal</text>
+<text x="2760" y="1554.5" text-anchor="end" font-size="11.5" fill="#64748b">FLOAT</text>
+</g>
+<g>
+<rect x="2472" y="713" width="300" height="138" rx="7" fill="#0f172a" opacity="0.10"/>
+<rect x="2470" y="710" width="300" height="138" rx="7" fill="#ffffff" stroke="#ca8a04" stroke-width="1.8"/>
+<path d="M 2470 740 L 2470 717 Q 2470 710 2477 710 L 2763 710 Q 2770 710 2770 717 L 2770 740 Z" fill="#ca8a04"/>
+<text x="2620.0" y="730" text-anchor="middle" font-size="16" font-weight="700" fill="#fff">categoria_financeira</text>
+<text x="2480" y="754.5" font-size="10.5" font-weight="700" fill="#ca8a04">PK</text>
+<text x="2520" y="754.5" font-size="13.5" font-weight="700" font-style="normal" fill="#0f172a">id</text>
+<text x="2760" y="754.5" text-anchor="end" font-size="11.5" fill="#64748b">INT</text>
+<rect x="2471" y="760" width="298" height="20" fill="#f8fafc"/>
+<text x="2520" y="774.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">nome</text>
+<text x="2760" y="774.5" text-anchor="end" font-size="11.5" fill="#64748b">VARCHAR(100)</text>
+<text x="2520" y="794.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">tipo</text>
+<text x="2760" y="794.5" text-anchor="end" font-size="11.5" fill="#64748b">VARCHAR(10)</text>
+<rect x="2471" y="800" width="298" height="20" fill="#f8fafc"/>
+<text x="2520" y="814.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">sistema</text>
+<text x="2760" y="814.5" text-anchor="end" font-size="11.5" fill="#64748b">BOOLEAN</text>
+<text x="2520" y="834.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">ativo</text>
+<text x="2760" y="834.5" text-anchor="end" font-size="11.5" fill="#64748b">BOOLEAN</text>
+</g>
+<g>
+<rect x="2072" y="713" width="300" height="378" rx="7" fill="#0f172a" opacity="0.10"/>
+<rect x="2070" y="710" width="300" height="378" rx="7" fill="#ffffff" stroke="#ca8a04" stroke-width="1.8"/>
+<path d="M 2070 740 L 2070 717 Q 2070 710 2077 710 L 2363 710 Q 2370 710 2370 717 L 2370 740 Z" fill="#ca8a04"/>
+<text x="2220.0" y="730" text-anchor="middle" font-size="16" font-weight="700" fill="#fff">titulo_financeiro</text>
+<text x="2080" y="754.5" font-size="10.5" font-weight="700" fill="#ca8a04">PK</text>
+<text x="2120" y="754.5" font-size="13.5" font-weight="700" font-style="normal" fill="#0f172a">id</text>
+<text x="2360" y="754.5" text-anchor="end" font-size="11.5" fill="#64748b">INT</text>
+<rect x="2071" y="760" width="298" height="20" fill="#f8fafc"/>
+<text x="2120" y="774.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">tipo</text>
+<text x="2360" y="774.5" text-anchor="end" font-size="11.5" fill="#64748b">VARCHAR(10)</text>
+<text x="2080" y="794.5" font-size="10.5" font-weight="700" fill="#ca8a04">FK</text>
+<text x="2120" y="794.5" font-size="13.5" font-weight="400" font-style="italic" fill="#0f172a">pedido_venda_id</text>
+<text x="2360" y="794.5" text-anchor="end" font-size="11.5" fill="#64748b">INT</text>
+<rect x="2071" y="800" width="298" height="20" fill="#f8fafc"/>
+<text x="2080" y="814.5" font-size="10.5" font-weight="700" fill="#ca8a04">FK</text>
+<text x="2120" y="814.5" font-size="13.5" font-weight="400" font-style="italic" fill="#0f172a">pedido_compra_id</text>
+<text x="2360" y="814.5" text-anchor="end" font-size="11.5" fill="#64748b">INT</text>
+<text x="2080" y="834.5" font-size="10.5" font-weight="700" fill="#ca8a04">FK</text>
+<text x="2120" y="834.5" font-size="13.5" font-weight="400" font-style="italic" fill="#0f172a">cliente_id</text>
+<text x="2360" y="834.5" text-anchor="end" font-size="11.5" fill="#64748b">INT</text>
+<rect x="2071" y="840" width="298" height="20" fill="#f8fafc"/>
+<text x="2080" y="854.5" font-size="10.5" font-weight="700" fill="#ca8a04">FK</text>
+<text x="2120" y="854.5" font-size="13.5" font-weight="400" font-style="italic" fill="#0f172a">fornecedor_id</text>
+<text x="2360" y="854.5" text-anchor="end" font-size="11.5" fill="#64748b">INT</text>
+<text x="2080" y="874.5" font-size="10.5" font-weight="700" fill="#ca8a04">FK</text>
+<text x="2120" y="874.5" font-size="13.5" font-weight="400" font-style="italic" fill="#0f172a">categoria_id</text>
+<text x="2360" y="874.5" text-anchor="end" font-size="11.5" fill="#64748b">INT</text>
+<rect x="2071" y="880" width="298" height="20" fill="#f8fafc"/>
+<text x="2120" y="894.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">descricao</text>
+<text x="2360" y="894.5" text-anchor="end" font-size="11.5" fill="#64748b">VARCHAR(255)</text>
+<text x="2120" y="914.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">numero_parcela</text>
+<text x="2360" y="914.5" text-anchor="end" font-size="11.5" fill="#64748b">INT</text>
+<rect x="2071" y="920" width="298" height="20" fill="#f8fafc"/>
+<text x="2120" y="934.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">total_parcelas</text>
+<text x="2360" y="934.5" text-anchor="end" font-size="11.5" fill="#64748b">INT</text>
+<text x="2120" y="954.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">vencimento</text>
+<text x="2360" y="954.5" text-anchor="end" font-size="11.5" fill="#64748b">DATE</text>
+<rect x="2071" y="960" width="298" height="20" fill="#f8fafc"/>
+<text x="2120" y="974.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">valor</text>
+<text x="2360" y="974.5" text-anchor="end" font-size="11.5" fill="#64748b">DECIMAL(12,2)</text>
+<text x="2120" y="994.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">taxa_percentual</text>
+<text x="2360" y="994.5" text-anchor="end" font-size="11.5" fill="#64748b">DECIMAL(5,2)</text>
+<rect x="2071" y="1000" width="298" height="20" fill="#f8fafc"/>
+<text x="2120" y="1014.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">valor_pago</text>
+<text x="2360" y="1014.5" text-anchor="end" font-size="11.5" fill="#64748b">DECIMAL(12,2)</text>
+<text x="2120" y="1034.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">status</text>
+<text x="2360" y="1034.5" text-anchor="end" font-size="11.5" fill="#64748b">VARCHAR(20)</text>
+<rect x="2071" y="1040" width="298" height="20" fill="#f8fafc"/>
+<text x="2120" y="1054.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">created_at</text>
+<text x="2360" y="1054.5" text-anchor="end" font-size="11.5" fill="#64748b">DATETIME</text>
+<text x="2120" y="1074.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">updated_at</text>
+<text x="2360" y="1074.5" text-anchor="end" font-size="11.5" fill="#64748b">DATETIME</text>
+</g>
+<g>
+<rect x="2472" y="973" width="300" height="238" rx="7" fill="#0f172a" opacity="0.10"/>
+<rect x="2470" y="970" width="300" height="238" rx="7" fill="#ffffff" stroke="#ca8a04" stroke-width="1.8"/>
+<path d="M 2470 1000 L 2470 977 Q 2470 970 2477 970 L 2763 970 Q 2770 970 2770 977 L 2770 1000 Z" fill="#ca8a04"/>
+<text x="2620.0" y="990" text-anchor="middle" font-size="16" font-weight="700" fill="#fff">baixa_titulo</text>
+<text x="2480" y="1014.5" font-size="10.5" font-weight="700" fill="#ca8a04">PK</text>
+<text x="2520" y="1014.5" font-size="13.5" font-weight="700" font-style="normal" fill="#0f172a">id</text>
+<text x="2760" y="1014.5" text-anchor="end" font-size="11.5" fill="#64748b">INT</text>
+<rect x="2471" y="1020" width="298" height="20" fill="#f8fafc"/>
+<text x="2480" y="1034.5" font-size="10.5" font-weight="700" fill="#ca8a04">FK</text>
+<text x="2520" y="1034.5" font-size="13.5" font-weight="400" font-style="italic" fill="#0f172a">titulo_id</text>
+<text x="2760" y="1034.5" text-anchor="end" font-size="11.5" fill="#64748b">INT</text>
+<text x="2520" y="1054.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">valor</text>
+<text x="2760" y="1054.5" text-anchor="end" font-size="11.5" fill="#64748b">DECIMAL(12,2)</text>
+<rect x="2471" y="1060" width="298" height="20" fill="#f8fafc"/>
+<text x="2520" y="1074.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">data_pagamento</text>
+<text x="2760" y="1074.5" text-anchor="end" font-size="11.5" fill="#64748b">DATE</text>
+<text x="2480" y="1094.5" font-size="10.5" font-weight="700" fill="#ca8a04">FK</text>
+<text x="2520" y="1094.5" font-size="13.5" font-weight="400" font-style="italic" fill="#0f172a">usuario_id</text>
+<text x="2760" y="1094.5" text-anchor="end" font-size="11.5" fill="#64748b">INT</text>
+<rect x="2471" y="1100" width="298" height="20" fill="#f8fafc"/>
+<text x="2520" y="1114.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">observacao</text>
+<text x="2760" y="1114.5" text-anchor="end" font-size="11.5" fill="#64748b">VARCHAR(255)</text>
+<text x="2520" y="1134.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">estornada</text>
+<text x="2760" y="1134.5" text-anchor="end" font-size="11.5" fill="#64748b">BOOLEAN</text>
+<rect x="2471" y="1140" width="298" height="20" fill="#f8fafc"/>
+<text x="2520" y="1154.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">estornada_em</text>
+<text x="2760" y="1154.5" text-anchor="end" font-size="11.5" fill="#64748b">DATETIME</text>
+<text x="2480" y="1174.5" font-size="10.5" font-weight="700" fill="#ca8a04">FK</text>
+<text x="2520" y="1174.5" font-size="13.5" font-weight="400" font-style="italic" fill="#0f172a">estornada_por_id</text>
+<text x="2760" y="1174.5" text-anchor="end" font-size="11.5" fill="#64748b">INT</text>
+<rect x="2471" y="1180" width="298" height="20" fill="#f8fafc"/>
+<text x="2520" y="1194.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">created_at</text>
+<text x="2760" y="1194.5" text-anchor="end" font-size="11.5" fill="#64748b">DATETIME</text>
+</g>
+<g>
+<rect x="2072" y="153" width="300" height="158" rx="7" fill="#0f172a" opacity="0.10"/>
+<rect x="2070" y="150" width="300" height="158" rx="7" fill="#ffffff" stroke="#db2777" stroke-width="1.8"/>
+<path d="M 2070 180 L 2070 157 Q 2070 150 2077 150 L 2363 150 Q 2370 150 2370 157 L 2370 180 Z" fill="#db2777"/>
+<text x="2220.0" y="170" text-anchor="middle" font-size="16" font-weight="700" fill="#fff">assistente_conversa</text>
+<text x="2080" y="194.5" font-size="10.5" font-weight="700" fill="#db2777">PK</text>
+<text x="2120" y="194.5" font-size="13.5" font-weight="700" font-style="normal" fill="#0f172a">id</text>
+<text x="2360" y="194.5" text-anchor="end" font-size="11.5" fill="#64748b">INT</text>
+<rect x="2071" y="200" width="298" height="20" fill="#f8fafc"/>
+<text x="2080" y="214.5" font-size="10.5" font-weight="700" fill="#db2777">FK</text>
+<text x="2120" y="214.5" font-size="13.5" font-weight="400" font-style="italic" fill="#0f172a">usuario_id</text>
+<text x="2360" y="214.5" text-anchor="end" font-size="11.5" fill="#64748b">INT</text>
+<text x="2120" y="234.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">titulo</text>
+<text x="2360" y="234.5" text-anchor="end" font-size="11.5" fill="#64748b">VARCHAR(120)</text>
+<rect x="2071" y="240" width="298" height="20" fill="#f8fafc"/>
+<text x="2120" y="254.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">ativa</text>
+<text x="2360" y="254.5" text-anchor="end" font-size="11.5" fill="#64748b">BOOLEAN</text>
+<text x="2120" y="274.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">created_at</text>
+<text x="2360" y="274.5" text-anchor="end" font-size="11.5" fill="#64748b">DATETIME</text>
+<rect x="2071" y="280" width="298" height="20" fill="#f8fafc"/>
+<text x="2120" y="294.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">updated_at</text>
+<text x="2360" y="294.5" text-anchor="end" font-size="11.5" fill="#64748b">DATETIME</text>
+</g>
+<g>
+<rect x="2472" y="153" width="300" height="238" rx="7" fill="#0f172a" opacity="0.10"/>
+<rect x="2470" y="150" width="300" height="238" rx="7" fill="#ffffff" stroke="#db2777" stroke-width="1.8"/>
+<path d="M 2470 180 L 2470 157 Q 2470 150 2477 150 L 2763 150 Q 2770 150 2770 157 L 2770 180 Z" fill="#db2777"/>
+<text x="2620.0" y="170" text-anchor="middle" font-size="16" font-weight="700" fill="#fff">assistente_mensagem</text>
+<text x="2480" y="194.5" font-size="10.5" font-weight="700" fill="#db2777">PK</text>
+<text x="2520" y="194.5" font-size="13.5" font-weight="700" font-style="normal" fill="#0f172a">id</text>
+<text x="2760" y="194.5" text-anchor="end" font-size="11.5" fill="#64748b">INT</text>
+<rect x="2471" y="200" width="298" height="20" fill="#f8fafc"/>
+<text x="2480" y="214.5" font-size="10.5" font-weight="700" fill="#db2777">FK</text>
+<text x="2520" y="214.5" font-size="13.5" font-weight="400" font-style="italic" fill="#0f172a">conversa_id</text>
+<text x="2760" y="214.5" text-anchor="end" font-size="11.5" fill="#64748b">INT</text>
+<text x="2520" y="234.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">papel</text>
+<text x="2760" y="234.5" text-anchor="end" font-size="11.5" fill="#64748b">VARCHAR(10)</text>
+<rect x="2471" y="240" width="298" height="20" fill="#f8fafc"/>
+<text x="2520" y="254.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">conteudo</text>
+<text x="2760" y="254.5" text-anchor="end" font-size="11.5" fill="#64748b">TEXT</text>
+<text x="2520" y="274.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">tabela</text>
+<text x="2760" y="274.5" text-anchor="end" font-size="11.5" fill="#64748b">TEXT</text>
+<rect x="2471" y="280" width="298" height="20" fill="#f8fafc"/>
+<text x="2520" y="294.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">consultas</text>
+<text x="2760" y="294.5" text-anchor="end" font-size="11.5" fill="#64748b">TEXT</text>
+<text x="2520" y="314.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">tokens_entrada</text>
+<text x="2760" y="314.5" text-anchor="end" font-size="11.5" fill="#64748b">INT</text>
+<rect x="2471" y="320" width="298" height="20" fill="#f8fafc"/>
+<text x="2520" y="334.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">tokens_saida</text>
+<text x="2760" y="334.5" text-anchor="end" font-size="11.5" fill="#64748b">INT</text>
+<text x="2520" y="354.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">duracao_ms</text>
+<text x="2760" y="354.5" text-anchor="end" font-size="11.5" fill="#64748b">INT</text>
+<rect x="2471" y="360" width="298" height="20" fill="#f8fafc"/>
+<text x="2520" y="374.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">created_at</text>
+<text x="2760" y="374.5" text-anchor="end" font-size="11.5" fill="#64748b">DATETIME</text>
+</g>
+<g>
+<rect x="2072" y="353" width="300" height="298" rx="7" fill="#0f172a" opacity="0.10"/>
+<rect x="2070" y="350" width="300" height="298" rx="7" fill="#ffffff" stroke="#db2777" stroke-width="1.8"/>
+<path d="M 2070 380 L 2070 357 Q 2070 350 2077 350 L 2363 350 Q 2370 350 2370 357 L 2370 380 Z" fill="#db2777"/>
+<text x="2220.0" y="370" text-anchor="middle" font-size="16" font-weight="700" fill="#fff">assistente_log</text>
+<text x="2080" y="394.5" font-size="10.5" font-weight="700" fill="#db2777">PK</text>
+<text x="2120" y="394.5" font-size="13.5" font-weight="700" font-style="normal" fill="#0f172a">id</text>
+<text x="2360" y="394.5" text-anchor="end" font-size="11.5" fill="#64748b">INT</text>
+<rect x="2071" y="400" width="298" height="20" fill="#f8fafc"/>
+<text x="2080" y="414.5" font-size="10.5" font-weight="700" fill="#db2777">FK</text>
+<text x="2120" y="414.5" font-size="13.5" font-weight="400" font-style="italic" fill="#0f172a">usuario_id</text>
+<text x="2360" y="414.5" text-anchor="end" font-size="11.5" fill="#64748b">INT</text>
+<text x="2080" y="434.5" font-size="10.5" font-weight="700" fill="#db2777">FK</text>
+<text x="2120" y="434.5" font-size="13.5" font-weight="400" font-style="italic" fill="#0f172a">conversa_id</text>
+<text x="2360" y="434.5" text-anchor="end" font-size="11.5" fill="#64748b">INT</text>
+<rect x="2071" y="440" width="298" height="20" fill="#f8fafc"/>
+<text x="2080" y="454.5" font-size="10.5" font-weight="700" fill="#db2777">FK</text>
+<text x="2120" y="454.5" font-size="13.5" font-weight="400" font-style="italic" fill="#0f172a">mensagem_id</text>
+<text x="2360" y="454.5" text-anchor="end" font-size="11.5" fill="#64748b">INT</text>
+<text x="2120" y="474.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">pergunta</text>
+<text x="2360" y="474.5" text-anchor="end" font-size="11.5" fill="#64748b">VARCHAR(500)</text>
+<rect x="2071" y="480" width="298" height="20" fill="#f8fafc"/>
+<text x="2120" y="494.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">ferramenta</text>
+<text x="2360" y="494.5" text-anchor="end" font-size="11.5" fill="#64748b">VARCHAR(40)</text>
+<text x="2120" y="514.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">entrada</text>
+<text x="2360" y="514.5" text-anchor="end" font-size="11.5" fill="#64748b">TEXT</text>
+<rect x="2071" y="520" width="298" height="20" fill="#f8fafc"/>
+<text x="2120" y="534.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">views</text>
+<text x="2360" y="534.5" text-anchor="end" font-size="11.5" fill="#64748b">VARCHAR(255)</text>
+<text x="2120" y="554.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">status</text>
+<text x="2360" y="554.5" text-anchor="end" font-size="11.5" fill="#64748b">VARCHAR(20)</text>
+<rect x="2071" y="560" width="298" height="20" fill="#f8fafc"/>
+<text x="2120" y="574.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">linhas</text>
+<text x="2360" y="574.5" text-anchor="end" font-size="11.5" fill="#64748b">INT</text>
+<text x="2120" y="594.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">duracao_ms</text>
+<text x="2360" y="594.5" text-anchor="end" font-size="11.5" fill="#64748b">INT</text>
+<rect x="2071" y="600" width="298" height="20" fill="#f8fafc"/>
+<text x="2120" y="614.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">erro</text>
+<text x="2360" y="614.5" text-anchor="end" font-size="11.5" fill="#64748b">VARCHAR(255)</text>
+<text x="2120" y="634.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">created_at</text>
+<text x="2360" y="634.5" text-anchor="end" font-size="11.5" fill="#64748b">DATETIME</text>
+</g>
+<path d="M 856 1330.0 L 870 1322.0 M 856 1330.0 L 870 1338.0 M 856 1330.0 L 870 1330.0" stroke="#334155" stroke-width="1.8" fill="none"/><circle cx="848" cy="1330.0" r="5" fill="#fff" stroke="#334155" stroke-width="1.8"/>
+<line x1="860" y1="1143.0" x2="860" y2="1157.0" stroke="#334155" stroke-width="1.8"/><line x1="854" y1="1143.0" x2="854" y2="1157.0" stroke="#334155" stroke-width="1.8"/>
+<path d="M 2056 430.0 L 2070 422.0 M 2056 430.0 L 2070 438.0 M 2056 430.0 L 2070 430.0" stroke="#334155" stroke-width="1.8" fill="none"/><circle cx="2048" cy="430.0" r="5" fill="#fff" stroke="#334155" stroke-width="1.8"/>
+<line x1="2060" y1="183.0" x2="2060" y2="197.0" stroke="#334155" stroke-width="1.8"/><circle cx="2050" cy="190.0" r="5" fill="#fff" stroke="#334155" stroke-width="1.8"/>
+<path d="M 2056 1450.0 L 2070 1442.0 M 2056 1450.0 L 2070 1458.0 M 2056 1450.0 L 2070 1450.0" stroke="#334155" stroke-width="1.8" fill="none"/><circle cx="2048" cy="1450.0" r="5" fill="#fff" stroke="#334155" stroke-width="1.8"/>
+<line x1="2060" y1="1183.0" x2="2060" y2="1197.0" stroke="#334155" stroke-width="1.8"/><line x1="2054" y1="1183.0" x2="2054" y2="1197.0" stroke="#334155" stroke-width="1.8"/>
+<path d="M 856 600.0 L 870 592.0 M 856 600.0 L 870 608.0 M 856 600.0 L 870 600.0" stroke="#334155" stroke-width="1.8" fill="none"/><circle cx="848" cy="600.0" r="5" fill="#fff" stroke="#334155" stroke-width="1.8"/>
+<line x1="860" y1="183.0" x2="860" y2="197.0" stroke="#334155" stroke-width="1.8"/><line x1="854" y1="183.0" x2="854" y2="197.0" stroke="#334155" stroke-width="1.8"/>
+<path d="M 56 1350.0 L 70 1342.0 M 56 1350.0 L 70 1358.0 M 56 1350.0 L 70 1350.0" stroke="#334155" stroke-width="1.8" fill="none"/><circle cx="48" cy="1350.0" r="5" fill="#fff" stroke="#334155" stroke-width="1.8"/>
+<line x1="60" y1="923.0" x2="60" y2="937.0" stroke="#334155" stroke-width="1.8"/><circle cx="50" cy="930.0" r="5" fill="#fff" stroke="#334155" stroke-width="1.8"/>
+<path d="M 856 310.0 L 870 302.0 M 856 310.0 L 870 318.0 M 856 310.0 L 870 310.0" stroke="#334155" stroke-width="1.8" fill="none"/><circle cx="848" cy="310.0" r="5" fill="#fff" stroke="#334155" stroke-width="1.8"/>
+<line x1="780" y1="183.0" x2="780" y2="197.0" stroke="#334155" stroke-width="1.8"/><circle cx="790" cy="190.0" r="5" fill="#fff" stroke="#334155" stroke-width="1.8"/>
+<path d="M 384 190.0 L 370 182.0 M 384 190.0 L 370 198.0 M 384 190.0 L 370 190.0" stroke="#334155" stroke-width="1.8" fill="none"/><circle cx="392" cy="190.0" r="5" fill="#fff" stroke="#334155" stroke-width="1.8"/>
+<line x1="460" y1="183.0" x2="460" y2="197.0" stroke="#334155" stroke-width="1.8"/><line x1="454" y1="183.0" x2="454" y2="197.0" stroke="#334155" stroke-width="1.8"/>
+<path d="M 1256 190.0 L 1270 182.0 M 1256 190.0 L 1270 198.0 M 1256 190.0 L 1270 190.0" stroke="#334155" stroke-width="1.8" fill="none"/><circle cx="1248" cy="190.0" r="5" fill="#fff" stroke="#334155" stroke-width="1.8"/>
+<line x1="1180" y1="183.0" x2="1180" y2="197.0" stroke="#334155" stroke-width="1.8"/><line x1="1186" y1="183.0" x2="1186" y2="197.0" stroke="#334155" stroke-width="1.8"/>
+<path d="M 1584 210.0 L 1570 202.0 M 1584 210.0 L 1570 218.0 M 1584 210.0 L 1570 210.0" stroke="#334155" stroke-width="1.8" fill="none"/><circle cx="1592" cy="210.0" r="5" fill="#fff" stroke="#334155" stroke-width="1.8"/>
+<line x1="1660" y1="183.0" x2="1660" y2="197.0" stroke="#334155" stroke-width="1.8"/><line x1="1654" y1="183.0" x2="1654" y2="197.0" stroke="#334155" stroke-width="1.8"/>
+<path d="M 1656 1390.0 L 1670 1382.0 M 1656 1390.0 L 1670 1398.0 M 1656 1390.0 L 1670 1390.0" stroke="#334155" stroke-width="1.8" fill="none"/><circle cx="1648" cy="1390.0" r="5" fill="#fff" stroke="#334155" stroke-width="1.8"/>
+<line x1="1580" y1="1363.0" x2="1580" y2="1377.0" stroke="#334155" stroke-width="1.8"/><line x1="1586" y1="1363.0" x2="1586" y2="1377.0" stroke="#334155" stroke-width="1.8"/>
+<path d="M 384 950.0 L 370 942.0 M 384 950.0 L 370 958.0 M 384 950.0 L 370 950.0" stroke="#334155" stroke-width="1.8" fill="none"/><circle cx="392" cy="950.0" r="5" fill="#fff" stroke="#334155" stroke-width="1.8"/>
+<line x1="460" y1="923.0" x2="460" y2="937.0" stroke="#334155" stroke-width="1.8"/><line x1="454" y1="923.0" x2="454" y2="937.0" stroke="#334155" stroke-width="1.8"/>
+<path d="M 384 540.0 L 370 532.0 M 384 540.0 L 370 548.0 M 384 540.0 L 370 540.0" stroke="#334155" stroke-width="1.8" fill="none"/><circle cx="392" cy="540.0" r="5" fill="#fff" stroke="#334155" stroke-width="1.8"/>
+<line x1="460" y1="513.0" x2="460" y2="527.0" stroke="#334155" stroke-width="1.8"/><line x1="454" y1="513.0" x2="454" y2="527.0" stroke="#334155" stroke-width="1.8"/>
+<path d="M 1656 540.0 L 1670 532.0 M 1656 540.0 L 1670 548.0 M 1656 540.0 L 1670 540.0" stroke="#334155" stroke-width="1.8" fill="none"/><circle cx="1648" cy="540.0" r="5" fill="#fff" stroke="#334155" stroke-width="1.8"/>
+<line x1="1580" y1="513.0" x2="1580" y2="527.0" stroke="#334155" stroke-width="1.8"/><line x1="1586" y1="513.0" x2="1586" y2="527.0" stroke="#334155" stroke-width="1.8"/>
+<path d="M 856 720.0 L 870 712.0 M 856 720.0 L 870 728.0 M 856 720.0 L 870 720.0" stroke="#334155" stroke-width="1.8" fill="none"/><circle cx="848" cy="720.0" r="5" fill="#fff" stroke="#334155" stroke-width="1.8"/>
+<line x1="780" y1="513.0" x2="780" y2="527.0" stroke="#334155" stroke-width="1.8"/><circle cx="790" cy="520.0" r="5" fill="#fff" stroke="#334155" stroke-width="1.8"/>
+<path d="M 1184 740.0 L 1170 732.0 M 1184 740.0 L 1170 748.0 M 1184 740.0 L 1170 740.0" stroke="#334155" stroke-width="1.8" fill="none"/><circle cx="1192" cy="740.0" r="5" fill="#fff" stroke="#334155" stroke-width="1.8"/>
+<line x1="1260" y1="513.0" x2="1260" y2="527.0" stroke="#334155" stroke-width="1.8"/><circle cx="1250" cy="520.0" r="5" fill="#fff" stroke="#334155" stroke-width="1.8"/>
+<path d="M 1184 970.0 L 1170 962.0 M 1184 970.0 L 1170 978.0 M 1184 970.0 L 1170 970.0" stroke="#334155" stroke-width="1.8" fill="none"/><circle cx="1192" cy="970.0" r="5" fill="#fff" stroke="#334155" stroke-width="1.8"/>
+<line x1="1260" y1="923.0" x2="1260" y2="937.0" stroke="#334155" stroke-width="1.8"/><line x1="1254" y1="923.0" x2="1254" y2="937.0" stroke="#334155" stroke-width="1.8"/>
+<path d="M 2384 870.0 L 2370 862.0 M 2384 870.0 L 2370 878.0 M 2384 870.0 L 2370 870.0" stroke="#334155" stroke-width="1.8" fill="none"/><circle cx="2392" cy="870.0" r="5" fill="#fff" stroke="#334155" stroke-width="1.8"/>
+<line x1="2460" y1="743.0" x2="2460" y2="757.0" stroke="#334155" stroke-width="1.8"/><line x1="2454" y1="743.0" x2="2454" y2="757.0" stroke="#334155" stroke-width="1.8"/>
+<path d="M 2456 210.0 L 2470 202.0 M 2456 210.0 L 2470 218.0 M 2456 210.0 L 2470 210.0" stroke="#334155" stroke-width="1.8" fill="none"/><circle cx="2448" cy="210.0" r="5" fill="#fff" stroke="#334155" stroke-width="1.8"/>
+<line x1="2380" y1="183.0" x2="2380" y2="197.0" stroke="#334155" stroke-width="1.8"/><line x1="2386" y1="183.0" x2="2386" y2="197.0" stroke="#334155" stroke-width="1.8"/>
+<path d="M 456 540.0 L 470 532.0 M 456 540.0 L 470 548.0 M 456 540.0 L 470 540.0" stroke="#334155" stroke-width="1.8" fill="none"/><circle cx="448" cy="540.0" r="5" fill="#fff" stroke="#334155" stroke-width="1.8"/>
+<line x1="460" y1="923.0" x2="460" y2="937.0" stroke="#334155" stroke-width="1.8"/><line x1="454" y1="923.0" x2="454" y2="937.0" stroke="#334155" stroke-width="1.8"/>
+<path d="M 1184 950.0 L 1170 942.0 M 1184 950.0 L 1170 958.0 M 1184 950.0 L 1170 950.0" stroke="#334155" stroke-width="1.8" fill="none"/><circle cx="1192" cy="950.0" r="5" fill="#fff" stroke="#334155" stroke-width="1.8"/>
+<line x1="1180" y1="513.0" x2="1180" y2="527.0" stroke="#334155" stroke-width="1.8"/><line x1="1186" y1="513.0" x2="1186" y2="527.0" stroke="#334155" stroke-width="1.8"/>
+<path d="M 2456 1470.0 L 2470 1462.0 M 2456 1470.0 L 2470 1478.0 M 2456 1470.0 L 2470 1470.0" stroke="#334155" stroke-width="1.8" fill="none"/><circle cx="2448" cy="1470.0" r="5" fill="#fff" stroke="#334155" stroke-width="1.8"/>
+<line x1="2380" y1="1423.0" x2="2380" y2="1437.0" stroke="#334155" stroke-width="1.8"/><line x1="2386" y1="1423.0" x2="2386" y2="1437.0" stroke="#334155" stroke-width="1.8"/>
+<path d="M 1256 990.0 L 1270 982.0 M 1256 990.0 L 1270 998.0 M 1256 990.0 L 1270 990.0" stroke="#334155" stroke-width="1.8" fill="none"/><circle cx="1248" cy="990.0" r="5" fill="#fff" stroke="#334155" stroke-width="1.8"/>
+<line x1="1260" y1="1363.0" x2="1260" y2="1377.0" stroke="#334155" stroke-width="1.8"/><line x1="1254" y1="1363.0" x2="1254" y2="1377.0" stroke="#334155" stroke-width="1.8"/>
+<path d="M 456 1230.0 L 470 1222.0 M 456 1230.0 L 470 1238.0 M 456 1230.0 L 470 1230.0" stroke="#334155" stroke-width="1.8" fill="none"/><circle cx="448" cy="1230.0" r="5" fill="#fff" stroke="#334155" stroke-width="1.8"/>
+<line x1="380" y1="1303.0" x2="380" y2="1317.0" stroke="#334155" stroke-width="1.8"/><line x1="386" y1="1303.0" x2="386" y2="1317.0" stroke="#334155" stroke-width="1.8"/>
+<path d="M 2456 1310.0 L 2470 1302.0 M 2456 1310.0 L 2470 1318.0 M 2456 1310.0 L 2470 1310.0" stroke="#334155" stroke-width="1.8" fill="none"/><circle cx="2448" cy="1310.0" r="5" fill="#fff" stroke="#334155" stroke-width="1.8"/>
+<line x1="2380" y1="1183.0" x2="2380" y2="1197.0" stroke="#334155" stroke-width="1.8"/><line x1="2386" y1="1183.0" x2="2386" y2="1197.0" stroke="#334155" stroke-width="1.8"/>
+<path d="M 2056 850.0 L 2070 842.0 M 2056 850.0 L 2070 858.0 M 2056 850.0 L 2070 850.0" stroke="#334155" stroke-width="1.8" fill="none"/><circle cx="2048" cy="850.0" r="5" fill="#fff" stroke="#334155" stroke-width="1.8"/>
+<line x1="1980" y1="923.0" x2="1980" y2="937.0" stroke="#334155" stroke-width="1.8"/><circle cx="1990" cy="930.0" r="5" fill="#fff" stroke="#334155" stroke-width="1.8"/>
+<path d="M 2384 450.0 L 2370 442.0 M 2384 450.0 L 2370 458.0 M 2384 450.0 L 2370 450.0" stroke="#334155" stroke-width="1.8" fill="none"/><circle cx="2392" cy="450.0" r="5" fill="#fff" stroke="#334155" stroke-width="1.8"/>
+<line x1="2460" y1="183.0" x2="2460" y2="197.0" stroke="#334155" stroke-width="1.8"/><circle cx="2450" cy="190.0" r="5" fill="#fff" stroke="#334155" stroke-width="1.8"/>
+<path d="M 1584 1030.0 L 1570 1022.0 M 1584 1030.0 L 1570 1038.0 M 1584 1030.0 L 1570 1030.0" stroke="#334155" stroke-width="1.8" fill="none"/><circle cx="1592" cy="1030.0" r="5" fill="#fff" stroke="#334155" stroke-width="1.8"/>
+<line x1="1580" y1="1543.0" x2="1580" y2="1557.0" stroke="#334155" stroke-width="1.8"/><line x1="1586" y1="1543.0" x2="1586" y2="1557.0" stroke="#334155" stroke-width="1.8"/>
+<path d="M 856 620.0 L 870 612.0 M 856 620.0 L 870 628.0 M 856 620.0 L 870 620.0" stroke="#334155" stroke-width="1.8" fill="none"/><circle cx="848" cy="620.0" r="5" fill="#fff" stroke="#334155" stroke-width="1.8"/>
+<line x1="860" y1="1143.0" x2="860" y2="1157.0" stroke="#334155" stroke-width="1.8"/><circle cx="850" cy="1150.0" r="5" fill="#fff" stroke="#334155" stroke-width="1.8"/>
+<path d="M 2456 1030.0 L 2470 1022.0 M 2456 1030.0 L 2470 1038.0 M 2456 1030.0 L 2470 1030.0" stroke="#334155" stroke-width="1.8" fill="none"/><circle cx="2448" cy="1030.0" r="5" fill="#fff" stroke="#334155" stroke-width="1.8"/>
+<line x1="2380" y1="743.0" x2="2380" y2="757.0" stroke="#334155" stroke-width="1.8"/><line x1="2386" y1="743.0" x2="2386" y2="757.0" stroke="#334155" stroke-width="1.8"/>
+<path d="M 784 560.0 L 770 552.0 M 784 560.0 L 770 568.0 M 784 560.0 L 770 560.0" stroke="#334155" stroke-width="1.8" fill="none"/><circle cx="792" cy="560.0" r="5" fill="#fff" stroke="#334155" stroke-width="1.8"/>
+<line x1="860" y1="183.0" x2="860" y2="197.0" stroke="#334155" stroke-width="1.8"/><line x1="854" y1="183.0" x2="854" y2="197.0" stroke="#334155" stroke-width="1.8"/>
+<path d="M 1256 560.0 L 1270 552.0 M 1256 560.0 L 1270 568.0 M 1256 560.0 L 1270 560.0" stroke="#334155" stroke-width="1.8" fill="none"/><circle cx="1248" cy="560.0" r="5" fill="#fff" stroke="#334155" stroke-width="1.8"/>
+<line x1="1180" y1="183.0" x2="1180" y2="197.0" stroke="#334155" stroke-width="1.8"/><line x1="1186" y1="183.0" x2="1186" y2="197.0" stroke="#334155" stroke-width="1.8"/>
+<path d="M 384 1330.0 L 370 1322.0 M 384 1330.0 L 370 1338.0 M 384 1330.0 L 370 1330.0" stroke="#334155" stroke-width="1.8" fill="none"/><circle cx="392" cy="1330.0" r="5" fill="#fff" stroke="#334155" stroke-width="1.8"/>
+<line x1="460" y1="923.0" x2="460" y2="937.0" stroke="#334155" stroke-width="1.8"/><line x1="454" y1="923.0" x2="454" y2="937.0" stroke="#334155" stroke-width="1.8"/>
+<path d="M 456 660.0 L 470 652.0 M 456 660.0 L 470 668.0 M 456 660.0 L 470 660.0" stroke="#334155" stroke-width="1.8" fill="none"/><circle cx="448" cy="660.0" r="5" fill="#fff" stroke="#334155" stroke-width="1.8"/>
+<line x1="380" y1="923.0" x2="380" y2="937.0" stroke="#334155" stroke-width="1.8"/><circle cx="390" cy="930.0" r="5" fill="#fff" stroke="#334155" stroke-width="1.8"/>
+<path d="M 1584 540.0 L 1570 532.0 M 1584 540.0 L 1570 548.0 M 1584 540.0 L 1570 540.0" stroke="#334155" stroke-width="1.8" fill="none"/><circle cx="1592" cy="540.0" r="5" fill="#fff" stroke="#334155" stroke-width="1.8"/>
+<line x1="1660" y1="923.0" x2="1660" y2="937.0" stroke="#334155" stroke-width="1.8"/><line x1="1654" y1="923.0" x2="1654" y2="937.0" stroke="#334155" stroke-width="1.8"/>
+<path d="M 1656 560.0 L 1670 552.0 M 1656 560.0 L 1670 568.0 M 1656 560.0 L 1670 560.0" stroke="#334155" stroke-width="1.8" fill="none"/><circle cx="1648" cy="560.0" r="5" fill="#fff" stroke="#334155" stroke-width="1.8"/>
+<line x1="1580" y1="923.0" x2="1580" y2="937.0" stroke="#334155" stroke-width="1.8"/><line x1="1586" y1="923.0" x2="1586" y2="937.0" stroke="#334155" stroke-width="1.8"/>
+<path d="M 856 580.0 L 870 572.0 M 856 580.0 L 870 588.0 M 856 580.0 L 870 580.0" stroke="#334155" stroke-width="1.8" fill="none"/><circle cx="848" cy="580.0" r="5" fill="#fff" stroke="#334155" stroke-width="1.8"/>
+<line x1="780" y1="923.0" x2="780" y2="937.0" stroke="#334155" stroke-width="1.8"/><circle cx="790" cy="930.0" r="5" fill="#fff" stroke="#334155" stroke-width="1.8"/>
+<path d="M 1584 1010.0 L 1570 1002.0 M 1584 1010.0 L 1570 1018.0 M 1584 1010.0 L 1570 1010.0" stroke="#334155" stroke-width="1.8" fill="none"/><circle cx="1592" cy="1010.0" r="5" fill="#fff" stroke="#334155" stroke-width="1.8"/>
+<line x1="1660" y1="1363.0" x2="1660" y2="1377.0" stroke="#334155" stroke-width="1.8"/><line x1="1654" y1="1363.0" x2="1654" y2="1377.0" stroke="#334155" stroke-width="1.8"/>
+<path d="M 784 640.0 L 770 632.0 M 784 640.0 L 770 648.0 M 784 640.0 L 770 640.0" stroke="#334155" stroke-width="1.8" fill="none"/><circle cx="792" cy="640.0" r="5" fill="#fff" stroke="#334155" stroke-width="1.8"/>
+<line x1="860" y1="1143.0" x2="860" y2="1157.0" stroke="#334155" stroke-width="1.8"/><circle cx="850" cy="1150.0" r="5" fill="#fff" stroke="#334155" stroke-width="1.8"/>
+<path d="M 1256 580.0 L 1270 572.0 M 1256 580.0 L 1270 588.0 M 1256 580.0 L 1270 580.0" stroke="#334155" stroke-width="1.8" fill="none"/><circle cx="1248" cy="580.0" r="5" fill="#fff" stroke="#334155" stroke-width="1.8"/>
+<line x1="1180" y1="1143.0" x2="1180" y2="1157.0" stroke="#334155" stroke-width="1.8"/><circle cx="1190" cy="1150.0" r="5" fill="#fff" stroke="#334155" stroke-width="1.8"/>
+<path d="M 2056 810.0 L 2070 802.0 M 2056 810.0 L 2070 818.0 M 2056 810.0 L 2070 810.0" stroke="#334155" stroke-width="1.8" fill="none"/><circle cx="2048" cy="810.0" r="5" fill="#fff" stroke="#334155" stroke-width="1.8"/>
+<line x1="1580" y1="513.0" x2="1580" y2="527.0" stroke="#334155" stroke-width="1.8"/><circle cx="1590" cy="520.0" r="5" fill="#fff" stroke="#334155" stroke-width="1.8"/>
+<line x1="2060" y1="1203.0" x2="2060" y2="1217.0" stroke="#334155" stroke-width="1.8"/><circle cx="2050" cy="1210.0" r="5" fill="#fff" stroke="#334155" stroke-width="1.8"/>
+<line x1="1580" y1="923.0" x2="1580" y2="937.0" stroke="#334155" stroke-width="1.8"/><line x1="1586" y1="923.0" x2="1586" y2="937.0" stroke="#334155" stroke-width="1.8"/>
+<path d="M 2056 210.0 L 2070 202.0 M 2056 210.0 L 2070 218.0 M 2056 210.0 L 2070 210.0" stroke="#334155" stroke-width="1.8" fill="none"/><circle cx="2048" cy="210.0" r="5" fill="#fff" stroke="#334155" stroke-width="1.8"/>
+<line x1="1180" y1="183.0" x2="1180" y2="197.0" stroke="#334155" stroke-width="1.8"/><line x1="1186" y1="183.0" x2="1186" y2="197.0" stroke="#334155" stroke-width="1.8"/>
+<path d="M 1184 560.0 L 1170 552.0 M 1184 560.0 L 1170 568.0 M 1184 560.0 L 1170 560.0" stroke="#334155" stroke-width="1.8" fill="none"/><circle cx="1192" cy="560.0" r="5" fill="#fff" stroke="#334155" stroke-width="1.8"/>
+<line x1="1660" y1="923.0" x2="1660" y2="937.0" stroke="#334155" stroke-width="1.8"/><circle cx="1650" cy="930.0" r="5" fill="#fff" stroke="#334155" stroke-width="1.8"/>
+<path d="M 856 780.0 L 870 772.0 M 856 780.0 L 870 788.0 M 856 780.0 L 870 780.0" stroke="#334155" stroke-width="1.8" fill="none"/><circle cx="848" cy="780.0" r="5" fill="#fff" stroke="#334155" stroke-width="1.8"/>
+<line x1="380" y1="923.0" x2="380" y2="937.0" stroke="#334155" stroke-width="1.8"/><circle cx="390" cy="930.0" r="5" fill="#fff" stroke="#334155" stroke-width="1.8"/>
+<path d="M 2056 1470.0 L 2070 1462.0 M 2056 1470.0 L 2070 1478.0 M 2056 1470.0 L 2070 1470.0" stroke="#334155" stroke-width="1.8" fill="none"/><circle cx="2048" cy="1470.0" r="5" fill="#fff" stroke="#334155" stroke-width="1.8"/>
+<line x1="1580" y1="923.0" x2="1580" y2="937.0" stroke="#334155" stroke-width="1.8"/><line x1="1586" y1="923.0" x2="1586" y2="937.0" stroke="#334155" stroke-width="1.8"/>
+<path d="M 2056 410.0 L 2070 402.0 M 2056 410.0 L 2070 418.0 M 2056 410.0 L 2070 410.0" stroke="#334155" stroke-width="1.8" fill="none"/><circle cx="2048" cy="410.0" r="5" fill="#fff" stroke="#334155" stroke-width="1.8"/>
+<line x1="1180" y1="183.0" x2="1180" y2="197.0" stroke="#334155" stroke-width="1.8"/><line x1="1186" y1="183.0" x2="1186" y2="197.0" stroke="#334155" stroke-width="1.8"/>
+<path d="M 784 1250.0 L 770 1242.0 M 784 1250.0 L 770 1258.0 M 784 1250.0 L 770 1250.0" stroke="#334155" stroke-width="1.8" fill="none"/><circle cx="792" cy="1250.0" r="5" fill="#fff" stroke="#334155" stroke-width="1.8"/>
+<line x1="860" y1="183.0" x2="860" y2="197.0" stroke="#334155" stroke-width="1.8"/><line x1="854" y1="183.0" x2="854" y2="197.0" stroke="#334155" stroke-width="1.8"/>
+<path d="M 2456 1330.0 L 2470 1322.0 M 2456 1330.0 L 2470 1338.0 M 2456 1330.0 L 2470 1330.0" stroke="#334155" stroke-width="1.8" fill="none"/><circle cx="2448" cy="1330.0" r="5" fill="#fff" stroke="#334155" stroke-width="1.8"/>
+<line x1="1580" y1="923.0" x2="1580" y2="937.0" stroke="#334155" stroke-width="1.8"/><line x1="1586" y1="923.0" x2="1586" y2="937.0" stroke="#334155" stroke-width="1.8"/>
+<path d="M 384 210.0 L 370 202.0 M 384 210.0 L 370 218.0 M 384 210.0 L 370 210.0" stroke="#334155" stroke-width="1.8" fill="none"/><circle cx="392" cy="210.0" r="5" fill="#fff" stroke="#334155" stroke-width="1.8"/>
+<line x1="1660" y1="183.0" x2="1660" y2="197.0" stroke="#334155" stroke-width="1.8"/><line x1="1654" y1="183.0" x2="1654" y2="197.0" stroke="#334155" stroke-width="1.8"/>
+<path d="M 384 560.0 L 370 552.0 M 384 560.0 L 370 568.0 M 384 560.0 L 370 560.0" stroke="#334155" stroke-width="1.8" fill="none"/><circle cx="392" cy="560.0" r="5" fill="#fff" stroke="#334155" stroke-width="1.8"/>
+<line x1="1260" y1="923.0" x2="1260" y2="937.0" stroke="#334155" stroke-width="1.8"/><line x1="1254" y1="923.0" x2="1254" y2="937.0" stroke="#334155" stroke-width="1.8"/>
+<path d="M 2456 1490.0 L 2470 1482.0 M 2456 1490.0 L 2470 1498.0 M 2456 1490.0 L 2470 1490.0" stroke="#334155" stroke-width="1.8" fill="none"/><circle cx="2448" cy="1490.0" r="5" fill="#fff" stroke="#334155" stroke-width="1.8"/>
+<line x1="1580" y1="923.0" x2="1580" y2="937.0" stroke="#334155" stroke-width="1.8"/><line x1="1586" y1="923.0" x2="1586" y2="937.0" stroke="#334155" stroke-width="1.8"/>
+<path d="M 2056 830.0 L 2070 822.0 M 2056 830.0 L 2070 838.0 M 2056 830.0 L 2070 830.0" stroke="#334155" stroke-width="1.8" fill="none"/><circle cx="2048" cy="830.0" r="5" fill="#fff" stroke="#334155" stroke-width="1.8"/>
+<line x1="780" y1="923.0" x2="780" y2="937.0" stroke="#334155" stroke-width="1.8"/><circle cx="790" cy="930.0" r="5" fill="#fff" stroke="#334155" stroke-width="1.8"/>
+<path d="M 2056 790.0 L 2070 782.0 M 2056 790.0 L 2070 798.0 M 2056 790.0 L 2070 790.0" stroke="#334155" stroke-width="1.8" fill="none"/><circle cx="2048" cy="790.0" r="5" fill="#fff" stroke="#334155" stroke-width="1.8"/>
+<line x1="780" y1="513.0" x2="780" y2="527.0" stroke="#334155" stroke-width="1.8"/><circle cx="790" cy="520.0" r="5" fill="#fff" stroke="#334155" stroke-width="1.8"/>
+<path d="M 2456 1090.0 L 2470 1082.0 M 2456 1090.0 L 2470 1098.0 M 2456 1090.0 L 2470 1090.0" stroke="#334155" stroke-width="1.8" fill="none"/><circle cx="2448" cy="1090.0" r="5" fill="#fff" stroke="#334155" stroke-width="1.8"/>
+<line x1="1180" y1="183.0" x2="1180" y2="197.0" stroke="#334155" stroke-width="1.8"/><line x1="1186" y1="183.0" x2="1186" y2="197.0" stroke="#334155" stroke-width="1.8"/>
+<path d="M 2456 1170.0 L 2470 1162.0 M 2456 1170.0 L 2470 1178.0 M 2456 1170.0 L 2470 1170.0" stroke="#334155" stroke-width="1.8" fill="none"/><circle cx="2448" cy="1170.0" r="5" fill="#fff" stroke="#334155" stroke-width="1.8"/>
+<line x1="1180" y1="183.0" x2="1180" y2="197.0" stroke="#334155" stroke-width="1.8"/><circle cx="1190" cy="190.0" r="5" fill="#fff" stroke="#334155" stroke-width="1.8"/>
+<path d="M 2056 1530.0 L 2070 1522.0 M 2056 1530.0 L 2070 1538.0 M 2056 1530.0 L 2070 1530.0" stroke="#334155" stroke-width="1.8" fill="none"/><circle cx="2048" cy="1530.0" r="5" fill="#fff" stroke="#334155" stroke-width="1.8"/>
+<line x1="1180" y1="183.0" x2="1180" y2="197.0" stroke="#334155" stroke-width="1.8"/><line x1="1186" y1="183.0" x2="1186" y2="197.0" stroke="#334155" stroke-width="1.8"/>
+<line x1="70" y1="1724" x2="2770" y2="1724" stroke="#e2e8f0"/>
+<text x="70" y="1742" font-size="14" fill="#334155" font-weight="700">Notação (pé de galinha):</text>
+<line x1="315" y1="1730" x2="315" y2="1744" stroke="#334155" stroke-width="1.8"/><line x1="309" y1="1730" x2="309" y2="1744" stroke="#334155" stroke-width="1.8"/>
+<line x1="325" y1="1737" x2="375" y2="1737" stroke="#64748b" stroke-width="1.6"/>
+<path d="M 389 1737 L 375 1729 M 389 1737 L 375 1745 M 389 1737 L 375 1737" stroke="#334155" stroke-width="1.8" fill="none"/><circle cx="397" cy="1737" r="5" fill="#fff" stroke="#334155" stroke-width="1.8"/>
+<text x="420" y="1742" font-size="13.5" fill="#334155">um (obrigatório) para muitos</text>
+<line x1="715" y1="1730" x2="715" y2="1744" stroke="#334155" stroke-width="1.8"/><circle cx="705" cy="1737" r="5" fill="#fff" stroke="#334155" stroke-width="1.8"/>
+<line x1="725" y1="1737" x2="775" y2="1737" stroke="#64748b" stroke-width="1.6"/>
+<path d="M 789 1737 L 775 1729 M 789 1737 L 775 1745 M 789 1737 L 775 1737" stroke="#334155" stroke-width="1.8" fill="none"/><circle cx="797" cy="1737" r="5" fill="#fff" stroke="#334155" stroke-width="1.8"/>
+<text x="820" y="1742" font-size="13.5" fill="#334155">zero ou um (FK opcional) para muitos</text>
+<text x="70" y="1766" font-size="13" fill="#64748b">Além das 32 tabelas, o banco possui 15 views somente leitura (prefixo v_) usadas pelo Assistente de IA. PK = chave primária · FK = chave estrangeira · UQ = valor único.</text>
+</svg>

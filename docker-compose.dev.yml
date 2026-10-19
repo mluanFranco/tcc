@@ -1,0 +1,20 @@
+# Complemento para DESENVOLVER dentro do Docker. Use junto com o arquivo principal:
+#     docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
+# O código das pastas backend/ e frontend/ é espelhado nos containers:
+#   - backend: o uvicorn recarrega sozinho ao salvar um .py;
+#   - frontend: é só dar F5 no navegador.
+# Só precisa de "--build" de novo se mudar o requirements.txt ou algum Dockerfile.
+
+services:
+  backend:
+    command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--reload",
+              "--reload-exclude", "venv/*", "--reload-exclude", "uploads/*", "--reload-exclude", "__pycache__/*"]
+    environment:
+      # No Windows os eventos de arquivo nem sempre chegam ao container; com polling a recarga é garantida.
+      WATCHFILES_FORCE_POLLING: "true"
+    volumes:
+      - ./backend:/app
+
+  frontend:
+    volumes:
+      - ./frontend:/usr/share/nginx/html:ro

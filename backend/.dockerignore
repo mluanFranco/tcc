@@ -1,0 +1,13 @@
+# Fora da imagem: ambiente local, segredos, dados e lixo de cache.
+venv/
+.venv/
+__pycache__/
+*.pyc
+.env
+.env.*
+uploads/
+avaliacao_resultados/
+backups/
+*.log
+*.sql
+*.dump
