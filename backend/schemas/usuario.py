@@ -1,15 +1,54 @@
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, field_validator
 from typing import List, Optional
 from datetime import datetime
 
-class UsuarioCreate(BaseModel):
+SENHA_MINIMA = 8
+SENHA_MAXIMA_BYTES = 72     # o bcrypt só considera os 72 primeiros bytes: melhor recusar do que cortar em silêncio
+
+
+def _nome_valido(v: Optional[str]) -> Optional[str]:
+    if v is None:
+        return v
+    v = " ".join(v.split())
+    if not v:
+        raise ValueError("Informe o nome do usuário")
+    if len(v) > 100:
+        raise ValueError("O nome pode ter no máximo 100 caracteres")
+    return v
+
+
+def _email_normalizado(v):
+    return v.strip().lower() if isinstance(v, str) else v
+
+
+def _senha_valida(v: Optional[str]) -> Optional[str]:
+    if v is None:
+        return v
+    if len(v) < SENHA_MINIMA:
+        raise ValueError(f"A senha deve ter no mínimo {SENHA_MINIMA} caracteres")
+    if len(v.encode("utf-8")) > SENHA_MAXIMA_BYTES:
+        raise ValueError(f"A senha é longa demais (máximo de {SENHA_MAXIMA_BYTES} bytes, cerca de {SENHA_MAXIMA_BYTES} caracteres sem acentos)")
+    return v
+
+
+class _CamposDeUsuario(BaseModel):
+    _nome = field_validator("nome", check_fields=False)(_nome_valido)
+    _senha = field_validator("senha", check_fields=False)(_senha_valida)
+
+    @field_validator("email", mode="before", check_fields=False)
+    @classmethod
+    def _email(cls, v):
+        return _email_normalizado(v)
+
+
+class UsuarioCreate(_CamposDeUsuario):
     nome: str
     email: EmailStr
     senha: str
     admin: Optional[bool] = False
     grupo_id: Optional[int] = Field(default=None, gt=0)
 
-class UsuarioUpdate(BaseModel):
+class UsuarioUpdate(_CamposDeUsuario):
     nome: Optional[str] = None
     email: Optional[EmailStr] = None
     senha: Optional[str] = None

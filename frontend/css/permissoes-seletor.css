@@ -1,0 +1,60 @@
+/* ============================================
+   PERMISSOES-SELETOR.CSS — seletor de permissões por módulo
+   Usado em Grupos de Acesso e em Usuários (permissões extras)
+   ============================================ */
+
+/* Seletor de permissões */
+.perm-topo {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.perm-topo__titulo { font-size: 14px; font-weight: 700; color: var(--neutro-texto); }
+.perm-topo__acoes { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.perm-contador { font-size: 12.5px; color: var(--neutro-secundario); }
+
+.perm-lista {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--neutro-borda);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.perm-modulo {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px 16px;
+  align-items: center;
+  padding: 12px 14px;
+  border-top: 1px solid var(--neutro-borda);
+}
+.perm-modulo:first-child { border-top: none; }
+.perm-modulo__nome { display: block; font-size: 14px; font-weight: 600; color: var(--neutro-texto); }
+.perm-modulo__desc { display: block; font-size: 12.5px; color: var(--neutro-secundario); margin-top: 2px; line-height: 1.4; }
+.perm-modulo__opcoes { display: flex; gap: 16px; flex-wrap: wrap; justify-content: flex-end; }
+
+.perm-opcao {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13.5px;
+  color: var(--neutro-texto);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.perm-opcao input { width: 16px; height: 16px; margin: 0; accent-color: var(--azul-acao); cursor: pointer; }
+.perm-opcao--travada { color: var(--neutro-secundario); cursor: default; }
+.perm-opcao--travada input { cursor: default; }
+
+.perm-corpo-modal { max-height: min(62vh, 560px); overflow-y: auto; }
+
+@media (max-width: 640px) {
+  .perm-modulo { grid-template-columns: 1fr; }
+  .perm-modulo__opcoes { justify-content: flex-start; }
+}
+
+.perm-opcao__origem { font-size: 11.5px; color: var(--neutro-secundario); }

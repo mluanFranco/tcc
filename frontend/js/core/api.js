@@ -17,6 +17,11 @@ async function apiFetch(endpoint, options = {}) {
     headers["Authorization"] = `Bearer ${token}`;
   }
 
+  // Envio de arquivo (FormData): o navegador define o Content-Type com o "boundary" sozinho.
+  if (typeof FormData !== "undefined" && options.body instanceof FormData) {
+    delete headers["Content-Type"];
+  }
+
   let response;
   try {
     response = await fetch(url, {

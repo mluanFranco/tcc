@@ -2,15 +2,9 @@
 //
 // Regras que a tela espelha do backend:
 //  - o nome é único (sem diferenciar maiúsculas), mesmo entre grupos inativos;
-//  - "Criar e alterar" (editar) de um módulo já inclui "Visualizar" (ver): ao marcar editar, o ver fica marcado e travado;
+//  - "Criar e alterar" (editar) de um módulo já inclui "Visualizar" (ver): o seletor (permissoes-seletor.js) trava o ver;
 //  - grupo com usuários ativos não pode ser desativado (o servidor confere; a tela avisa antes de tentar).
 // O catálogo de permissões (módulos e ações) vem da API: a tela nunca fixa a lista de permissões.
-
-const ROTULO_MODULO = {
-  cadastros: "Cadastros", geladeiras: "Geladeiras", vendas: "Vendas", compras: "Compras", cotacoes: "Cotações",
-  producao: "Produção", financeiro: "Financeiro", relatorios: "Relatórios", assistente: "Assistente de IA"
-};
-const ROTULO_ACAO = { ver: "Visualizar", editar: "Criar e alterar" };
 
 document.addEventListener("DOMContentLoaded", async () => {
   if (!exigirAdmin()) return;
@@ -25,19 +19,15 @@ document.addEventListener("DOMContentLoaded", async () => {
     grupoDescricao: $("grupo-descricao"), descricao: $("campo-descricao"), erroDescricao: $("erro-descricao"),
     permLista: $("perm-lista"), permContador: $("perm-contador"), marcarTudo: $("perm-marcar-tudo"), limpar: $("perm-limpar")
   };
+  const seletor = permissoesSeletor.criar({ lista: el.permLista, contador: el.permContador });
 
   let grupos = [];
-  let catalogo = [];                 // [{ modulo, descricao, permissoes: [{ codigo, acao }] }]
   let abaAtual = "ativos";
   let requisicaoAtual = 0;
   let emEdicao = null;               // grupo sendo editado (null = novo)
-  let selecionadas = new Set();      // códigos marcados no modal
   let snapshotInicial = "";
   let enviando = false;
   let ocupado = false;
-
-  const rotuloModulo = (m) => ROTULO_MODULO[m] || (m.charAt(0).toUpperCase() + m.slice(1));
-  const todosOsCodigos = () => catalogo.flatMap(m => m.permissoes.map(p => p.codigo));
 
   const ICONE_EDITAR = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>';
   const ICONE_DESATIVAR = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6"></path><path d="M14 11v6"></path></svg>';
@@ -47,14 +37,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   function resumoPermissoes(g) {
     const codigos = g.permissoes || [];
     if (codigos.length === 0) return '<span class="badge-permissoes-nenhuma">Nenhuma permissão</span>';
-    const total = todosOsCodigos().length;
+    const total = seletor.total();
     if (total && codigos.length === total) return '<span class="badge-permissoes-todas">Acesso total</span>';
-    const porModulo = new Map();
-    codigos.forEach(c => {
-      const [modulo, acao] = c.split(".");
-      porModulo.set(modulo, (porModulo.get(modulo) || new Set()).add(acao));
-    });
-    const nomes = [...porModulo.entries()].map(([m, acoes]) => rotuloModulo(m) + (acoes.has("editar") || !acoes.has("ver") ? "" : " (leitura)"));
+    const nomes = resumoModulos(codigos);
     const mostrados = nomes.slice(0, 3).join(", ");
     const resto = nomes.length > 3 ? ` +${nomes.length - 3}` : "";
     return `<span class="celula-dupla__principal">${codigos.length} ${codigos.length === 1 ? "permissão" : "permissões"}</span><span class="celula-dupla__sub" title="${escaparHtml(nomes.join(", "))}">${escaparHtml(mostrados + resto)}</span>`;
@@ -125,50 +110,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     renderizar();
   }
 
-  // ---------- Seletor de permissões ----------
-  function renderizarPermissoes() {
-    el.permLista.innerHTML = catalogo.map(m => {
-      const temEditar = m.permissoes.some(p => p.acao === "editar");
-      const opcoes = m.permissoes.map(p => {
-        const travada = p.acao === "ver" && temEditar && selecionadas.has(`${m.modulo}.editar`);
-        return `<label class="perm-opcao${travada ? " perm-opcao--travada" : ""}">
-            <input type="checkbox" data-codigo="${escaparHtml(p.codigo)}" ${selecionadas.has(p.codigo) ? "checked" : ""} ${travada ? "disabled" : ""}>
-            <span>${escaparHtml(ROTULO_ACAO[p.acao] || p.acao)}</span>
-          </label>`;
-      }).join("");
-      return `<div class="perm-modulo">
-          <div><span class="perm-modulo__nome">${escaparHtml(rotuloModulo(m.modulo))}</span><span class="perm-modulo__desc">${escaparHtml(m.descricao)}</span></div>
-          <div class="perm-modulo__opcoes">${opcoes}</div>
-        </div>`;
-    }).join("");
-    atualizarContador();
-  }
-
-  function atualizarContador() {
-    const total = todosOsCodigos().length;
-    el.permContador.textContent = `${selecionadas.size} de ${total} selecionadas`;
-  }
-
-  el.permLista.addEventListener("change", (evento) => {
-    const caixa = evento.target.closest("input[data-codigo]");
-    if (!caixa) return;
-    const codigo = caixa.dataset.codigo;
-    const [modulo, acao] = codigo.split(".");
-    if (caixa.checked) {
-      selecionadas.add(codigo);
-      if (acao === "editar" && catalogo.find(m => m.modulo === modulo)?.permissoes.some(p => p.codigo === `${modulo}.ver`)) selecionadas.add(`${modulo}.ver`);
-    } else {
-      selecionadas.delete(codigo);
-    }
-    renderizarPermissoes();
-  });
-
-  el.marcarTudo.addEventListener("click", () => { selecionadas = new Set(todosOsCodigos()); renderizarPermissoes(); });
-  el.limpar.addEventListener("click", () => { selecionadas = new Set(); renderizarPermissoes(); });
+  // ---------- Seletor de permissões (componente compartilhado) ----------
+  el.marcarTudo.addEventListener("click", () => seletor.marcarTudo());
+  el.limpar.addEventListener("click", () => seletor.limpar());
 
   // ---------- Modal ----------
-  const selecionadasOrdenadas = () => todosOsCodigos().filter(c => selecionadas.has(c));
-  const instantaneo = () => JSON.stringify([el.nome.value.trim(), el.descricao.value.trim(), selecionadasOrdenadas()]);
+  const instantaneo = () => JSON.stringify([el.nome.value.trim(), el.descricao.value.trim(), seletor.obter()]);
   const alterado = () => instantaneo() !== snapshotInicial;
 
   function limparErros() {
@@ -186,9 +133,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   async function abrirModal(grupo = null) {
     if (el.modal.classList.contains("aberto") || ocupado) return;
-    if (catalogo.length === 0) {
+    if (!seletor.temCatalogo()) {
       try {
-        catalogo = await grupoAcessoService.listarPermissoes();
+        seletor.definirCatalogo(await grupoAcessoService.listarPermissoes());
       } catch (erro) {
         toast.erro(`Não foi possível carregar as permissões. ${erro.message}`);
         return;
@@ -200,8 +147,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     el.titulo.textContent = grupo ? "Editar grupo de acesso" : "Novo grupo de acesso";
     el.nome.value = grupo ? grupo.nome : "";
     el.descricao.value = grupo?.descricao || "";
-    selecionadas = new Set(grupo ? grupo.permissoes : []);
-    renderizarPermissoes();
+    seletor.definir(grupo ? grupo.permissoes : []);
     definirEnviando(false);
     snapshotInicial = instantaneo();
     el.modal.classList.add("aberto");
@@ -235,7 +181,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const nome = el.nome.value.trim();
     if (!nome) { erroNome("Informe o nome do grupo."); el.nome.focus(); return; }
 
-    const permissoes = selecionadasOrdenadas();
+    const permissoes = seletor.obter();
     if (emEdicao && emEdicao.total_usuarios > 0) {
       const antes = JSON.stringify(emEdicao.permissoes || []);
       if (antes !== JSON.stringify(permissoes)) {
@@ -323,6 +269,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   el.abaInativos.addEventListener("click", () => trocarAba("inativos"));
 
   // Catálogo em segundo plano: só o resumo da lista ("Acesso total") depende dele.
-  grupoAcessoService.listarPermissoes().then(c => { catalogo = c; if (grupos.length) renderizar(); }).catch(() => { /* o modal tenta de novo ao abrir */ });
+  grupoAcessoService.listarPermissoes().then(c => { seletor.definirCatalogo(c); if (grupos.length) renderizar(); }).catch(() => { /* o modal tenta de novo ao abrir */ });
   carregar();
 });

@@ -52,3 +52,39 @@
   background: #F3F4F6;
   color: var(--neutro-secundario);
 }
+/* Lista: avatar + nome */
+.tabela-container { position: relative; }
+.celula-usuario { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.avatar-usuario {
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--azul-primario);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  background-size: cover;
+  background-position: center;
+}
+.avatar-usuario--foto { font-size: 0; }
+.celula-usuario__nome { font-weight: 600; color: var(--neutro-texto); overflow-wrap: anywhere; }
+.marca-voce { margin-left: 6px; font-size: 11.5px; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: #EFF6FF; color: var(--azul-acao); }
+.celula-sem-grupo { color: var(--neutro-secundario); }
+.tabela td.celula-email { overflow-wrap: anywhere; }
+
+/* Modal: foto, aviso de admin, resumo do acesso */
+.usuario-foto { display: flex; gap: 14px; align-items: center; padding: 12px 14px; border: 1px solid var(--neutro-borda); border-radius: 12px; background: #F9FAFB; }
+.usuario-foto[hidden] { display: none; }
+.usuario-foto__avatar { width: 64px; height: 64px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: var(--azul-primario); color: #fff; font-size: 20px; font-weight: 700; background-size: cover; background-position: center; }
+.usuario-foto__avatar--foto { font-size: 0; }
+.usuario-foto__corpo { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.usuario-foto__acoes { display: flex; gap: 8px; flex-wrap: wrap; }
+.gel-aviso-admin { margin: 0; padding: 10px 14px; border-radius: 12px; background: #FEF3C7; color: #92400E; font-size: 13px; line-height: 1.45; }
+.gel-aviso-admin[hidden] { display: none; }
+.dica-modal { font-size: 12.5px; color: var(--neutro-secundario); margin: 0; line-height: 1.45; }
+.resumo-acesso { margin: 0; padding: 10px 14px; border-radius: 12px; background: #EFF6FF; color: #1E40AF; font-size: 13px; line-height: 1.45; }
+.perm-lista[hidden] { display: none; }

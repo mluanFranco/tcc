@@ -9,7 +9,10 @@
   <link rel="stylesheet" href="../css/base.css">
   <link rel="stylesheet" href="../css/sidebar.css">
   <link rel="stylesheet" href="../css/listagem-crud.css">
+  <link rel="stylesheet" href="../css/pedido-compra.css">
+  <link rel="stylesheet" href="../css/permissoes-seletor.css">
   <link rel="stylesheet" href="../css/usuarios.css">
+  <link rel="stylesheet" href="../css/feedback.css">
 </head>
 <body>
 
@@ -29,7 +32,7 @@
       <div class="barra-filtros">
         <div class="campo-busca">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-          <input type="text" id="campo-busca" placeholder="Buscar por nome ou email...">
+          <input type="text" id="campo-busca" placeholder="Buscar por nome, e-mail ou grupo..." aria-label="Buscar usuários">
         </div>
         <div class="abas-status">
           <button class="aba-status aba-status--ativa" id="aba-ativos">Ativos</button>
@@ -41,18 +44,18 @@
         <table class="tabela">
           <thead>
             <tr>
-              <th>Nome</th>
-              <th>Email</th>
-              <th>Permissão</th>
+              <th>Usuário</th>
+              <th>E-mail</th>
+              <th>Grupo</th>
+              <th>Perfil</th>
               <th>Status</th>
-              <th>Ações</th>
+              <th><span class="sr-only">Ações</span></th>
             </tr>
           </thead>
           <tbody id="tabela-usuarios-corpo"></tbody>
         </table>
-        <div class="estado-vazio" id="estado-vazio" style="display: none;">
-          Nenhum usuário encontrado.
-        </div>
+        <div class="estado-carregando" id="estado-carregando">Carregando usuários...</div>
+        <div class="estado-vazio" id="estado-vazio" hidden></div>
       </div>
 
     </main>
@@ -60,45 +63,76 @@
 
   <!-- Modal de criação/edição -->
   <div class="modal-overlay" id="modal-usuario">
-    <div class="modal">
+    <div class="modal modal--larga" role="dialog" aria-modal="true" aria-labelledby="modal-titulo">
       <div class="modal__topo">
         <span class="modal__titulo" id="modal-titulo">Novo usuário</span>
-        <button class="modal__fechar" id="modal-fechar" aria-label="Fechar">
+        <button type="button" class="modal__fechar" id="modal-fechar" aria-label="Fechar">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
         </button>
       </div>
 
-      <form id="form-usuario">
-        <div class="modal__corpo">
+      <form id="form-usuario" novalidate>
+        <div class="modal__corpo perm-corpo-modal">
 
-          <div class="campo-form">
-            <label for="campo-nome">Nome *</label>
-            <input type="text" id="campo-nome" required>
-            <span class="campo-erro-msg">Informe o nome do usuário.</span>
+          <div class="campo-form-linha">
+            <div class="campo-form" id="grupo-nome">
+              <label for="campo-nome">Nome *</label>
+              <input type="text" id="campo-nome" maxlength="100" autocomplete="off">
+              <span class="campo-erro-msg" id="erro-nome"></span>
+            </div>
+            <div class="campo-form" id="grupo-email">
+              <label for="campo-email">E-mail *</label>
+              <input type="email" id="campo-email" maxlength="100" autocomplete="off">
+              <span class="campo-erro-msg" id="erro-email"></span>
+            </div>
           </div>
 
-          <div class="campo-form">
-            <label for="campo-email">Email *</label>
-            <input type="email" id="campo-email" required>
-            <span class="campo-erro-msg">Informe um email válido.</span>
-          </div>
-
-          <div class="campo-form">
+          <div class="campo-form" id="grupo-senha">
             <label for="campo-senha" id="label-senha">Senha *</label>
             <input type="password" id="campo-senha" autocomplete="new-password">
-            <span class="campo-erro-msg">Informe a senha.</span>
-            <span class="campo-ajuda" id="ajuda-senha" style="display: none;">
-              Deixe em branco para manter a senha atual.
-            </span>
+            <span class="campo-erro-msg" id="erro-senha"></span>
+            <span class="campo-ajuda" id="ajuda-senha">De 8 a 72 caracteres.</span>
+          </div>
+
+          <div class="campo-form" id="grupo-grupo">
+            <label for="campo-grupo">Grupo de acesso</label>
+            <select id="campo-grupo"></select>
+            <span class="campo-ajuda">O grupo define o que o usuário pode acessar. Sem grupo, ele só consulta os cadastros.</span>
           </div>
 
           <div class="campo-checkbox">
             <input type="checkbox" id="campo-admin">
             <label for="campo-admin">Conceder permissão de administrador</label>
           </div>
-          <p class="campo-checkbox__ajuda">
-            Administradores têm acesso ao Dashboard, à gestão de usuários e a todas as áreas do sistema.
+          <p class="campo-checkbox__ajuda" id="ajuda-admin">
+            Administradores têm acesso a todas as áreas, inclusive Dashboard, Usuários e Grupos de Acesso.
           </p>
+
+          <div class="usuario-foto" id="bloco-foto" hidden>
+            <span class="usuario-foto__avatar" id="foto-preview" aria-hidden="true">?</span>
+            <div class="usuario-foto__corpo">
+              <span class="perm-topo__titulo">Foto</span>
+              <span class="campo-ajuda">JPEG, PNG ou WebP, até 2 MB. A foto é salva na hora, sem precisar clicar em Salvar.</span>
+              <div class="usuario-foto__acoes">
+                <button type="button" class="botao-secundario" id="foto-trocar">Trocar foto</button>
+                <button type="button" class="botao-secundario" id="foto-remover">Remover foto</button>
+                <input type="file" id="foto-arquivo" accept="image/jpeg,image/png,image/webp" hidden>
+              </div>
+            </div>
+          </div>
+
+          <div class="perm-topo">
+            <span class="perm-topo__titulo">Permissões extras</span>
+            <div class="perm-topo__acoes">
+              <span class="perm-contador" id="perm-contador" aria-live="polite"></span>
+              <button type="button" class="botao-secundario" id="perm-limpar">Limpar extras</button>
+            </div>
+          </div>
+          <p class="dica-modal" id="dica-extras">Use só para dar a este usuário algo além do que o grupo já libera. O que vem do grupo aparece marcado e travado.</p>
+          <p class="gel-aviso-admin" id="aviso-admin" hidden>Este usuário é administrador e já tem acesso a tudo. As permissões extras não se aplicam.</p>
+          <div class="perm-lista" id="perm-lista"></div>
+
+          <p class="resumo-acesso" id="resumo-acesso" aria-live="polite"></p>
 
         </div>
 
@@ -113,8 +147,12 @@
   <script src="../js/core/config.js"></script>
   <script src="../js/core/api.js"></script>
   <script src="../js/core/auth.js"></script>
+  <script src="../js/core/formatadores.js"></script>
   <script src="../js/components/sidebar.js"></script>
+  <script src="../js/components/feedback.js"></script>
+  <script src="../js/components/permissoes-seletor.js"></script>
   <script src="../js/services/usuarioService.js"></script>
+  <script src="../js/services/grupoAcessoService.js"></script>
   <script src="../js/pages/usuarios.js"></script>
 </body>
 </html>
