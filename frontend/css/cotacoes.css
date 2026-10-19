@@ -46,3 +46,128 @@
   background: #DCFCE7;
   color: #166534;
 }
+
+/* ============================================
+   Tela de cotações redesenhada (lista, nova cotação e detalhe)
+   Reaproveita cartões, tabelas e botões de pedido-venda.css
+   ============================================ */
+
+/* Status e tipo */
+.badge-status--rascunho { background: #F3F4F6; color: #374151; }
+.badge-status--enviada  { background: #FEF9C3; color: #854D0E; }
+.badge-status--recebida { background: #DBEAFE; color: #1E40AF; }
+.badge-status--aprovada { background: #DCFCE7; color: #166534; }
+.badge-status--recusada { background: #FEE2E2; color: #991B1B; }
+.badge-status--vencida  { background: #FFEDD5; color: #9A3412; margin-left: 6px; }
+
+.badge-tipo {
+  display: inline-flex;
+  padding: 3px 9px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  font-weight: 600;
+}
+.badge-tipo--compra { background: #EEF2FF; color: #3730A3; }
+.badge-tipo--venda  { background: #ECFEFF; color: #155E75; }
+
+.pilula-status--rascunho { background: #F3F4F6; color: #374151; }
+.pilula-status--enviada  { background: #FEF9C3; color: #854D0E; }
+.pilula-status--recebida { background: #DBEAFE; color: #1E40AF; }
+.pilula-status--aprovada { background: #DCFCE7; color: #166534; }
+.pilula-status--recusada { background: #FEE2E2; color: #991B1B; }
+.pilula-status--vencida  { background: #FFEDD5; color: #9A3412; }
+.pilula-status--tipo-compra { background: #EEF2FF; color: #3730A3; }
+.pilula-status--tipo-venda  { background: #ECFEFF; color: #155E75; }
+
+.filtro-tipo {
+  height: 40px;
+  padding: 0 32px 0 12px;
+  font-size: 14px;
+  font-family: inherit;
+  color: var(--neutro-texto);
+  background-color: var(--neutro-fundo);
+  border: 1.5px solid var(--neutro-borda);
+  border-radius: var(--raio-botao);
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236B7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  cursor: pointer;
+}
+
+.celula-vencida { color: #9A3412; font-weight: 600; }
+.celula-sem-valor { color: var(--neutro-secundario); }
+
+/* Seletor Compra | Venda (nova cotação) */
+.seletor-tipo {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.seletor-tipo__opcao {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 12px 16px;
+  text-align: left;
+  background: var(--neutro-fundo);
+  border: 1.5px solid var(--neutro-borda);
+  border-radius: 12px;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.seletor-tipo__opcao strong { font-size: 14px; color: var(--neutro-texto); }
+.seletor-tipo__opcao span   { font-size: 12.5px; color: var(--neutro-secundario); }
+.seletor-tipo__opcao:hover  { border-color: #9CA3AF; }
+
+.seletor-tipo__opcao--ativa {
+  border-color: var(--azul-acao);
+  background: #EFF6FF;
+}
+
+/* Itens: observação do item e total pendente */
+.item-obs {
+  margin-top: 6px;
+  height: 34px !important;
+  font-size: 12.5px !important;
+}
+
+.total-pedido__valor--pendente {
+  font-size: 18px;
+  color: var(--neutro-secundario);
+}
+
+.faixa-aviso {
+  margin-bottom: 20px;
+  padding: 12px 16px;
+  background: #FFFBEB;
+  border: 1px solid #FDE68A;
+  border-radius: 12px;
+  font-size: 13.5px;
+  color: #92400E;
+}
+
+.link-pedido {
+  font-weight: 600;
+  color: var(--azul-acao);
+}
+
+.link-pedido:hover { text-decoration: underline; }
+
+.botao-secundario--perigo {
+  color: #B91C1C;
+  border-color: #FECACA;
+}
+
+.botao-secundario--perigo:hover { background: #FEF2F2; }
+
+/* Comparativo */
+.diferenca-positiva { color: #9A3412; font-weight: 600; }
+.diferenca-melhor   { color: #166534; font-weight: 600; }
+
+@media (max-width: 720px) {
+  .seletor-tipo { grid-template-columns: 1fr; }
+}

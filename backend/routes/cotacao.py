@@ -1,8 +1,8 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import ValidationError
 from sqlalchemy.orm import Session
 from database import get_db
-from models import Cotacao, ItemCotacao, Fornecedor, Cliente, FormaPagamento, Produto, Usuario
+from models import Cotacao, ItemCotacao, Fornecedor, Cliente, ClienteEndereco, FormaPagamento, Produto, Usuario
 from schemas.cotacao import (
     CotacaoCreate, CotacaoUpdate, CotacaoUpdateStatus, CotacaoResponse,
     AprovacaoResponse, ComparativoFornecedor,
@@ -11,8 +11,9 @@ from schemas.pedido_venda import PedidoVendaCreate, ItemPedidoVendaCreate
 from schemas.pedido_compra import PedidoCompraCreate, ItemPedidoCompraCreate
 from core.security import get_current_user
 from core.pedidos import registrar_pedido_venda, registrar_pedido_compra
+from core.permissoes import checar_permissao
 from typing import List, Optional
-from datetime import date, datetime
+from datetime import date, datetime, time
 
 router = APIRouter(prefix="/cotacoes", tags=["Cotações"])
 
@@ -62,6 +63,17 @@ def _validar_parte(db: Session, tipo: str, fornecedor_id, cliente_id) -> None:
             raise HTTPException(status_code=404, detail="Cliente não encontrado")
         if not cliente.ativo:
             raise HTTPException(status_code=400, detail="O cliente selecionado está inativo")
+
+
+def _validar_endereco(db: Session, cliente_id: int, endereco_id) -> None:
+    """Endereço de entrega: do próprio cliente e ativo (nulo = retirada)."""
+    if endereco_id is None:
+        return
+    endereco = db.query(ClienteEndereco).filter(ClienteEndereco.id == endereco_id).first()
+    if not endereco or endereco.cliente_id != cliente_id:
+        raise HTTPException(status_code=400, detail="O endereço de entrega informado não pertence a este cliente")
+    if not endereco.ativo:
+        raise HTTPException(status_code=400, detail="O endereço de entrega selecionado está inativo")
 
 
 def _validar_forma(db: Session, forma_pagamento_id) -> None:
@@ -115,6 +127,7 @@ def criar_cotacao(
 ):
     _validar_parte(db, dados.tipo, dados.fornecedor_id, dados.cliente_id)
     _validar_forma(db, dados.forma_pagamento_id)
+    _validar_endereco(db, dados.cliente_id, dados.endereco_entrega_id)
     _validar_itens(db, dados.tipo, dados.itens)
 
     cotacao = Cotacao(
@@ -125,6 +138,8 @@ def criar_cotacao(
         forma_pagamento_id=dados.forma_pagamento_id,
         data_cotacao=datetime.now(),
         validade=dados.validade,
+        data_entrega_prevista=dados.data_entrega_prevista,
+        endereco_entrega_id=dados.endereco_entrega_id,
         status="rascunho",
         observacao=dados.observacao,
         itens=[
@@ -227,6 +242,17 @@ def atualizar_cotacao(
         cotacao.validade = dados.validade
     if "observacao" in enviados:
         cotacao.observacao = dados.observacao
+    if "endereco_entrega_id" in enviados:
+        if cotacao.tipo != "venda" and dados.endereco_entrega_id is not None:
+            raise HTTPException(status_code=400, detail="Endereço de entrega só existe em cotação de venda")
+        if cotacao.tipo == "venda":
+            _validar_endereco(db, cotacao.cliente_id, dados.endereco_entrega_id)
+            cotacao.endereco_entrega_id = dados.endereco_entrega_id
+    if "data_entrega_prevista" in enviados:
+        if cotacao.tipo != "compra" and dados.data_entrega_prevista is not None:
+            raise HTTPException(status_code=400, detail="Entrega prevista só existe em cotação de compra")
+        if cotacao.tipo == "compra":
+            cotacao.data_entrega_prevista = dados.data_entrega_prevista
 
     if dados.itens is not None:
         _validar_itens(db, cotacao.tipo, dados.itens)
@@ -291,6 +317,7 @@ def atualizar_status_cotacao(
 @router.post("/{cotacao_id}/aprovar", response_model=AprovacaoResponse)
 def aprovar_cotacao(
     cotacao_id: int,
+    request: Request,
     db: Session = Depends(get_db),
     usuario: Usuario = Depends(get_current_user),
 ):
@@ -300,6 +327,9 @@ def aprovar_cotacao(
     Se o pedido não puder ser criado (por exemplo, venda sem estoque), nada é gravado e a cotação continua como estava.
     """
     cotacao = _travar_cotacao(db, cotacao_id)
+
+    # A aprovação cria um pedido: além de editar cotações, o usuário precisa poder editar o módulo do pedido gerado
+    checar_permissao(request, db, usuario, "compras.editar" if cotacao.tipo == "compra" else "vendas.editar")
 
     status_exigido = "recebida" if cotacao.tipo == "compra" else "enviada"
     if cotacao.status != status_exigido:
@@ -322,6 +352,7 @@ def aprovar_cotacao(
             pedido = registrar_pedido_compra(db, usuario.id, PedidoCompraCreate(
                 fornecedor_id=cotacao.fornecedor_id,
                 forma_pagamento_id=cotacao.forma_pagamento_id,
+                data_entrega_prevista=datetime.combine(cotacao.data_entrega_prevista, time.min) if cotacao.data_entrega_prevista else None,
                 observacao=_observacao_do_pedido(cotacao),
                 itens=[
                     ItemPedidoCompraCreate(produto_id=i.produto_id, quantidade=i.quantidade, preco_unitario=i.preco_unitario)
@@ -333,6 +364,7 @@ def aprovar_cotacao(
             pedido = registrar_pedido_venda(db, usuario.id, PedidoVendaCreate(
                 cliente_id=cotacao.cliente_id,
                 forma_pagamento_id=cotacao.forma_pagamento_id,
+                endereco_entrega_id=cotacao.endereco_entrega_id,
                 observacao=_observacao_do_pedido(cotacao),
                 itens=[
                     ItemPedidoVendaCreate(

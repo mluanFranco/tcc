@@ -114,6 +114,12 @@ def exigir(codigo: str):
     return dependencia
 
 
+def checar_permissao(request: Request, db: Session, usuario: Usuario, codigo: str) -> None:
+    """Checagem pontual dentro de uma rota (por exemplo, aprovar cotação também exige editar o módulo do pedido gerado)."""
+    if not tem_permissao(_efetivas_da_requisicao(request, db, usuario), codigo):
+        _negar(codigo)
+
+
 def exigir_modulo(modulo: str):
     """Dependência para um router inteiro: GET/HEAD exigem "<modulo>.ver"; os demais métodos, "<modulo>.editar".
     Quando o módulo não tem a ação (cadastros não tem "ver"), basta estar logado."""

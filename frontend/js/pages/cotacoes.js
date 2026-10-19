@@ -1,202 +1,251 @@
-// Lógica da tela de Cotações: aba de listagem (com busca e filtro de status)
-// e aba de comparativo de preços por produto.
+// Lista de Cotações (compra e venda) e Comparativo de Preços.
+// Criar é em cotacao-nova.html; ver, editar e mudar o status é em cotacao-detalhe.html.
+// O backend filtra por tipo e status; busca por nome/número e período são feitos aqui, na lista carregada.
 
 let cotacoesCache = [];
-let fornecedoresMapCotacao = {};
-let filtroStatusCotacao = "todos";
-let abaAtivaCotacao = "lista";
+let nomesFornecedor = {};   // { id: nome }
+let nomesCliente = {};
+let filtroStatusAtivo = "todos";
+let requisicaoAtual = 0;    // descarta respostas antigas se o usuário trocar de filtro rápido
 
 document.addEventListener("DOMContentLoaded", async () => {
-  if (!exigirAutenticacao()) return;
+  if (!exigirPermissao("cotacoes.ver")) return;
 
-  const elementos = {
-    botaoIncluir: document.getElementById("botao-incluir"),
-    abaLista: document.getElementById("aba-lista"),
-    abaComparativo: document.getElementById("aba-comparativo"),
-    painelLista: document.getElementById("painel-lista"),
-    painelComparativo: document.getElementById("painel-comparativo"),
-    tabelaCorpo: document.getElementById("tabela-cotacoes-corpo"),
-    estadoVazioLista: document.getElementById("estado-vazio-lista"),
-    campoBusca: document.getElementById("campo-busca"),
+  const podeEditar = temPermissao("cotacoes.editar");
+
+  const $ = (id) => document.getElementById(id);
+  const el = {
+    botaoIncluir: $("botao-incluir"),
+    abaLista: $("aba-lista"), abaComparativo: $("aba-comparativo"),
+    painelLista: $("painel-lista"), painelComparativo: $("painel-comparativo"),
+    tabelaCorpo: $("tabela-cotacoes-corpo"), estadoVazio: $("estado-vazio-lista"), estadoCarregando: $("estado-carregando"),
+    campoBusca: $("campo-busca"), filtroTipo: $("filtro-tipo"),
+    campoDataInicio: $("campo-data-inicio"), campoDataFim: $("campo-data-fim"),
     abasStatus: document.querySelectorAll(".aba-status[data-status]"),
-    campoProdutoComparativo: document.getElementById("campo-produto-comparativo"),
-    containerComparativo: document.getElementById("container-comparativo"),
-    tabelaComparativoCorpo: document.getElementById("tabela-comparativo-corpo"),
-    estadoVazioComparativo: document.getElementById("estado-vazio-comparativo")
+    campoProduto: $("campo-produto-comparativo"), containerComparativo: $("container-comparativo"),
+    tabelaComparativoCorpo: $("tabela-comparativo-corpo"), estadoVazioComparativo: $("estado-vazio-comparativo")
   };
 
-  function formatarMoeda(numero) {
-    return `R$ ${Number(numero).toFixed(2).replace(".", ",")}`;
+  el.botaoIncluir.hidden = !podeEditar;
+
+  const ROTULOS_STATUS = { rascunho: "Rascunho", enviada: "Enviada", recebida: "Recebida", aprovada: "Aprovada", recusada: "Recusada" };
+  const STATUS_EM_ABERTO = ["rascunho", "enviada", "recebida"];
+
+  function hojeTexto() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
   }
 
-  function formatarData(isoString) {
-    if (!isoString) return "—";
-    return new Date(isoString).toLocaleDateString("pt-BR");
+  function nomeDaParte(cotacao) {
+    return cotacao.tipo === "venda"
+      ? (nomesCliente[cotacao.cliente_id] ?? `Cliente #${cotacao.cliente_id}`)
+      : (nomesFornecedor[cotacao.fornecedor_id] ?? `Fornecedor #${cotacao.fornecedor_id}`);
   }
 
-  // ---------- Aba: Lista de Cotações ----------
+  // ---------- Lista ----------
 
-  async function carregarFornecedoresMap() {
-    const fornecedores = await fornecedorService.listar({ incluirInativos: true });
-    fornecedoresMapCotacao = fornecedores.reduce((mapa, f) => {
-      mapa[f.id] = f.nome;
-      return mapa;
-    }, {});
+  function periodoInvalido() {
+    const inicio = el.campoDataInicio.value, fim = el.campoDataFim.value;
+    return Boolean(inicio && fim && inicio > fim);
   }
 
-  function nomeFornecedor(id) {
-    return fornecedoresMapCotacao[id] ?? `Fornecedor #${id}`;
+  function cotacoesFiltradas() {
+    const termo = el.campoBusca.value.trim().toLowerCase();
+    const termoNumerico = termo.replace(/^#/, "");
+    const inicio = el.campoDataInicio.value, fim = el.campoDataFim.value;
+
+    return cotacoesCache.filter(c => {
+      if (termo) {
+        const casaNumero = /^\d+$/.test(termoNumerico) && (formatarNumeroPedido(c.id).includes(termoNumerico) || String(c.id).includes(termoNumerico));
+        if (!nomeDaParte(c).toLowerCase().includes(termo) && !casaNumero) return false;
+      }
+      const dia = String(c.data_cotacao).slice(0, 10);
+      if (inicio && dia < inicio) return false;
+      if (fim && dia > fim) return false;
+      return true;
+    });
+  }
+
+  function mostrarVazio(texto, aviso = false) {
+    el.tabelaCorpo.innerHTML = "";
+    el.estadoVazio.textContent = texto;
+    el.estadoVazio.classList.toggle("aviso-periodo", aviso);
+    el.estadoVazio.hidden = false;
+  }
+
+  function renderizarTabela() {
+    el.estadoCarregando.hidden = true;
+
+    if (periodoInvalido()) {
+      mostrarVazio("Período inválido: a data inicial é posterior à data final.", true);
+      return;
+    }
+    const lista = cotacoesFiltradas();
+    if (lista.length === 0) {
+      mostrarVazio(cotacoesCache.length > 0 ? "Nenhuma cotação encontrada com esses filtros." : "Nenhuma cotação encontrada.");
+      return;
+    }
+
+    el.estadoVazio.hidden = true;
+    const hoje = hojeTexto();
+    el.tabelaCorpo.innerHTML = lista
+      .slice()
+      .sort((a, b) => b.id - a.id)
+      .map(c => {
+        const vencida = Boolean(c.validade) && c.validade < hoje && STATUS_EM_ABERTO.includes(c.status);
+        const selo = vencida ? '<span class="badge-status badge-status--vencida">Vencida</span>' : "";
+        const total = c.valor_total === null || c.valor_total === undefined
+          ? '<td class="celula-numero celula-sem-valor">A definir</td>'
+          : `<td class="celula-numero">${formatarMoeda(c.valor_total)}</td>`;
+        return `
+          <tr class="linha-clicavel" data-id="${c.id}" tabindex="0">
+            <td class="celula-nome">${formatarNumeroPedido(c.id)}</td>
+            <td><span class="badge-tipo badge-tipo--${escaparHtml(c.tipo)}">${c.tipo === "venda" ? "Venda" : "Compra"}</span></td>
+            <td>${escaparHtml(nomeDaParte(c))}</td>
+            <td>${formatarData(c.data_cotacao)}</td>
+            <td${vencida ? ' class="celula-vencida"' : ""}>${c.validade ? formatarData(c.validade) : "—"}</td>
+            <td>${c.itens.length} ${c.itens.length === 1 ? "item" : "itens"}</td>
+            ${total}
+            <td><span class="badge-status badge-status--${escaparHtml(c.status)}">${escaparHtml(ROTULOS_STATUS[c.status] || c.status)}</span>${selo}</td>
+          </tr>`;
+      }).join("");
+  }
+
+  async function carregarNomes() {
+    const [rForn, rCli] = await Promise.allSettled([
+      fornecedorService.listar({ incluirInativos: true }),
+      clienteService.listar({ incluirInativos: true })
+    ]);
+    if (rForn.status === "fulfilled") nomesFornecedor = Object.fromEntries(rForn.value.map(f => [f.id, f.nome]));
+    if (rCli.status === "fulfilled") nomesCliente = Object.fromEntries(rCli.value.map(c => [c.id, c.nome]));
+    if (rForn.status === "rejected" || rCli.status === "rejected") {
+      // Sem o nome a cotação ainda aparece como "Fornecedor #id" / "Cliente #id"; avisa e segue.
+      toast.erro("Não foi possível carregar todos os nomes de fornecedores e clientes.");
+    }
   }
 
   async function carregarCotacoes() {
+    const minha = ++requisicaoAtual;
+    el.tabelaCorpo.innerHTML = "";
+    el.estadoVazio.hidden = true;
+    el.estadoCarregando.hidden = false;
     try {
-      const status = filtroStatusCotacao === "todos" ? null : filtroStatusCotacao;
-      cotacoesCache = await cotacaoService.listar({ status });
-      renderizarTabelaCotacoes();
+      const dados = await cotacaoService.listar({
+        tipo: el.filtroTipo.value || null,
+        status: filtroStatusAtivo === "todos" ? null : filtroStatusAtivo
+      });
+      if (minha !== requisicaoAtual) return;
+      cotacoesCache = dados;
+      renderizarTabela();
     } catch (erro) {
-      alert(erro.message);
+      if (minha !== requisicaoAtual) return;
+      cotacoesCache = [];
+      mostrarVazio("Não foi possível carregar as cotações.");
+      toast.erro(erro.message);
     }
   }
 
-  function renderizarTabelaCotacoes() {
-    const termoBusca = elementos.campoBusca.value.trim().toLowerCase();
-
-    const filtradas = cotacoesCache.filter(c =>
-      !termoBusca || nomeFornecedor(c.fornecedor_id).toLowerCase().includes(termoBusca)
-    );
-
-    if (filtradas.length === 0) {
-      elementos.tabelaCorpo.innerHTML = "";
-      elementos.estadoVazioLista.style.display = "block";
-      return;
-    }
-
-    elementos.estadoVazioLista.style.display = "none";
-
-    elementos.tabelaCorpo.innerHTML = filtradas
-      .slice()
-      .sort((a, b) => b.id - a.id)
-      .map(cotacao => `
-        <tr>
-          <td class="celula-nome">#${cotacao.id}</td>
-          <td>${nomeFornecedor(cotacao.fornecedor_id)}</td>
-          <td>${formatarData(cotacao.data_cotacao)}</td>
-          <td>${cotacao.itens.length} ${cotacao.itens.length === 1 ? "item" : "itens"}</td>
-          <td><span class="badge-status-grande badge-status-grande--${statusParaClasse(cotacao.status)}">${cotacao.status}</span></td>
-          <td class="celula-acoes">
-            <button class="botao-icone" data-acao="visualizar" data-id="${cotacao.id}" title="Visualizar" aria-label="Visualizar">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-            </button>
-            <button class="botao-icone botao-icone--perigo" data-acao="excluir" data-id="${cotacao.id}" title="Excluir" aria-label="Excluir">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6"></path><path d="M14 11v6"></path></svg>
-            </button>
-          </td>
-        </tr>
-      `).join("");
+  function abrirCotacao(linha) {
+    if (linha) window.location.href = `cotacao-detalhe.html?id=${linha.dataset.id}`;
   }
 
-  function statusParaClasse(status) {
-    if (status === "aprovada") return "confirmado";
-    if (status === "rascunho") return "aberto";
-    return "pendente"; // enviada, recebida
-  }
+  el.botaoIncluir.addEventListener("click", () => { window.location.href = "cotacao-nova.html"; });
+  el.tabelaCorpo.addEventListener("click", (e) => abrirCotacao(e.target.closest("tr[data-id]")));
+  el.tabelaCorpo.addEventListener("keydown", (e) => { if (e.key === "Enter") abrirCotacao(e.target.closest("tr[data-id]")); });
 
-  elementos.tabelaCorpo.addEventListener("click", async (evento) => {
-    const botao = evento.target.closest("button[data-acao]");
-    if (!botao) return;
-
-    const id = botao.dataset.id;
-
-    if (botao.dataset.acao === "visualizar") {
-      window.location.href = `cotacao-detalhe.html?id=${id}`;
-    }
-
-    if (botao.dataset.acao === "excluir") {
-      if (!confirm("Excluir esta cotação permanentemente? Esta ação não pode ser desfeita.")) return;
-      try {
-        await cotacaoService.excluir(id);
-        await carregarCotacoes();
-      } catch (erro) {
-        alert(erro.message);
-      }
-    }
-  });
-
-  elementos.botaoIncluir.addEventListener("click", () => {
-    window.location.href = "cotacao-detalhe.html";
-  });
-
-  elementos.campoBusca.addEventListener("input", renderizarTabelaCotacoes);
-
-  elementos.abasStatus.forEach(aba => {
+  el.abasStatus.forEach(aba => {
     aba.addEventListener("click", () => {
-      elementos.abasStatus.forEach(a => a.classList.remove("aba-status--ativa"));
+      el.abasStatus.forEach(a => a.classList.remove("aba-status--ativa"));
       aba.classList.add("aba-status--ativa");
-      filtroStatusCotacao = aba.dataset.status;
+      filtroStatusAtivo = aba.dataset.status;
       carregarCotacoes();
     });
   });
+  el.filtroTipo.addEventListener("change", carregarCotacoes);
+  el.campoBusca.addEventListener("input", renderizarTabela);
+  el.campoDataInicio.addEventListener("change", renderizarTabela);
+  el.campoDataFim.addEventListener("change", renderizarTabela);
 
-  // ---------- Aba: Comparativo de Preços ----------
+  // ---------- Comparativo de preços ----------
 
-  async function carregarProdutosParaComparativo() {
-    const produtos = await produtoService.listar();
-    elementos.campoProdutoComparativo.innerHTML = '<option value="">Selecione um produto...</option>' +
-      produtos.map(p => `<option value="${p.id}">${p.nome}</option>`).join("");
+  let requisicaoComparativo = 0;
+
+  async function carregarProdutos() {
+    try {
+      const produtos = (await produtoService.listar()).sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
+      el.campoProduto.innerHTML = '<option value="">Selecione um produto...</option>' +
+        produtos.map(p => `<option value="${p.id}">${escaparHtml(p.nome)}</option>`).join("");
+    } catch (erro) {
+      el.campoProduto.innerHTML = '<option value="">Falha ao carregar</option>';
+      toast.erro(`Não foi possível carregar os produtos. ${erro.message}`);
+    }
   }
 
   async function carregarComparativo(produtoId) {
-    if (!produtoId) {
-      elementos.containerComparativo.style.display = "none";
-      elementos.estadoVazioComparativo.style.display = "none";
-      return;
-    }
+    const minha = ++requisicaoComparativo;
+    el.containerComparativo.hidden = true;
+    el.estadoVazioComparativo.hidden = true;
+    if (!produtoId) return;
 
     try {
       const resultados = await cotacaoService.comparativoPorProduto(produtoId);
-
+      if (minha !== requisicaoComparativo) return;
       if (resultados.length === 0) {
-        elementos.containerComparativo.style.display = "none";
-        elementos.estadoVazioComparativo.style.display = "block";
+        el.estadoVazioComparativo.hidden = false;
         return;
       }
-
-      elementos.estadoVazioComparativo.style.display = "none";
-      elementos.containerComparativo.style.display = "block";
-
-      elementos.tabelaComparativoCorpo.innerHTML = resultados.map((item, index) => `
-        <tr>
-          <td><span class="posicao-ranking ${index === 0 ? "posicao-ranking--melhor" : ""}">${index + 1}</span></td>
-          <td class="celula-nome">${item.fornecedor_nome}</td>
-          <td>${formatarMoeda(item.preco_unitario)}</td>
-          <td>${item.quantidade_referencia}</td>
-          <td>${formatarData(item.data_cotacao)}</td>
-        </tr>
-      `).join("");
+      const melhor = Number(resultados[0].preco_unitario);
+      el.tabelaComparativoCorpo.innerHTML = resultados.map((item, i) => {
+        const preco = Number(item.preco_unitario);
+        const pct = melhor > 0 ? ((preco - melhor) / melhor) * 100 : 0;
+        const diferenca = i === 0 || pct < 0.005
+          ? '<span class="diferenca-melhor">Menor preço</span>'
+          : `<span class="diferenca-positiva">+${formatarNumero(Math.round(pct * 10) / 10)}%</span>`;
+        const link = `<a class="link-pedido" href="cotacao-detalhe.html?id=${item.cotacao_id}">${formatarNumeroPedido(item.cotacao_id)}</a> ` +
+          `<span class="badge-status badge-status--${escaparHtml(item.status)}">${escaparHtml(ROTULOS_STATUS[item.status] || item.status)}</span>`;
+        return `
+          <tr>
+            <td><span class="posicao-ranking ${i === 0 ? "posicao-ranking--melhor" : ""}">${i + 1}</span></td>
+            <td class="celula-nome">${escaparHtml(item.fornecedor_nome)}</td>
+            <td class="celula-numero">${formatarMoeda(item.preco_unitario)}</td>
+            <td class="celula-numero">${diferenca}</td>
+            <td class="celula-numero">${formatarNumero(item.quantidade)}</td>
+            <td>${link}</td>
+            <td>${formatarData(item.data_cotacao)}</td>
+          </tr>`;
+      }).join("");
+      el.containerComparativo.hidden = false;
     } catch (erro) {
-      alert(erro.message);
+      if (minha === requisicaoComparativo) toast.erro(erro.message);
     }
   }
 
-  elementos.campoProdutoComparativo.addEventListener("change", () => {
-    carregarComparativo(elementos.campoProdutoComparativo.value);
-  });
+  el.campoProduto.addEventListener("change", () => carregarComparativo(el.campoProduto.value));
 
-  // ---------- Alternância entre abas principais ----------
+  // ---------- Abas principais ----------
 
-  function trocarAbaPrincipal(aba) {
-    abaAtivaCotacao = aba;
-    elementos.abaLista.classList.toggle("aba-secundaria--ativa", aba === "lista");
-    elementos.abaComparativo.classList.toggle("aba-secundaria--ativa", aba === "comparativo");
-    elementos.painelLista.style.display = aba === "lista" ? "block" : "none";
-    elementos.painelComparativo.style.display = aba === "comparativo" ? "block" : "none";
-    elementos.botaoIncluir.style.display = aba === "lista" ? "flex" : "none";
+  function trocarAba(aba) {
+    const lista = aba === "lista";
+    el.abaLista.classList.toggle("aba-secundaria--ativa", lista);
+    el.abaComparativo.classList.toggle("aba-secundaria--ativa", !lista);
+    el.painelLista.hidden = !lista;
+    el.painelComparativo.hidden = lista;
+    el.botaoIncluir.hidden = !(lista && podeEditar);
   }
 
-  elementos.abaLista.addEventListener("click", () => trocarAbaPrincipal("lista"));
-  elementos.abaComparativo.addEventListener("click", () => trocarAbaPrincipal("comparativo"));
+  el.abaLista.addEventListener("click", () => trocarAba("lista"));
+  el.abaComparativo.addEventListener("click", () => trocarAba("comparativo"));
 
-  await carregarFornecedoresMap();
+  // ---------- Carga ----------
+
+  // Voltando da exclusão de uma cotação no detalhe
+  const excluida = new URLSearchParams(window.location.search).get("excluida");
+  if (excluida) {
+    toast.sucesso(`Cotação ${formatarNumeroPedido(excluida)} excluída.`);
+    history.replaceState(null, "", "cotacoes.html");
+  }
+
+  await carregarNomes();
   await carregarCotacoes();
-  await carregarProdutosParaComparativo();
+  await carregarProdutos();
 });

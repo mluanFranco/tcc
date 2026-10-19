@@ -3,6 +3,7 @@ from typing import List, Literal, Optional
 
 from pydantic import BaseModel, Field, computed_field, field_validator, model_validator
 
+from schemas.endereco import EnderecoResponse
 from schemas.tipos import Quantidade, QuantidadeSaida
 
 
@@ -38,6 +39,8 @@ class CotacaoCreate(BaseModel):
     cliente_id: Optional[int] = Field(default=None, gt=0)      # obrigatório em venda
     forma_pagamento_id: Optional[int] = Field(default=None, gt=0)
     validade: Optional[date] = None
+    data_entrega_prevista: Optional[date] = None               # só em compra
+    endereco_entrega_id: Optional[int] = Field(default=None, gt=0)   # só em venda; endereço ativo do cliente, nulo = retirada
     observacao: Optional[str] = Field(default=None, max_length=255)
     itens: List[ItemCotacaoCreate] = Field(min_length=1)
 
@@ -53,7 +56,11 @@ class CotacaoCreate(BaseModel):
                 raise ValueError("Cotação de compra não tem cliente: informe só o fornecedor")
             if any(i.desconto != 0 for i in self.itens):
                 raise ValueError("Desconto só existe em cotação de venda")
+            if self.endereco_entrega_id is not None:
+                raise ValueError("Endereço de entrega só existe em cotação de venda")
         else:
+            if self.data_entrega_prevista is not None:
+                raise ValueError("Entrega prevista só existe em cotação de compra")
             if self.cliente_id is None:
                 raise ValueError("Cotação de venda exige cliente_id")
             if self.fornecedor_id is not None:
@@ -67,6 +74,8 @@ class CotacaoUpdate(BaseModel):
     """Campos omitidos não mudam. Se `itens` vier, SUBSTITUI a lista inteira."""
     forma_pagamento_id: Optional[int] = Field(default=None, gt=0)
     validade: Optional[date] = None
+    data_entrega_prevista: Optional[date] = None
+    endereco_entrega_id: Optional[int] = Field(default=None, gt=0)
     observacao: Optional[str] = Field(default=None, max_length=255)
     itens: Optional[List[ItemCotacaoCreate]] = Field(default=None, min_length=1)
 
@@ -109,6 +118,9 @@ class CotacaoResponse(BaseModel):
     observacao: Optional[str]
     pedido_venda_id: Optional[int]
     pedido_compra_id: Optional[int]
+    data_entrega_prevista: Optional[date] = None
+    endereco_entrega_id: Optional[int] = None
+    endereco_entrega: Optional[EnderecoResponse] = None
     itens: List[ItemCotacaoResponse]
 
     model_config = {"from_attributes": True}

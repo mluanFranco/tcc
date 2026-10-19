@@ -26,7 +26,7 @@ const ITENS_MENU = [
       { label: "Pedidos de Compra", href: "pedidos-compra.html", tambem: ["pedido-compra-novo.html", "pedido-compra-detalhe.html"], permissao: "compras.ver" }
     ]
   },
-  { label: "Cotações",            href: "cotacoes.html",         tambem: ["cotacao-detalhe.html"],   permissao: "cotacoes.ver",   icone: "cotacao" },
+  { label: "Cotações",            href: "cotacoes.html",         tambem: ["cotacao-nova.html", "cotacao-detalhe.html"],   permissao: "cotacoes.ver",   icone: "cotacao" },
   { label: "Formas de Pagamento", href: "formas-pagamento.html", icone: "pagamento" },
   { label: "Geladeiras",          href: "geladeiras.html",       tambem: ["geladeira-detalhe.html"], permissao: "geladeiras.ver", icone: "geladeira" },
   { label: "Usuários",            href: "usuarios.html",         apenasAdmin: true, icone: "usuario" }

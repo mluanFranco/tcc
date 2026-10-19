@@ -296,6 +296,10 @@ def pdf_cotacao(db: Session, cotacao_id: int, emitido_por: str) -> Tuple[bytes, 
     else:
         f = cot.fornecedor
         pares = _pares_parte("Fornecedor", f.nome, f.cnpj, f.telefone, f.email, _endereco_fornecedor(f))
+    if venda:
+        pares.append(("Entrega", _formatar_endereco(cot.endereco_entrega) if cot.endereco_entrega else "Retirada (sem entrega)"))
+    elif cot.data_entrega_prevista:
+        pares.append(("Entrega prevista", data_br(cot.data_entrega_prevista)))
     pares += [("Data", data_br(cot.data_cotacao)), ("Validade", data_br(cot.validade)),
               ("Forma de pgto.", _txt(forma.descricao if forma else None))]
     if cot.pedido_venda_id:

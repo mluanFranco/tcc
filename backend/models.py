@@ -362,8 +362,11 @@ class Cotacao(Base):
     observacao         = Column(String(255))
     pedido_venda_id    = Column(Integer, ForeignKey("pedido_venda.id"))    # preenchidos na aprovação
     pedido_compra_id   = Column(Integer, ForeignKey("pedido_compra.id"))
+    data_entrega_prevista = Column(Date)    # só em cotação de compra; vai para o pedido gerado
+    endereco_entrega_id   = Column(Integer, ForeignKey("cliente_endereco.id"), nullable=True)   # só em cotação de venda; nulo = retirada
     created_at         = Column(DateTime, default=datetime.now)
     updated_at         = Column(DateTime, default=datetime.now, onupdate=datetime.now)
+    endereco_entrega = relationship("ClienteEndereco")
     fornecedor = relationship("Fornecedor", back_populates="cotacoes")
     cliente    = relationship("Cliente", back_populates="cotacoes")
     itens      = relationship("ItemCotacao", back_populates="cotacao",
@@ -617,4 +620,4 @@ class AssistenteLog(Base):
     linhas = Column(Integer)
     duracao_ms = Column(Integer)
     erro = Column(String(255))
-    created_at = Column(DateTime, default=datetime.now, index=True)
+    created_at = Column(DateTime, default=datetime.now, index=True)

@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nova Cotação — Nova Sorvetes</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/base.css">
+  <link rel="stylesheet" href="../css/sidebar.css">
+  <link rel="stylesheet" href="../css/listagem-crud.css">
+  <link rel="stylesheet" href="../css/detalhe-pedido.css">
+  <link rel="stylesheet" href="../css/pedido-venda.css">
+  <link rel="stylesheet" href="../css/cotacoes.css">
+  <link rel="stylesheet" href="../css/feedback.css">
+</head>
+<body>
+
+  <div class="app-layout">
+    <aside id="sidebar" class="sidebar"></aside>
+
+    <main class="conteudo-principal">
+
+      <div class="pedido-topo">
+        <a class="pedido-topo__voltar" href="cotacoes.html" id="link-voltar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><polyline points="15 18 9 12 15 6"></polyline></svg>
+          Cotações
+        </a>
+        <div class="pedido-topo__linha">
+          <h1>Nova Cotação</h1>
+          <div class="pedido-acoes">
+            <button type="button" class="botao-primario" id="botao-salvar" disabled>Salvar Cotação</button>
+            <button type="button" class="botao-cancelar-vermelho" id="botao-cancelar">Cancelar</button>
+          </div>
+        </div>
+      </div>
+
+      <form id="form-cotacao" novalidate>
+        <div id="cotacao-form"></div>
+      </form>
+
+    </main>
+  </div>
+
+  <script src="../js/core/config.js"></script>
+  <script src="../js/core/api.js"></script>
+  <script src="../js/core/auth.js"></script>
+  <script src="../js/core/formatadores.js"></script>
+  <script src="../js/components/sidebar.js"></script>
+  <script src="../js/components/feedback.js"></script>
+  <script src="../js/services/cotacaoService.js"></script>
+  <script src="../js/services/produtoService.js"></script>
+  <script src="../js/services/fornecedorService.js"></script>
+  <script src="../js/services/clienteService.js"></script>
+  <script src="../js/services/formaPagamentoService.js"></script>
+  <script src="../js/services/unidadeMedidaService.js"></script>
+  <script src="../js/components/cotacao-form.js"></script>
+  <script src="../js/pages/cotacao-nova.js"></script>
+</body>
+</html>
