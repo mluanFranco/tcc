@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from database import get_db
 from models import HistoricoManutencao, Geladeira, Usuario
 from schemas.historico_manutencao import HistoricoManutencaoCreate, HistoricoManutencaoResponse
@@ -19,6 +19,9 @@ def criar_manutencao(
     geladeira = db.query(Geladeira).filter(Geladeira.id == dados.geladeira_id).first()
     if not geladeira:
         raise HTTPException(status_code=404, detail="Geladeira não encontrada")
+
+    if geladeira.status == "desativada":
+        raise HTTPException(status_code=400, detail="Geladeira desativada não aceita registro de manutenção")
 
     if dados.tipo not in ("preventiva", "corretiva"):
         raise HTTPException(status_code=400, detail="Tipo deve ser 'preventiva' ou 'corretiva'")
@@ -43,10 +46,10 @@ def listar_manutencoes(
     db: Session = Depends(get_db),
     _=Depends(get_current_user)
 ):
-    query = db.query(HistoricoManutencao)
+    query = db.query(HistoricoManutencao).options(joinedload(HistoricoManutencao.usuario))
     if geladeira_id:
         query = query.filter(HistoricoManutencao.geladeira_id == geladeira_id)
-    return query.order_by(HistoricoManutencao.data.desc()).all()
+    return query.order_by(HistoricoManutencao.data.desc(), HistoricoManutencao.id.desc()).all()
 
 
 @router.get("/{manutencao_id}", response_model=HistoricoManutencaoResponse)
@@ -65,4 +68,4 @@ def excluir_manutencao(manutencao_id: int, db: Session = Depends(get_db), _=Depe
 
     db.delete(manutencao)
     db.commit()
-    return {"message": "Registro de manutenção excluído com sucesso"}
+    return {"message": "Registro de manutenção excluído com sucesso"}

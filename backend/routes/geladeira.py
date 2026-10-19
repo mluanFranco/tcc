@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from database import get_db
 from models import Geladeira, Cliente, ClienteEndereco
 from schemas.geladeira import GeladeiraCreate, GeladeiraUpdate, GeladeiraResponse
@@ -36,6 +36,8 @@ def criar_geladeira(dados: GeladeiraCreate, db: Session = Depends(get_db), _=Dep
     cliente = db.query(Cliente).filter(Cliente.id == dados.cliente_id).first()
     if not cliente:
         raise HTTPException(status_code=404, detail="Cliente não encontrado")
+    if not cliente.ativo:
+        raise HTTPException(status_code=400, detail="O cliente selecionado está inativo")
 
     _validar_endereco_do_cliente(db, dados.cliente_id, dados.endereco_id)
 
@@ -59,15 +61,18 @@ def listar_geladeiras(
     db: Session = Depends(get_db),
     _=Depends(get_current_user)
 ):
-    query = db.query(Geladeira).filter(Geladeira.status != "desativada")
+    query = db.query(Geladeira).options(joinedload(Geladeira.cliente), joinedload(Geladeira.endereco)).filter(Geladeira.status != "desativada")
     if cliente_id:
         query = query.filter(Geladeira.cliente_id == cliente_id)
-    return query.all()
+    return query.order_by(Geladeira.id).all()
 
 
 @router.get("/desativadas", response_model=List[GeladeiraResponse])
 def listar_geladeiras_desativadas(db: Session = Depends(get_db), _=Depends(get_current_user)):
-    return db.query(Geladeira).filter(Geladeira.status == "desativada").all()
+    return (
+        db.query(Geladeira).options(joinedload(Geladeira.cliente), joinedload(Geladeira.endereco))
+        .filter(Geladeira.status == "desativada").order_by(Geladeira.id).all()
+    )
 
 
 @router.get("/{geladeira_id}", response_model=GeladeiraResponse)
@@ -84,7 +89,14 @@ def atualizar_geladeira(geladeira_id: int, dados: GeladeiraUpdate, db: Session =
     if not geladeira:
         raise HTTPException(status_code=404, detail="Geladeira não encontrada")
 
-    atualizacoes = dados.model_dump(exclude_none=True)
+    # Só o que foi enviado muda. modelo/marca/numero_serie/data_alocacao aceitam null (apagar o valor);
+    # nos demais campos null é o mesmo que não enviar.
+    anulaveis = {"modelo", "marca", "numero_serie", "data_alocacao"}
+    atualizacoes = {
+        campo: getattr(dados, campo)
+        for campo in dados.model_fields_set
+        if getattr(dados, campo) is not None or campo in anulaveis
+    }
 
     cliente_final = atualizacoes.get("cliente_id", geladeira.cliente_id)
     cliente_mudou = cliente_final != geladeira.cliente_id
@@ -93,6 +105,8 @@ def atualizar_geladeira(geladeira_id: int, dados: GeladeiraUpdate, db: Session =
         cliente = db.query(Cliente).filter(Cliente.id == cliente_final).first()
         if not cliente:
             raise HTTPException(status_code=404, detail="Cliente não encontrado")
+        if cliente_mudou and not cliente.ativo:
+            raise HTTPException(status_code=400, detail="O cliente selecionado está inativo")
 
     # O endereço antigo pertence ao cliente antigo: ao trocar o cliente, é preciso escolher um novo
     if cliente_mudou and "endereco_id" not in atualizacoes:
@@ -107,7 +121,7 @@ def atualizar_geladeira(geladeira_id: int, dados: GeladeiraUpdate, db: Session =
     if cliente_mudou or endereco_mudou:
         _validar_endereco_do_cliente(db, cliente_final, atualizacoes["endereco_id"])
 
-    if "numero_serie" in atualizacoes and _numero_serie_duplicado(db, atualizacoes["numero_serie"], ignorar_id=geladeira_id):
+    if atualizacoes.get("numero_serie") and _numero_serie_duplicado(db, atualizacoes["numero_serie"], ignorar_id=geladeira_id):
         raise HTTPException(status_code=400, detail=MSG_SERIE_DUPLICADA)
 
     for campo, valor in atualizacoes.items():
@@ -130,4 +144,4 @@ def desativar_geladeira(geladeira_id: int, db: Session = Depends(get_db), _=Depe
 
     geladeira.status = "desativada"
     db.commit()
-    return {"message": f"Geladeira {geladeira.numero_serie or geladeira.id} desativada com sucesso"}
+    return {"message": f"Geladeira {geladeira.numero_serie or geladeira.id} desativada com sucesso"}

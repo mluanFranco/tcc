@@ -405,6 +405,10 @@ class Geladeira(Base):
     endereco             = relationship("ClienteEndereco")
     historico_manutencao = relationship("HistoricoManutencao", back_populates="geladeira")
 
+    @property
+    def cliente_nome(self):
+        return self.cliente.nome if self.cliente else None
+
 
 class HistoricoManutencao(Base):
     __tablename__ = "historico_manutencao"
@@ -418,6 +422,11 @@ class HistoricoManutencao(Base):
     custo        = Column(Float, default=0.0)
 
     geladeira = relationship("Geladeira", back_populates="historico_manutencao")
+    usuario   = relationship("Usuario")
+
+    @property
+    def usuario_nome(self):
+        return self.usuario.nome if self.usuario else None
 
 
 # ─────────────────────────────────────────

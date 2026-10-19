@@ -2,6 +2,7 @@
 // Nenhuma lógica de UI deve existir aqui, apenas chamadas à API.
 
 const geladeiraService = {
+  // Geladeiras em campo ou em manutenção (as desativadas ficam em listarDesativadas).
   async listar({ clienteId = null } = {}) {
     const query = clienteId ? `?cliente_id=${clienteId}` : "";
     return apiFetch(`/geladeiras/${query}`);
@@ -26,6 +27,14 @@ const geladeiraService = {
     return apiFetch(`/geladeiras/${id}`, {
       method: "PUT",
       body: JSON.stringify(dados)
+    });
+  },
+
+  // Muda só o status: "em_campo" | "manutencao" (desativar/reativar usam as funções abaixo).
+  async alterarStatus(id, status) {
+    return apiFetch(`/geladeiras/${id}`, {
+      method: "PUT",
+      body: JSON.stringify({ status })
     });
   },
 

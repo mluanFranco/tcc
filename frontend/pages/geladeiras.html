@@ -9,6 +9,9 @@
   <link rel="stylesheet" href="../css/base.css">
   <link rel="stylesheet" href="../css/sidebar.css">
   <link rel="stylesheet" href="../css/listagem-crud.css">
+  <link rel="stylesheet" href="../css/pedido-compra.css">
+  <link rel="stylesheet" href="../css/geladeiras.css">
+  <link rel="stylesheet" href="../css/feedback.css">
 </head>
 <body>
 
@@ -19,7 +22,7 @@
 
       <div class="pagina-topo">
         <h1>Geladeiras</h1>
-        <button class="botao-primario" id="botao-incluir">
+        <button class="botao-primario" id="botao-incluir" hidden>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
           Incluir
         </button>
@@ -28,11 +31,13 @@
       <div class="barra-filtros">
         <div class="campo-busca">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-          <input type="text" id="campo-busca" placeholder="Buscar por nº de série, modelo ou cliente...">
+          <input type="text" id="campo-busca" placeholder="Buscar por série, modelo ou cliente..." aria-label="Buscar geladeiras">
         </div>
-        <div class="abas-status">
-          <button class="aba-status aba-status--ativa" id="aba-ativas">Em campo / Manutenção</button>
-          <button class="aba-status" id="aba-desativadas">Desativadas</button>
+        <div class="abas-status" role="tablist">
+          <button class="aba-status aba-status--ativa" id="aba-todas" data-aba="todas" role="tab" aria-selected="true">Todas</button>
+          <button class="aba-status" id="aba-em_campo" data-aba="em_campo" role="tab" aria-selected="false">Em campo</button>
+          <button class="aba-status" id="aba-manutencao" data-aba="manutencao" role="tab" aria-selected="false">Em manutenção</button>
+          <button class="aba-status" id="aba-desativadas" data-aba="desativadas" role="tab" aria-selected="false">Desativadas</button>
         </div>
       </div>
 
@@ -45,86 +50,27 @@
               <th>Cliente</th>
               <th>Data de alocação</th>
               <th>Status</th>
-              <th>Ações</th>
+              <th><span class="sr-only">Ações</span></th>
             </tr>
           </thead>
           <tbody id="tabela-geladeiras-corpo"></tbody>
         </table>
-        <div class="estado-vazio" id="estado-vazio" style="display: none;">
-          Nenhuma geladeira encontrada.
-        </div>
+        <div class="estado-carregando" id="estado-carregando">Carregando geladeiras...</div>
+        <div class="estado-vazio" id="estado-vazio" hidden></div>
       </div>
 
     </main>
   </div>
 
-  <!-- Modal de criação/edição -->
-  <div class="modal-overlay" id="modal-geladeira">
-    <div class="modal">
-      <div class="modal__topo">
-        <span class="modal__titulo" id="modal-titulo">Nova geladeira</span>
-        <button class="modal__fechar" id="modal-fechar" aria-label="Fechar">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-        </button>
-      </div>
-
-      <form id="form-geladeira">
-        <div class="modal__corpo">
-
-          <div class="campo-form">
-            <label for="campo-cliente">Cliente *</label>
-            <select id="campo-cliente" required></select>
-          </div>
-
-          <div class="campo-form-linha">
-            <div class="campo-form">
-              <label for="campo-tipo">Tipo *</label>
-              <select id="campo-tipo" required>
-                <option value="">Selecione...</option>
-                <option value="Freezer Horizontal">Freezer Horizontal</option>
-                <option value="Freezer Vertical">Freezer Vertical</option>
-                <option value="Conservador">Conservador</option>
-                <option value="Expositor">Expositor</option>
-              </select>
-            </div>
-            <div class="campo-form">
-              <label for="campo-marca">Marca</label>
-              <input type="text" id="campo-marca">
-            </div>
-          </div>
-
-          <div class="campo-form-linha">
-            <div class="campo-form">
-              <label for="campo-modelo">Modelo</label>
-              <input type="text" id="campo-modelo">
-            </div>
-            <div class="campo-form">
-              <label for="campo-numero-serie">Número de série</label>
-              <input type="text" id="campo-numero-serie">
-            </div>
-          </div>
-
-          <div class="campo-form">
-            <label for="campo-data-alocacao">Data de alocação</label>
-            <input type="date" id="campo-data-alocacao">
-          </div>
-
-        </div>
-
-        <div class="modal__rodape">
-          <button type="button" class="botao-secundario" id="modal-cancelar">Cancelar</button>
-          <button type="submit" class="botao-primario" id="modal-salvar">Salvar</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
   <script src="../js/core/config.js"></script>
   <script src="../js/core/api.js"></script>
   <script src="../js/core/auth.js"></script>
+  <script src="../js/core/formatadores.js"></script>
   <script src="../js/components/sidebar.js"></script>
+  <script src="../js/components/feedback.js"></script>
   <script src="../js/services/geladeiraService.js"></script>
   <script src="../js/services/clienteService.js"></script>
+  <script src="../js/components/geladeira-form.js"></script>
   <script src="../js/pages/geladeiras.js"></script>
 </body>
 </html>

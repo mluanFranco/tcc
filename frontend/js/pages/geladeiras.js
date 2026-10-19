@@ -1,239 +1,163 @@
-// Lógica da tela de listagem de Geladeiras: busca, filtro ativas/desativadas,
-// cadastro via modal (sem ViaCEP — geladeira não tem endereço próprio).
+// Geladeiras: lista com abas por situação (Todas / Em campo / Em manutenção / Desativadas), busca e ações rápidas.
+// O cadastro/edição usa o modal compartilhado (geladeira-form.js); o histórico de manutenção fica no detalhe.
+// Permissões: geladeiras.ver abre a tela; geladeiras.editar mostra Incluir, Editar, Desativar e Reativar.
 
-let geladeirasCache = [];
-let clientesMapGeladeira = {};
-let abaAtivaGeladeira = "ativas";
-let geladeiraEmEdicaoId = null;
+const ROTULO_STATUS_GELADEIRA = { em_campo: "Em campo", manutencao: "Em manutenção", desativada: "Desativada" };
 
 document.addEventListener("DOMContentLoaded", async () => {
-  if (!exigirAutenticacao()) return;
+  if (!exigirPermissao("geladeiras.ver")) return;
+  const podeEditar = temPermissao("geladeiras.editar");
 
-  const elementos = {
-    tabelaCorpo: document.getElementById("tabela-geladeiras-corpo"),
-    estadoVazio: document.getElementById("estado-vazio"),
-    campoBusca: document.getElementById("campo-busca"),
-    abaAtivas: document.getElementById("aba-ativas"),
-    abaDesativadas: document.getElementById("aba-desativadas"),
-    botaoIncluir: document.getElementById("botao-incluir"),
-    modalOverlay: document.getElementById("modal-geladeira"),
-    modalTitulo: document.getElementById("modal-titulo"),
-    modalFechar: document.getElementById("modal-fechar"),
-    modalCancelar: document.getElementById("modal-cancelar"),
-    form: document.getElementById("form-geladeira"),
-    campoCliente: document.getElementById("campo-cliente")
+  const $ = (id) => document.getElementById(id);
+  const el = {
+    corpo: $("tabela-geladeiras-corpo"), vazio: $("estado-vazio"), carregando: $("estado-carregando"),
+    busca: $("campo-busca"), botaoIncluir: $("botao-incluir"), abas: document.querySelectorAll(".aba-status[data-aba]")
   };
 
-  function formatarData(isoString) {
-    if (!isoString) return "—";
-    return new Date(isoString).toLocaleDateString("pt-BR");
+  let abaAtual = "todas";
+  let grupoCarregado = null;     // "ativas" (em campo + manutenção) ou "desativadas"
+  let cache = [];
+  let requisicaoAtual = 0;       // descarta respostas antigas se o usuário trocar de aba rápido
+  let ocupado = false;
+
+  el.botaoIncluir.hidden = !podeEditar;
+
+  const ICONE_VER = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>';
+  const ICONE_EDITAR = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>';
+  const ICONE_DESATIVAR = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6"></path><path d="M14 11v6"></path></svg>';
+  const ICONE_REATIVAR = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>';
+
+  const nomeDaGeladeira = (g) => g.numero_serie ? `nº ${g.numero_serie}` : `#${g.id}`;
+
+  function mostrarVazio(texto) {
+    el.corpo.innerHTML = "";
+    el.vazio.textContent = texto;
+    el.vazio.hidden = false;
   }
 
-  function rotuloStatus(status) {
-    const rotulos = { em_campo: "Em campo", manutencao: "Em manutenção", desativada: "Desativada" };
-    return rotulos[status] ?? status;
-  }
-
-  function classeStatus(status) {
-    if (status === "em_campo") return "badge-status--ativo";
-    return "badge-status--inativo";
-  }
-
-  async function carregarClientesMap() {
-    const clientes = await clienteService.listar({ incluirInativos: true });
-    clientesMapGeladeira = clientes.reduce((mapa, c) => {
-      mapa[c.id] = c.nome;
-      return mapa;
-    }, {});
-
-    elementos.campoCliente.innerHTML = '<option value="">Selecione um cliente...</option>' +
-      clientes.map(c => `<option value="${c.id}">${c.nome}</option>`).join("");
-  }
-
-  function nomeCliente(id) {
-    return clientesMapGeladeira[id] ?? `Cliente #${id}`;
-  }
-
-  async function carregarGeladeiras() {
-    try {
-      geladeirasCache = abaAtivaGeladeira === "ativas"
-        ? await geladeiraService.listar()
-        : await geladeiraService.listarDesativadas();
-      renderizarTabela();
-    } catch (erro) {
-      alert(erro.message);
-    }
-  }
-
-  function renderizarTabela() {
-    const termoBusca = elementos.campoBusca.value.trim().toLowerCase();
-
-    const filtradas = geladeirasCache.filter(g => {
-      if (!termoBusca) return true;
-      return (
-        (g.numero_serie ?? "").toLowerCase().includes(termoBusca) ||
-        (g.modelo ?? "").toLowerCase().includes(termoBusca) ||
-        nomeCliente(g.cliente_id).toLowerCase().includes(termoBusca)
-      );
+  function visiveis() {
+    const termo = el.busca.value.trim().toLowerCase();
+    return cache.filter(g => {
+      if ((abaAtual === "em_campo" || abaAtual === "manutencao") && g.status !== abaAtual) return false;
+      if (!termo) return true;
+      return [g.numero_serie, g.modelo, g.marca, g.tipo, g.cliente_nome].some(v => (v || "").toLowerCase().includes(termo));
     });
+  }
 
-    if (filtradas.length === 0) {
-      elementos.tabelaCorpo.innerHTML = "";
-      elementos.estadoVazio.style.display = "block";
+  function linhaCliente(g) {
+    const e = g.endereco;
+    const sub = !g.endereco_id
+      ? '<span class="celula-dupla__sub celula-dupla__sub--alerta">Sem endereço de instalação</span>'
+      : (e && (e.cidade || e.uf) ? `<span class="celula-dupla__sub">${escaparHtml([e.cidade, e.uf].filter(Boolean).join("/"))}</span>` : "");
+    return `<span class="celula-dupla__principal">${escaparHtml(g.cliente_nome || `Cliente #${g.cliente_id}`)}</span>${sub}`;
+  }
+
+  function renderizar() {
+    el.carregando.hidden = true;
+    const lista = visiveis();
+    if (lista.length === 0) {
+      const filtrando = el.busca.value.trim() !== "" || cache.length > 0;
+      mostrarVazio(filtrando ? "Nenhuma geladeira encontrada com esses filtros." : "Nenhuma geladeira cadastrada.");
       return;
     }
+    el.vazio.hidden = true;
 
-    elementos.estadoVazio.style.display = "none";
-
-    elementos.tabelaCorpo.innerHTML = filtradas.map(geladeira => {
-      const botaoAcao = geladeira.status === "desativada"
-        ? `<button class="botao-icone" data-acao="reativar" data-id="${geladeira.id}" title="Reativar" aria-label="Reativar">
-             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>
-           </button>`
-        : `<button class="botao-icone botao-icone--perigo" data-acao="desativar" data-id="${geladeira.id}" title="Desativar" aria-label="Desativar">
-             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6"></path><path d="M14 11v6"></path></svg>
-           </button>`;
-
+    el.corpo.innerHTML = lista.map(g => {
+      const nome = escaparHtml(nomeDaGeladeira(g));
+      const marcaModelo = [g.marca, g.modelo].filter(Boolean).join(" ");
+      const desativada = g.status === "desativada";
+      const editar = podeEditar && !desativada ? `
+        <button type="button" class="botao-icone" data-acao="editar" data-id="${g.id}" title="Editar" aria-label="Editar geladeira ${nome}">${ICONE_EDITAR}</button>` : "";
+      const estado = !podeEditar ? "" : (desativada
+        ? `<button type="button" class="botao-icone" data-acao="reativar" data-id="${g.id}" title="Reativar" aria-label="Reativar geladeira ${nome}">${ICONE_REATIVAR}</button>`
+        : `<button type="button" class="botao-icone botao-icone--perigo" data-acao="desativar" data-id="${g.id}" title="Desativar" aria-label="Desativar geladeira ${nome}">${ICONE_DESATIVAR}</button>`);
       return `
-        <tr data-id="${geladeira.id}">
-          <td class="celula-nome celula-link" data-id="${geladeira.id}">${geladeira.numero_serie ?? "—"}</td>
-          <td class="celula-link" data-id="${geladeira.id}">${geladeira.tipo}${geladeira.modelo ? " · " + geladeira.modelo : ""}</td>
-          <td class="celula-link" data-id="${geladeira.id}">${nomeCliente(geladeira.cliente_id)}</td>
-          <td class="celula-link" data-id="${geladeira.id}">${formatarData(geladeira.data_alocacao)}</td>
-          <td class="celula-link" data-id="${geladeira.id}"><span class="badge-status ${classeStatus(geladeira.status)}">${rotuloStatus(geladeira.status)}</span></td>
+        <tr>
+          <td class="celula-nome"><a class="celula-link" href="geladeira-detalhe.html?id=${g.id}">${g.numero_serie ? escaparHtml(g.numero_serie) : `<span class="celula-dupla__sub">Sem nº de série (#${g.id})</span>`}</a></td>
+          <td><span class="celula-dupla__principal">${escaparHtml(g.tipo)}</span>${marcaModelo ? `<span class="celula-dupla__sub">${escaparHtml(marcaModelo)}</span>` : ""}</td>
+          <td>${linhaCliente(g)}</td>
+          <td>${escaparHtml(formatarData(g.data_alocacao))}</td>
+          <td><span class="badge-status badge-status--gel-${escaparHtml(g.status)}">${escaparHtml(ROTULO_STATUS_GELADEIRA[g.status] ?? g.status)}</span></td>
           <td class="celula-acoes">
-            <button class="botao-icone" data-acao="editar" data-id="${geladeira.id}" title="Editar" aria-label="Editar">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
-            </button>
-            ${botaoAcao}
+            <a class="botao-icone" href="geladeira-detalhe.html?id=${g.id}" title="Ver detalhes" aria-label="Ver detalhes da geladeira ${nome}">${ICONE_VER}</a>
+            ${editar}
+            ${estado}
           </td>
-        </tr>
-      `;
+        </tr>`;
     }).join("");
   }
 
-  function abrirModal(geladeira = null) {
-    elementos.form.reset();
-
-    if (geladeira) {
-      geladeiraEmEdicaoId = geladeira.id;
-      elementos.modalTitulo.textContent = "Editar geladeira";
-      elementos.campoCliente.value = geladeira.cliente_id;
-      document.getElementById("campo-tipo").value = geladeira.tipo;
-      document.getElementById("campo-marca").value = geladeira.marca ?? "";
-      document.getElementById("campo-modelo").value = geladeira.modelo ?? "";
-      document.getElementById("campo-numero-serie").value = geladeira.numero_serie ?? "";
-      document.getElementById("campo-data-alocacao").value = geladeira.data_alocacao
-        ? geladeira.data_alocacao.slice(0, 10)
-        : "";
-    } else {
-      geladeiraEmEdicaoId = null;
-      elementos.modalTitulo.textContent = "Nova geladeira";
-    }
-
-    elementos.modalOverlay.classList.add("aberto");
-  }
-
-  function fecharModal() {
-    elementos.modalOverlay.classList.remove("aberto");
-    geladeiraEmEdicaoId = null;
-  }
-
-  async function salvarGeladeira(evento) {
-    evento.preventDefault();
-
-    const dados = {
-      cliente_id: parseInt(elementos.campoCliente.value, 10),
-      tipo: document.getElementById("campo-tipo").value,
-      marca: document.getElementById("campo-marca").value || null,
-      modelo: document.getElementById("campo-modelo").value || null,
-      numero_serie: document.getElementById("campo-numero-serie").value || null,
-      data_alocacao: document.getElementById("campo-data-alocacao").value || null
-    };
-
-    if (!dados.cliente_id || !dados.tipo) {
-      alert("Selecione o cliente e o tipo da geladeira.");
-      return;
-    }
-
-    const botaoSalvar = document.getElementById("modal-salvar");
-    botaoSalvar.disabled = true;
-    botaoSalvar.textContent = "Salvando...";
-
+  async function carregar(forcar = false) {
+    const grupo = abaAtual === "desativadas" ? "desativadas" : "ativas";
+    if (!forcar && grupo === grupoCarregado) { renderizar(); return; }
+    const minha = ++requisicaoAtual;
+    el.corpo.innerHTML = "";
+    el.vazio.hidden = true;
+    el.carregando.hidden = false;
     try {
-      if (geladeiraEmEdicaoId) {
-        await geladeiraService.atualizar(geladeiraEmEdicaoId, dados);
-      } else {
-        await geladeiraService.criar(dados);
-      }
-      fecharModal();
-      await carregarGeladeiras();
+      const dados = grupo === "desativadas" ? await geladeiraService.listarDesativadas() : await geladeiraService.listar();
+      if (minha !== requisicaoAtual) return;
+      cache = dados;
+      grupoCarregado = grupo;
+      renderizar();
     } catch (erro) {
-      alert(erro.message);
-    } finally {
-      botaoSalvar.disabled = false;
-      botaoSalvar.textContent = "Salvar";
+      if (minha !== requisicaoAtual) return;
+      cache = [];
+      grupoCarregado = null;
+      el.carregando.hidden = true;
+      mostrarVazio("Não foi possível carregar as geladeiras.");
+      toast.erro(erro.message);
     }
   }
 
-  async function tratarAcaoTabela(evento) {
+  function trocarAba(nova) {
+    abaAtual = nova;
+    el.abas.forEach(b => {
+      const ativa = b.dataset.aba === nova;
+      b.classList.toggle("aba-status--ativa", ativa);
+      b.setAttribute("aria-selected", String(ativa));
+    });
+    carregar();
+  }
+
+  el.abas.forEach(b => b.addEventListener("click", () => trocarAba(b.dataset.aba)));
+  el.busca.addEventListener("input", () => { if (grupoCarregado) renderizar(); });
+  el.botaoIncluir.addEventListener("click", () => geladeiraForm.abrir({ aoSalvar: () => carregar(true) }));
+
+  el.corpo.addEventListener("click", async (evento) => {
     const botao = evento.target.closest("button[data-acao]");
+    if (!botao || ocupado) return;
+    const geladeira = cache.find(g => g.id === Number(botao.dataset.id));
+    if (!geladeira) return;
+    const acao = botao.dataset.acao;
 
-    if (botao) {
-      const id = parseInt(botao.dataset.id, 10);
-      const acao = botao.dataset.acao;
-
-      if (acao === "editar") {
-        const geladeira = geladeirasCache.find(g => g.id === id);
-        if (geladeira) abrirModal(geladeira);
-      }
-
-      if (acao === "desativar") {
-        if (!confirm("Desativar esta geladeira? O histórico de manutenção será preservado.")) return;
-        try {
-          await geladeiraService.desativar(id);
-          await carregarGeladeiras();
-        } catch (erro) {
-          alert(erro.message);
-        }
-      }
-
-      if (acao === "reativar") {
-        try {
-          await geladeiraService.reativar(id);
-          await carregarGeladeiras();
-        } catch (erro) {
-          alert(erro.message);
-        }
-      }
+    if (acao === "editar") {
+      geladeiraForm.abrir({ geladeira, aoSalvar: () => carregar(true) });
       return;
     }
 
-    const celulaLink = evento.target.closest(".celula-link");
-    if (celulaLink) {
-      window.location.href = `geladeira-detalhe.html?id=${celulaLink.dataset.id}`;
+    if (acao === "desativar") {
+      const confirmou = await confirmarAcao({
+        titulo: "Desativar geladeira?",
+        mensagem: `A geladeira ${nomeDaGeladeira(geladeira)} sairá da lista principal e deixará de aceitar registros de manutenção. O histórico é mantido e você pode reativá-la depois.`,
+        textoConfirmar: "Desativar",
+        perigo: true
+      });
+      if (!confirmou) return;
     }
-  }
 
-  function trocarAba(novaAba) {
-    abaAtivaGeladeira = novaAba;
-    elementos.abaAtivas.classList.toggle("aba-status--ativa", novaAba === "ativas");
-    elementos.abaDesativadas.classList.toggle("aba-status--ativa", novaAba === "desativadas");
-    carregarGeladeiras();
-  }
-
-  elementos.botaoIncluir.addEventListener("click", () => abrirModal());
-  elementos.modalFechar.addEventListener("click", fecharModal);
-  elementos.modalCancelar.addEventListener("click", fecharModal);
-  elementos.modalOverlay.addEventListener("click", (e) => {
-    if (e.target === elementos.modalOverlay) fecharModal();
+    ocupado = true;
+    try {
+      if (acao === "desativar") await geladeiraService.desativar(geladeira.id);
+      else await geladeiraService.reativar(geladeira.id);
+      toast.sucesso(acao === "desativar" ? "Geladeira desativada." : "Geladeira reativada. Ela voltou para \"Em campo\".");
+      await carregar(true);
+    } catch (erro) {
+      toast.erro(erro.message);
+    } finally {
+      ocupado = false;
+    }
   });
-  elementos.form.addEventListener("submit", salvarGeladeira);
-  elementos.campoBusca.addEventListener("input", renderizarTabela);
-  elementos.abaAtivas.addEventListener("click", () => trocarAba("ativas"));
-  elementos.abaDesativadas.addEventListener("click", () => trocarAba("desativadas"));
-  elementos.tabelaCorpo.addEventListener("click", tratarAcaoTabela);
 
-  await carregarClientesMap();
-  await carregarGeladeiras();
+  carregar(true);
 });

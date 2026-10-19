@@ -10,6 +10,10 @@
   <link rel="stylesheet" href="../css/sidebar.css">
   <link rel="stylesheet" href="../css/listagem-crud.css">
   <link rel="stylesheet" href="../css/detalhe-pedido.css">
+  <link rel="stylesheet" href="../css/pedido-venda.css">
+  <link rel="stylesheet" href="../css/pedido-compra.css">
+  <link rel="stylesheet" href="../css/geladeiras.css">
+  <link rel="stylesheet" href="../css/feedback.css">
 </head>
 <body>
 
@@ -18,112 +22,143 @@
 
     <main class="conteudo-principal">
 
-      <div class="detalhe-topo">
-        <div class="detalhe-topo__titulo-wrapper">
-          <button class="botao-voltar" id="botao-voltar" aria-label="Voltar">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
-          </button>
-          <h1 id="detalhe-titulo">Geladeira</h1>
-          <span class="badge-status-grande" id="badge-status" style="display: none;"></span>
+      <div class="estado-pagina" id="estado-pagina">Carregando geladeira...</div>
+
+      <div id="conteudo-geladeira" hidden>
+
+        <div class="pedido-topo">
+          <a class="pedido-topo__voltar" href="geladeiras.html">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            Geladeiras
+          </a>
+          <div class="pedido-topo__linha">
+            <h1 id="titulo-pagina">Geladeira</h1>
+            <div class="pedido-acoes">
+              <span class="pilula-status" id="pilula-status"></span>
+              <button type="button" class="botao-secundario" id="botao-editar" hidden>Editar</button>
+              <button type="button" class="botao-secundario" id="botao-manutencao" hidden>Enviar para manutenção</button>
+              <button type="button" class="botao-sucesso" id="botao-campo" hidden>Voltar para campo</button>
+              <button type="button" class="botao-cancelar-vermelho" id="botao-desativar" hidden>Desativar</button>
+              <button type="button" class="botao-sucesso" id="botao-reativar" hidden>Reativar</button>
+            </div>
+          </div>
         </div>
+
+        <div class="gel-aviso" id="aviso-geladeira" hidden></div>
+
+        <section class="cartao">
+          <h2 class="cartao__titulo">Dados do equipamento</h2>
+          <div class="cartao-grade">
+            <div class="visualizacao-item">
+              <span class="visualizacao-label">Cliente</span>
+              <span class="visualizacao-valor" id="vis-cliente">—</span>
+            </div>
+            <div class="visualizacao-item">
+              <span class="visualizacao-label">Tipo</span>
+              <span class="visualizacao-valor" id="vis-tipo">—</span>
+            </div>
+            <div class="visualizacao-item">
+              <span class="visualizacao-label">Nº de série</span>
+              <span class="visualizacao-valor" id="vis-serie">—</span>
+            </div>
+            <div class="visualizacao-item">
+              <span class="visualizacao-label">Marca</span>
+              <span class="visualizacao-valor" id="vis-marca">—</span>
+            </div>
+            <div class="visualizacao-item">
+              <span class="visualizacao-label">Modelo</span>
+              <span class="visualizacao-valor" id="vis-modelo">—</span>
+            </div>
+            <div class="visualizacao-item">
+              <span class="visualizacao-label">Data de alocação</span>
+              <span class="visualizacao-valor" id="vis-alocacao">—</span>
+            </div>
+          </div>
+        </section>
+
+        <section class="cartao">
+          <h2 class="cartao__titulo">Endereço de instalação</h2>
+          <div class="visualizacao-item">
+            <span class="visualizacao-valor" id="vis-endereco">—</span>
+          </div>
+        </section>
+
+        <section class="cartao">
+          <div class="cartao__topo-linha">
+            <h2 class="cartao__titulo">Histórico de manutenção</h2>
+            <button type="button" class="botao-secundario" id="botao-nova-manutencao" hidden>+ Registrar manutenção</button>
+          </div>
+          <p class="gel-resumo-manutencao" id="resumo-manutencao" hidden></p>
+          <div class="tabela-rolavel">
+            <table class="tabela tabela--manutencoes">
+              <thead>
+                <tr>
+                  <th>Data</th>
+                  <th>Tipo</th>
+                  <th>Descrição</th>
+                  <th class="coluna-numero">Custo</th>
+                  <th>Registrado por</th>
+                  <th><span class="sr-only">Ações</span></th>
+                </tr>
+              </thead>
+              <tbody id="manutencoes-corpo"></tbody>
+            </table>
+          </div>
+          <div class="estado-carregando" id="manutencoes-carregando">Carregando manutenções...</div>
+          <div class="estado-vazio" id="manutencoes-vazio" hidden>Nenhuma manutenção registrada ainda.</div>
+        </section>
+
       </div>
-
-      <div class="painel">
-        <p class="painel__titulo">Dados do equipamento</p>
-        <div class="visualizacao-grid">
-          <div class="visualizacao-item">
-            <span class="visualizacao-label">Cliente</span>
-            <span class="visualizacao-valor" id="vis-cliente">—</span>
-          </div>
-          <div class="visualizacao-item">
-            <span class="visualizacao-label">Tipo</span>
-            <span class="visualizacao-valor" id="vis-tipo">—</span>
-          </div>
-          <div class="visualizacao-item">
-            <span class="visualizacao-label">Marca / Modelo</span>
-            <span class="visualizacao-valor" id="vis-marca-modelo">—</span>
-          </div>
-          <div class="visualizacao-item">
-            <span class="visualizacao-label">Nº de série</span>
-            <span class="visualizacao-valor" id="vis-numero-serie">—</span>
-          </div>
-          <div class="visualizacao-item">
-            <span class="visualizacao-label">Data de alocação</span>
-            <span class="visualizacao-valor" id="vis-data-alocacao">—</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="painel">
-        <div class="itens-topo">
-          <p class="painel__titulo" style="margin-bottom: 0;">Histórico de manutenção</p>
-          <button class="botao-secundario" id="botao-nova-manutencao">+ Registrar manutenção</button>
-        </div>
-
-        <table class="tabela">
-          <thead>
-            <tr>
-              <th>Data</th>
-              <th>Tipo</th>
-              <th>Descrição</th>
-              <th>Custo</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody id="tabela-manutencoes-corpo"></tbody>
-        </table>
-        <div class="estado-vazio" id="estado-vazio-manutencoes" style="display: none;">
-          Nenhuma manutenção registrada ainda.
-        </div>
-      </div>
-
     </main>
   </div>
 
-  <!-- Modal de registrar manutenção -->
+  <!-- Modal: registrar manutenção -->
   <div class="modal-overlay" id="modal-manutencao">
-    <div class="modal">
+    <div class="modal modal--manutencao" role="dialog" aria-modal="true" aria-labelledby="manut-titulo-modal">
       <div class="modal__topo">
-        <span class="modal__titulo">Registrar manutenção</span>
-        <button class="modal__fechar" id="modal-manutencao-fechar" aria-label="Fechar">
+        <span class="modal__titulo" id="manut-titulo-modal">Registrar manutenção</span>
+        <button type="button" class="modal__fechar" id="manut-fechar" aria-label="Fechar">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
         </button>
       </div>
-
-      <form id="form-manutencao">
+      <form id="form-manutencao" novalidate>
         <div class="modal__corpo">
 
           <div class="campo-form-linha">
-            <div class="campo-form">
-              <label for="campo-tipo-manutencao">Tipo *</label>
-              <select id="campo-tipo-manutencao" required>
+            <div class="campo-form" id="manut-grupo-tipo">
+              <label for="manut-tipo">Tipo *</label>
+              <select id="manut-tipo">
                 <option value="preventiva">Preventiva</option>
                 <option value="corretiva">Corretiva</option>
               </select>
+              <span class="campo-erro-msg" id="manut-erro-tipo"></span>
             </div>
-            <div class="campo-form">
-              <label for="campo-data-manutencao">Data</label>
-              <input type="date" id="campo-data-manutencao">
+            <div class="campo-form" id="manut-grupo-data">
+              <label for="manut-data">Data *</label>
+              <input type="date" id="manut-data" min="2000-01-01">
+              <span class="campo-erro-msg" id="manut-erro-data"></span>
             </div>
           </div>
 
-          <div class="campo-form">
-            <label for="campo-descricao-manutencao">Descrição</label>
-            <textarea id="campo-descricao-manutencao" placeholder="Ex: Limpeza do condensador e verificação de gás"></textarea>
+          <div class="campo-form" id="manut-grupo-descricao">
+            <label for="manut-descricao">Descrição</label>
+            <textarea id="manut-descricao" maxlength="500" rows="3" placeholder="Ex.: Limpeza do condensador e verificação de gás"></textarea>
+            <span class="contador-caracteres" id="manut-contador">0/500</span>
+            <span class="campo-erro-msg" id="manut-erro-descricao"></span>
           </div>
 
-          <div class="campo-form">
-            <label for="campo-custo-manutencao">Custo</label>
+          <div class="campo-form" id="manut-grupo-custo">
+            <label for="manut-custo">Custo</label>
             <div class="campo-moeda">
-              <input type="text" id="campo-custo-manutencao" inputmode="numeric" placeholder="0,00">
+              <input type="text" id="manut-custo" inputmode="numeric" autocomplete="off" placeholder="0,00">
             </div>
+            <span class="campo-erro-msg" id="manut-erro-custo"></span>
           </div>
 
         </div>
-
         <div class="modal__rodape">
-          <button type="button" class="botao-secundario" id="modal-manutencao-cancelar">Cancelar</button>
-          <button type="submit" class="botao-primario" id="modal-manutencao-salvar">Salvar</button>
+          <button type="button" class="botao-secundario" id="manut-cancelar">Cancelar</button>
+          <button type="submit" class="botao-primario" id="manut-salvar">Salvar</button>
         </div>
       </form>
     </div>
@@ -132,11 +167,14 @@
   <script src="../js/core/config.js"></script>
   <script src="../js/core/api.js"></script>
   <script src="../js/core/auth.js"></script>
+  <script src="../js/core/formatadores.js"></script>
   <script src="../js/core/mascaras.js"></script>
   <script src="../js/components/sidebar.js"></script>
+  <script src="../js/components/feedback.js"></script>
   <script src="../js/services/geladeiraService.js"></script>
   <script src="../js/services/clienteService.js"></script>
   <script src="../js/services/historicoManutencaoService.js"></script>
+  <script src="../js/components/geladeira-form.js"></script>
   <script src="../js/pages/geladeira-detalhe.js"></script>
 </body>
 </html>
