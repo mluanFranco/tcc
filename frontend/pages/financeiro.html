@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Financeiro — Nova Sorvetes</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/base.css">
+  <link rel="stylesheet" href="../css/sidebar.css">
+  <link rel="stylesheet" href="../css/listagem-crud.css">
+  <link rel="stylesheet" href="../css/detalhe-pedido.css">
+  <link rel="stylesheet" href="../css/pedido-venda.css">
+  <link rel="stylesheet" href="../css/pedido-compra.css">
+  <link rel="stylesheet" href="../css/cotacoes.css">
+  <link rel="stylesheet" href="../css/financeiro.css">
+  <link rel="stylesheet" href="../css/feedback.css">
+</head>
+<body>
+
+  <div class="app-layout">
+    <aside id="sidebar" class="sidebar"></aside>
+
+    <main class="conteudo-principal">
+
+      <div class="pagina-topo">
+        <h1>Financeiro</h1>
+        <button class="botao-primario" id="botao-incluir" hidden>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+          <span id="texto-botao-incluir">Novo lançamento</span>
+        </button>
+      </div>
+
+      <div class="abas-secundarias" role="tablist">
+        <button type="button" class="aba-secundaria aba-secundaria--ativa" id="aba-receber" data-aba="receber" role="tab">A receber</button>
+        <button type="button" class="aba-secundaria" id="aba-pagar" data-aba="pagar" role="tab">A pagar</button>
+        <button type="button" class="aba-secundaria" id="aba-categorias" data-aba="categorias" role="tab">Categorias</button>
+      </div>
+
+      <!-- ================= Títulos (a receber / a pagar) ================= -->
+      <section id="painel-titulos">
+
+        <div class="cards-resumo cards-resumo--carregando" id="cards-resumo">
+          <div class="card-resumo">
+            <span class="card-resumo__rotulo" id="card-aberto-rotulo">Em aberto</span>
+            <span class="card-resumo__valor" id="card-aberto-valor">—</span>
+            <span class="card-resumo__detalhe" id="card-aberto-detalhe">&nbsp;</span>
+          </div>
+          <div class="card-resumo" id="card-vencido">
+            <span class="card-resumo__rotulo">Vencido</span>
+            <span class="card-resumo__valor" id="card-vencido-valor">—</span>
+            <span class="card-resumo__detalhe" id="card-vencido-detalhe">&nbsp;</span>
+          </div>
+          <div class="card-resumo">
+            <span class="card-resumo__rotulo">A vencer</span>
+            <span class="card-resumo__valor" id="card-avencer-valor">—</span>
+            <span class="card-resumo__detalhe" id="card-avencer-detalhe">&nbsp;</span>
+          </div>
+          <div class="card-resumo card-resumo--ok">
+            <span class="card-resumo__rotulo" id="card-pago-rotulo">Recebido</span>
+            <span class="card-resumo__valor" id="card-pago-valor">—</span>
+            <span class="card-resumo__detalhe">Soma das baixas válidas</span>
+          </div>
+        </div>
+
+        <div class="filtros-titulos">
+          <div class="campo-busca">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            <input type="text" id="campo-busca" maxlength="100" placeholder="Buscar título, nome ou nº do pedido" aria-label="Buscar títulos por descrição, nome ou número do pedido">
+          </div>
+          <div class="filtro-data">
+            <input type="date" id="campo-vencimento-de" title="Vencimento a partir de" aria-label="Vencimento a partir de">
+            <span class="filtro-data__separador">Até</span>
+            <input type="date" id="campo-vencimento-ate" title="Vencimento até" aria-label="Vencimento até">
+          </div>
+          <select class="filtro-select" id="filtro-origem" aria-label="Origem do título">
+            <option value="">Todas as origens</option>
+            <option value="pedido">Só de pedidos</option>
+            <option value="avulso">Só avulsos</option>
+          </select>
+          <select class="filtro-select" id="filtro-categoria" aria-label="Categoria"></select>
+        </div>
+
+        <div class="barra-abas-titulos">
+          <div class="abas-status" id="abas-situacao">
+            <button type="button" class="aba-status aba-status--ativa" data-situacao="pendente">Pendentes</button>
+            <button type="button" class="aba-status" data-situacao="vencido">Vencidos</button>
+            <button type="button" class="aba-status" data-situacao="pago">Quitados</button>
+            <button type="button" class="aba-status" data-situacao="cancelado">Cancelados</button>
+            <button type="button" class="aba-status" data-situacao="todos">Todos</button>
+          </div>
+        </div>
+
+        <div class="tabela-container tabela-container--rolavel">
+          <table class="tabela tabela--titulos">
+            <thead>
+              <tr>
+                <th>Vencimento</th>
+                <th>Título</th>
+                <th class="col-parte" id="cabecalho-parte">Cliente</th>
+                <th class="coluna-numero">Valor</th>
+                <th class="coluna-numero">Saldo</th>
+                <th>Situação</th>
+                <th><span class="sr-only">Ações</span></th>
+              </tr>
+            </thead>
+            <tbody id="tabela-titulos-corpo"></tbody>
+          </table>
+          <div class="estado-carregando" id="estado-carregando">Carregando títulos...</div>
+          <div class="estado-vazio" id="estado-vazio" hidden></div>
+          <div class="rodape-lista" id="rodape-lista" hidden>
+            <span id="texto-rodape-lista"></span>
+            <button type="button" class="botao-secundario" id="botao-carregar-mais">Carregar mais</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= Categorias financeiras ================= -->
+      <section id="painel-categorias" hidden>
+        <div class="barra-abas-titulos">
+          <div class="abas-status" id="abas-categoria-status">
+            <button type="button" class="aba-status aba-status--ativa" data-ativo="true">Ativas</button>
+            <button type="button" class="aba-status" data-ativo="false">Inativas</button>
+          </div>
+          <select class="filtro-select" id="filtro-tipo-categoria" aria-label="Tipo da categoria">
+            <option value="">Todos os tipos</option>
+            <option value="receber">A receber</option>
+            <option value="pagar">A pagar</option>
+          </select>
+        </div>
+        <div class="tabela-container">
+          <table class="tabela">
+            <thead>
+              <tr>
+                <th>Nome</th>
+                <th>Tipo</th>
+                <th>Origem</th>
+                <th>Status</th>
+                <th><span class="sr-only">Ações</span></th>
+              </tr>
+            </thead>
+            <tbody id="tabela-categorias-corpo"></tbody>
+          </table>
+          <div class="estado-carregando" id="categorias-carregando">Carregando categorias...</div>
+          <div class="estado-vazio" id="categorias-vazio" hidden></div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- Modal de categoria -->
+  <div class="modal-overlay" id="modal-categoria">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="categoria-modal-titulo">
+      <div class="modal__topo">
+        <span class="modal__titulo" id="categoria-modal-titulo">Nova categoria</span>
+        <button type="button" class="modal__fechar" id="categoria-fechar" aria-label="Fechar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+      <form id="form-categoria" novalidate>
+        <div class="modal__corpo">
+          <div class="campo-form">
+            <label id="categoria-rotulo-tipo">Tipo</label>
+            <div class="segmentado" id="categoria-tipo" role="radiogroup" aria-labelledby="categoria-rotulo-tipo">
+              <button type="button" class="segmentado__opcao" role="radio" data-tipo="pagar">A pagar</button>
+              <button type="button" class="segmentado__opcao" role="radio" data-tipo="receber">A receber</button>
+            </div>
+            <span class="fin-dica" id="categoria-tipo-fixo" hidden>O tipo não pode ser alterado: os títulos já lançados dependem dele.</span>
+          </div>
+          <div class="campo-form" id="grupo-categoria-nome">
+            <label for="categoria-nome">Nome *</label>
+            <input type="text" id="categoria-nome" maxlength="100" placeholder="Ex.: Marketing, Internet, Manutenção...">
+            <span class="campo-erro-msg" id="erro-categoria-nome"></span>
+          </div>
+        </div>
+        <div class="modal__rodape">
+          <button type="button" class="botao-secundario" id="categoria-cancelar">Cancelar</button>
+          <button type="submit" class="botao-primario" id="categoria-salvar">Salvar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="../js/core/config.js"></script>
+  <script src="../js/core/api.js"></script>
+  <script src="../js/core/auth.js"></script>
+  <script src="../js/core/formatadores.js"></script>
+  <script src="../js/core/mascaras.js"></script>
+  <script src="../js/components/sidebar.js"></script>
+  <script src="../js/components/feedback.js"></script>
+  <script src="../js/services/financeiroService.js"></script>
+  <script src="../js/services/categoriaFinanceiraService.js"></script>
+  <script src="../js/services/clienteService.js"></script>
+  <script src="../js/services/fornecedorService.js"></script>
+  <script src="../js/components/lancamento-modal.js"></script>
+  <script src="../js/components/baixa-modal.js"></script>
+  <script src="../js/components/titulo-util.js"></script>
+  <script src="../js/pages/financeiro.js"></script>
+</body>
+</html>

@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Título financeiro — Nova Sorvetes</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/base.css">
+  <link rel="stylesheet" href="../css/sidebar.css">
+  <link rel="stylesheet" href="../css/listagem-crud.css">
+  <link rel="stylesheet" href="../css/detalhe-pedido.css">
+  <link rel="stylesheet" href="../css/pedido-venda.css">
+  <link rel="stylesheet" href="../css/pedido-compra.css">
+  <link rel="stylesheet" href="../css/financeiro.css">
+  <link rel="stylesheet" href="../css/feedback.css">
+</head>
+<body>
+
+  <div class="app-layout">
+    <aside id="sidebar" class="sidebar"></aside>
+
+    <main class="conteudo-principal">
+
+      <div class="estado-pagina" id="estado-pagina">Carregando título...</div>
+
+      <div id="conteudo-titulo" hidden>
+
+        <div class="pedido-topo">
+          <a class="pedido-topo__voltar" id="link-voltar" href="financeiro.html">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            <span id="texto-voltar">Financeiro</span>
+          </a>
+          <div class="pedido-topo__linha">
+            <h1 id="titulo-pagina">Título</h1>
+            <div class="pedido-acoes">
+              <span class="pilula-status" id="pilula-situacao"></span>
+              <button type="button" class="botao-sucesso" id="botao-baixa" hidden>Registrar pagamento</button>
+              <button type="button" class="botao-secundario" id="botao-editar" hidden>Editar</button>
+              <button type="button" class="botao-cancelar-vermelho" id="botao-cancelar" hidden>Cancelar lançamento</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="aviso-origem" id="aviso-origem" hidden></div>
+
+        <section class="cartao">
+          <h2 class="cartao__titulo">Dados do Título</h2>
+          <div class="cartao-grade">
+            <div class="visualizacao-item">
+              <span class="visualizacao-label">Tipo</span>
+              <span class="visualizacao-valor" id="vis-tipo">—</span>
+            </div>
+            <div class="visualizacao-item">
+              <span class="visualizacao-label">Categoria</span>
+              <span class="visualizacao-valor" id="vis-categoria">—</span>
+            </div>
+            <div class="visualizacao-item">
+              <span class="visualizacao-label" id="vis-parte-rotulo">Cliente</span>
+              <span class="visualizacao-valor" id="vis-parte">—</span>
+            </div>
+            <div class="visualizacao-item">
+              <span class="visualizacao-label">Origem</span>
+              <span class="visualizacao-valor" id="vis-origem">—</span>
+            </div>
+            <div class="visualizacao-item">
+              <span class="visualizacao-label">Parcela</span>
+              <span class="visualizacao-valor" id="vis-parcela">—</span>
+            </div>
+            <div class="visualizacao-item">
+              <span class="visualizacao-label">Vencimento</span>
+              <span class="visualizacao-valor" id="vis-vencimento">—</span>
+            </div>
+            <div class="visualizacao-item">
+              <span class="visualizacao-label">Valor</span>
+              <span class="visualizacao-valor valor-destaque" id="vis-valor">—</span>
+            </div>
+            <div class="visualizacao-item">
+              <span class="visualizacao-label" id="vis-pago-rotulo">Já pago</span>
+              <span class="visualizacao-valor valor-destaque" id="vis-pago">—</span>
+            </div>
+            <div class="visualizacao-item">
+              <span class="visualizacao-label">Saldo</span>
+              <span class="visualizacao-valor valor-destaque valor-destaque--saldo" id="vis-saldo">—</span>
+            </div>
+            <div class="visualizacao-item" id="bloco-taxa" hidden>
+              <span class="visualizacao-label">Taxa da forma de pagamento</span>
+              <span class="visualizacao-valor" id="vis-taxa">—</span>
+            </div>
+          </div>
+        </section>
+
+        <section class="cartao">
+          <h2 class="cartao__titulo" id="titulo-baixas">Histórico de pagamentos</h2>
+          <div class="tabela-rolavel">
+          <table class="tabela-itens-leitura tabela-baixas">
+            <thead>
+              <tr>
+                <th>Data</th>
+                <th class="num">Valor</th>
+                <th>Observação</th>
+                <th>Registrada em</th>
+                <th>Situação</th>
+                <th><span class="sr-only">Ações</span></th>
+              </tr>
+            </thead>
+            <tbody id="baixas-corpo"></tbody>
+          </table>
+          </div>
+          <p class="nota-cartao" id="nota-baixas" hidden></p>
+        </section>
+
+      </div>
+
+    </main>
+  </div>
+
+  <script src="../js/core/config.js"></script>
+  <script src="../js/core/api.js"></script>
+  <script src="../js/core/auth.js"></script>
+  <script src="../js/core/formatadores.js"></script>
+  <script src="../js/core/mascaras.js"></script>
+  <script src="../js/components/sidebar.js"></script>
+  <script src="../js/components/feedback.js"></script>
+  <script src="../js/services/financeiroService.js"></script>
+  <script src="../js/services/categoriaFinanceiraService.js"></script>
+  <script src="../js/services/clienteService.js"></script>
+  <script src="../js/services/fornecedorService.js"></script>
+  <script src="../js/components/lancamento-modal.js"></script>
+  <script src="../js/components/baixa-modal.js"></script>
+  <script src="../js/components/titulo-util.js"></script>
+  <script src="../js/pages/titulo-detalhe.js"></script>
+</body>
+</html>

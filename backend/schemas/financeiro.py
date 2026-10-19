@@ -148,3 +148,17 @@ class TituloAvulsoUpdate(BaseModel):
         if self.descricao is not None:
             self.descricao = _limpar_descricao(self.descricao)
         return self
+
+
+class GrupoResumo(BaseModel):
+    quantidade: int
+    saldo: DinheiroSaida
+
+
+class ResumoTitulosResponse(BaseModel):
+    """Totais dos títulos filtrados. `saldo` = valor - valor_pago dos títulos aberto/parcial."""
+    quantidade: int            # todos os que passam no filtro, inclusive pagos e cancelados
+    em_aberto: GrupoResumo     # aberto + parcial
+    vencido: GrupoResumo       # parte de em_aberto que já passou do vencimento
+    a_vencer: GrupoResumo      # parte de em_aberto que ainda não venceu
+    total_pago: DinheiroSaida  # soma das baixas válidas (pago/recebido) dos não cancelados

@@ -1,0 +1,244 @@
+/* ============================================
+   FINANCEIRO.CSS — Títulos a pagar/receber, cards de totais, modais de lançamento e baixa
+   ============================================ */
+
+/* ---------- Cards de totais ---------- */
+.cards-resumo {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.card-resumo {
+  background: var(--neutro-fundo);
+  border: 1px solid var(--neutro-borda);
+  border-radius: 14px;
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.card-resumo__rotulo {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--neutro-secundario);
+}
+
+.card-resumo__valor {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--neutro-texto);
+  overflow-wrap: anywhere;
+}
+
+.card-resumo__detalhe {
+  font-size: 12.5px;
+  color: var(--neutro-secundario);
+}
+
+.card-resumo--alerta .card-resumo__valor { color: #B91C1C; }
+.card-resumo--ok .card-resumo__valor { color: #166534; }
+.cards-resumo--carregando .card-resumo__valor { color: var(--neutro-placeholder); }
+
+/* ---------- Filtros ---------- */
+.filtros-titulos {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+.filtros-titulos .campo-busca { flex: 1 1 240px; max-width: 320px; }
+
+.filtro-select {
+  height: 40px;
+  padding: 0 34px 0 12px;
+  font-size: 13.5px;
+  color: var(--neutro-texto);
+  border: 1.5px solid var(--neutro-borda);
+  border-radius: var(--raio-input);
+  font-family: inherit;
+  background-color: #FFFFFF;
+  max-width: 220px;
+}
+
+.filtro-select:focus { border-color: var(--azul-acao); }
+
+.barra-abas-titulos {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+.abas-status { flex-wrap: wrap; }
+
+/* ---------- Tabela de títulos ---------- */
+.tabela--titulos td { vertical-align: middle; }
+
+.celula-titulo__principal {
+  font-weight: 600;
+  color: var(--neutro-texto);
+  overflow-wrap: anywhere;
+}
+
+.celula-titulo__sub {
+  display: block;
+  margin-top: 2px;
+  font-size: 12.5px;
+  font-weight: 400;
+  color: var(--neutro-secundario);
+  overflow-wrap: anywhere;
+}
+
+.tabela--titulos .coluna-numero,
+.tabela--titulos .celula-numero { text-align: right; white-space: nowrap; }
+
+.celula-vencimento { white-space: nowrap; }
+.celula-vencimento__atraso { display: block; font-size: 12px; color: #B91C1C; font-weight: 600; }
+
+.saldo-zerado { color: var(--neutro-placeholder); }
+
+.rodape-lista {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 14px;
+  border-top: 1px solid var(--neutro-borda);
+  font-size: 13px;
+  color: var(--neutro-secundario);
+}
+
+.badge-tipo-categoria--pagar   { background: #FFEDD5; color: #9A3412; }
+.badge-tipo-categoria--receber { background: #DCFCE7; color: #166534; }
+.badge-origem--sistema { background: #EFF6FF; color: var(--azul-acao); }
+.badge-origem--propria { background: #F3F4F6; color: var(--neutro-secundario); }
+
+.botao-icone--sucesso:hover { background: #DCFCE7; color: #166534; }
+
+/* ---------- Segmentado (tipo do lançamento / da categoria) ---------- */
+.segmentado {
+  display: inline-flex;
+  padding: 3px;
+  gap: 3px;
+  background: #F3F4F6;
+  border-radius: 10px;
+  align-self: flex-start;
+}
+
+.segmentado__opcao {
+  padding: 7px 18px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--neutro-secundario);
+  border-radius: 8px;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.segmentado__opcao--ativa {
+  background: #FFFFFF;
+  color: var(--azul-acao);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+
+.fin-dica {
+  font-size: 12.5px;
+  color: var(--neutro-secundario);
+}
+
+/* ---------- Modal de lançamento ---------- */
+.lanc-repetir { display: flex; flex-direction: column; gap: 10px; }
+.lanc-repetir__meses { max-width: 220px; }
+.modal--lancamento .campo-form select { max-width: 100%; }
+
+/* ---------- Modal de baixa ---------- */
+.modal--baixa { max-width: 520px; }
+
+.resumo-baixa {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 10px 16px;
+  padding: 14px 16px;
+  background: #F9FAFB;
+  border: 1px solid var(--neutro-borda);
+  border-radius: 12px;
+}
+
+.resumo-baixa__item { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.resumo-baixa__item:first-child { grid-column: 1 / -1; }
+.resumo-baixa__rotulo { font-size: 12px; color: var(--neutro-secundario); font-weight: 600; }
+.resumo-baixa__valor { font-size: 14px; color: var(--neutro-texto); font-weight: 600; overflow-wrap: anywhere; }
+
+.baixa-valor-linha { display: flex; gap: 10px; align-items: stretch; }
+.baixa-valor-linha .campo-moeda { flex: 1; min-width: 0; }
+
+/* ---------- Detalhe do título ---------- */
+.tabela-baixas .baixa--estornada td { color: var(--neutro-placeholder); }
+.tabela-baixas .baixa--estornada .baixa__valor { text-decoration: line-through; }
+.tabela-baixas td.acoes { text-align: right; white-space: nowrap; }
+.baixa__obs { overflow-wrap: anywhere; }
+
+.aviso-origem {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  background: #EFF6FF;
+  border-radius: 12px;
+  font-size: 13.5px;
+  color: #1E3A8A;
+  margin-bottom: 20px;
+}
+
+.aviso-origem a { color: var(--azul-acao); font-weight: 600; text-decoration: underline; }
+
+.valor-destaque { font-size: 16px; font-weight: 700; }
+.valor-destaque--saldo { color: var(--azul-acao-hover); }
+
+/* ---------- Responsivo ---------- */
+@media (max-width: 1000px) {
+  .cards-resumo { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .tabela--titulos .col-parte { display: none; }
+}
+
+@media (max-width: 640px) {
+  .cards-resumo { grid-template-columns: 1fr; }
+  .filtros-titulos .campo-busca { max-width: none; flex-basis: 100%; }
+  .filtro-select { max-width: none; flex: 1 1 140px; }
+  .tabela-container--rolavel { overflow-x: auto; }
+  .tabela--titulos { min-width: 560px; }
+  .resumo-baixa { grid-template-columns: 1fr; }
+  .baixa-valor-linha { flex-direction: column; }
+  .segmentado { align-self: stretch; }
+  .segmentado__opcao { flex: 1; }
+}
+
+/* Pílula de situação no topo do detalhe */
+.pilula-status--titulo-aberto    { background: #EFF6FF; color: var(--azul-acao); }
+.pilula-status--titulo-parcial   { background: #FEF9C3; color: #854D0E; }
+.pilula-status--titulo-pago      { background: #DCFCE7; color: #166534; }
+.pilula-status--titulo-vencido   { background: #FEE2E2; color: #991B1B; }
+.pilula-status--titulo-cancelado { background: #F3F4F6; color: var(--neutro-secundario); }
+
+/* Mantém a altura da linha quando não há botões (categoria de sistema) */
+.espaco-icone { display: inline-block; height: 32px; vertical-align: middle; }
+
+/* O texto "Ações" (sr-only) é absoluto: sem um pai posicionado ele escapa da rolagem da tabela e alarga a página */
+.tabela-container { position: relative; }
+
+/* Tabela do histórico de baixas: rola dentro do cartão em telas estreitas */
+.tabela-rolavel { position: relative; overflow-x: auto; }
+.tabela-rolavel .tabela-baixas { min-width: 520px; }
+
+@media (max-width: 640px) {
+  .pagina-topo { flex-wrap: wrap; gap: 12px; }
+  .pagina-topo .botao-primario { white-space: nowrap; }
+  .abas-secundarias .aba-secundaria { white-space: nowrap; margin-right: 16px; }
+}
