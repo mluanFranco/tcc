@@ -10,12 +10,19 @@ def _nome_limpo(v: Optional[str]) -> Optional[str]:
         raise ValueError("Informe o nome do grupo")
     return v
 
+def _descricao_limpa(v: Optional[str]) -> Optional[str]:
+    """Tira espaços das pontas; descrição só com espaços vira nula."""
+    if v is None:
+        return v
+    return v.strip() or None
+
 class GrupoAcessoCreate(BaseModel):
     nome: str = Field(max_length=60)
     descricao: Optional[str] = Field(default=None, max_length=255)
     permissoes: List[str] = []
 
     _nome = field_validator("nome")(_nome_limpo)
+    _descricao = field_validator("descricao")(_descricao_limpa)
 
 class GrupoAcessoUpdate(BaseModel):
     nome: Optional[str] = Field(default=None, max_length=60)
@@ -24,6 +31,7 @@ class GrupoAcessoUpdate(BaseModel):
     permissoes: Optional[List[str]] = None   # se enviada, substitui todas as permissões do grupo
 
     _nome = field_validator("nome")(_nome_limpo)
+    _descricao = field_validator("descricao")(_descricao_limpa)
 
 class GrupoAcessoResponse(BaseModel):
     id: int

@@ -31,6 +31,7 @@ const ITENS_MENU = [
   { label: "Formas de Pagamento", href: "formas-pagamento.html", icone: "pagamento" },
   { label: "Financeiro",          href: "financeiro.html",       tambem: ["titulo-detalhe.html"], permissao: "financeiro.ver", icone: "financeiro" },
   { label: "Geladeiras",          href: "geladeiras.html",       tambem: ["geladeira-detalhe.html"], permissao: "geladeiras.ver", icone: "geladeira" },
+  { label: "Grupos de Acesso",    href: "grupos-acesso.html",    apenasAdmin: true, icone: "grupo" },
   { label: "Usuários",            href: "usuarios.html",         apenasAdmin: true, icone: "usuario" }
 ];
 
@@ -45,6 +46,7 @@ const ICONES_SVG = {
   geladeira: _svg('<rect x="2" y="3" width="20" height="8" rx="2"></rect><rect x="2" y="13" width="20" height="8" rx="2"></rect><line x1="6" y1="7" x2="6.01" y2="7"></line><line x1="6" y1="17" x2="6.01" y2="17"></line>'),
   financeiro: _svg('<polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline>'),
   pagamento: _svg('<rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line>'),
+  grupo:     _svg('<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><polyline points="9 12 11 14 15 10"></polyline>'),
   usuario:   _svg('<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle>')
 };
 
