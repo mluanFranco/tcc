@@ -292,6 +292,28 @@
   color: var(--erro);
 }
 
+.sidebar__senha {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  color: var(--neutro-secundario);
+  flex-shrink: 0;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.sidebar__senha svg {
+  width: 17px;
+  height: 17px;
+}
+
+.sidebar__senha:hover {
+  background: #EFF6FF;
+  color: var(--azul-acao);
+}
+
 /* Recolhida: avatar com o botão de sair embaixo */
 .sidebar.colapsado .sidebar__rodape {
   flex-direction: column;

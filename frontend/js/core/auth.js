@@ -149,6 +149,18 @@ async function login(email, senha) {
   return resposta;
 }
 
+// Troca de senha pelo próprio usuário. O backend devolve um token novo (as sessões antigas deixam de valer),
+// e guardá-lo aqui mantém esta aba logada. Erro de senha atual chega como ApiError 400 (não 401).
+async function alterarSenha(senhaAtual, senhaNova) {
+  const resposta = await apiFetch("/auth/senha", {
+    method: "PUT",
+    body: JSON.stringify({ senha_atual: senhaAtual, senha_nova: senhaNova })
+  });
+
+  setToken(resposta.access_token);
+  return resposta;
+}
+
 function logout() {
   clearToken();
   window.location.href = "login.html";

@@ -13,6 +13,7 @@ from core.permissoes import (
     codigos_desconhecidos, exigir_admin, normalizar, permissoes_efetivas, travar_admins_ativos,
 )
 from core import foto as fotos
+from datetime import datetime
 from typing import List, Optional
 import bcrypt
 
@@ -163,6 +164,7 @@ def atualizar_usuario(usuario_id: int, dados: UsuarioUpdate, db: Session = Depen
         usuario.nome = dados.nome
     if dados.senha is not None:
         usuario.senha_hash = bcrypt.hashpw(dados.senha.encode(), bcrypt.gensalt()).decode()
+        usuario.senha_alterada_em = datetime.utcnow()   # redefinição pelo administrador: as sessões abertas desse usuário caem
     if dados.admin is not None:
         usuario.admin = dados.admin
     if dados.ativo is not None:

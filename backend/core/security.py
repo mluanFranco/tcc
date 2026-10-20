@@ -6,6 +6,7 @@ from database import get_db
 from models import Usuario
 from dotenv import load_dotenv
 import os
+import calendar
 
 load_dotenv()
 
@@ -35,6 +36,14 @@ def get_current_user(
     usuario = db.query(Usuario).filter(Usuario.id == int(user_id)).first()
     if not usuario or not usuario.ativo:
         raise credentials_exception
+
+    # Senha trocada depois da emissão do token: a sessão antiga não vale mais.
+    # Sem "iat" (token de antes desta regra) só passa se a senha nunca foi trocada.
+    if usuario.senha_alterada_em is not None:
+        limite = calendar.timegm(usuario.senha_alterada_em.utctimetuple())
+        emitido_em = payload.get("iat")
+        if emitido_em is None or int(emitido_em) < limite:
+            raise credentials_exception
     return usuario
 
 def get_admin_user(current_user: Usuario = Depends(get_current_user)) -> Usuario:

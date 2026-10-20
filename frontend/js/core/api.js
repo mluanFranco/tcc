@@ -97,7 +97,7 @@ class ApiError extends Error {
 const ROTULOS_CAMPOS = {
   nome: "Nome", cpf_cnpj: "CPF/CNPJ", cnpj: "CNPJ", tipo: "Tipo", telefone: "Telefone", email: "E-mail",
   cep: "CEP", logradouro: "Logradouro", numero: "Número", complemento: "Complemento", bairro: "Bairro",
-  cidade: "Cidade", uf: "UF", ddd: "DDD", senha: "Senha", sigla: "Sigla", descricao: "Descrição",
+  cidade: "Cidade", uf: "UF", ddd: "DDD", senha: "Senha", senha_atual: "Senha atual", senha_nova: "Nova senha", sigla: "Sigla", descricao: "Descrição",
   categoria_id: "Categoria", subcategoria_id: "Subcategoria", unidade_medida_id: "Unidade de medida",
   preco_custo: "Preço de custo", porcentagem: "Margem", estoque_minimo: "Estoque mínimo",
   endereco_principal: "Endereço"

@@ -54,6 +54,7 @@ const ICONES_SVG = {
 
 const ICONE_TOGGLE = _svg('<rect x="3" y="3" width="18" height="18" rx="2"></rect><line x1="9" y1="3" x2="9" y2="21"></line>');
 const ICONE_LOGOUT = _svg('<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line>');
+const ICONE_CHAVE = _svg('<path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"></path>');
 const ICONE_GRUPO_SETA = _svg('<polyline points="6 9 12 15 18 9"></polyline>');
 
 function isSidebarColapsado() {
@@ -158,6 +159,7 @@ function renderizarSidebar() {
         <span class="sidebar__usuario">${_esc(nome)}</span>
         <span class="sidebar__papel">${_esc(papel)}</span>
       </span>
+      <button type="button" id="sidebar-senha" class="sidebar__senha" aria-label="Alterar senha" title="Alterar senha">${ICONE_CHAVE}</button>
       <button type="button" id="sidebar-logout" class="sidebar__logout" aria-label="Sair" title="Sair">${ICONE_LOGOUT}</button>
     </div>
   `;
@@ -167,6 +169,7 @@ function renderizarSidebar() {
     renderizarSidebar();
   });
   document.getElementById("sidebar-logout").addEventListener("click", logout);
+  document.getElementById("sidebar-senha").addEventListener("click", abrirTrocaDeSenha);
 
   document.querySelectorAll(".sidebar__grupo-cabecalho").forEach(botao => {
     botao.addEventListener("click", () => {
@@ -177,6 +180,35 @@ function renderizarSidebar() {
   });
 
   carregarFotoSidebar(perfil);
+}
+
+// A janela de troca de senha só é carregada (script + estilo) quando alguém clica na chave:
+// assim nenhuma página precisa de tag nova e quem nunca troca a senha não baixa nada extra.
+function _garantirJanelaDeSenha() {
+  if (typeof senhaModal !== "undefined") return Promise.resolve();
+  if (!document.getElementById("senha-modal-css")) {
+    const estilo = document.createElement("link");
+    estilo.id = "senha-modal-css";
+    estilo.rel = "stylesheet";
+    estilo.href = "../css/senha-modal.css";
+    document.head.appendChild(estilo);
+  }
+  return new Promise((resolve, reject) => {
+    const script = document.createElement("script");
+    script.src = "../js/components/senha-modal.js";
+    script.onload = resolve;
+    script.onerror = () => reject(new Error("senha-modal.js não carregou"));
+    document.head.appendChild(script);
+  });
+}
+
+async function abrirTrocaDeSenha() {
+  try {
+    await _garantirJanelaDeSenha();
+    senhaModal.abrir();
+  } catch {
+    toast.erro("Não foi possível abrir a troca de senha. Recarregue a página e tente de novo.");
+  }
 }
 
 // A foto exige o token no cabeçalho; <img src> não envia, então baixamos como blob.

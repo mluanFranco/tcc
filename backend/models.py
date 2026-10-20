@@ -20,6 +20,7 @@ class Usuario(Base):
     admin      = Column(Boolean, default=False)
     grupo_id   = Column(Integer, ForeignKey("grupo_acesso.id", name="fk_usuario_grupo_acesso"), index=True)   # um grupo por usuario (opcional)
     foto       = Column(String(80))   # nome do arquivo em uploads/usuarios/; nulo = sem foto
+    senha_alterada_em = Column(DateTime)   # UTC. Tokens emitidos antes desse instante deixam de valer (troca ou redefinição de senha)
     created_at = Column(DateTime, default=datetime.now)
     updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
 
