@@ -1,10 +1,12 @@
 // Lógica da tela de Produtos: cadastro/subcategoria/unidade dependentes,
 // tipo de produto (insumo/vendável) e cálculo somente-leitura de preço de venda.
+// Embalagem (opcional): ex.: base Litro + embalagem Pote com 5. Preços são da embalagem; estoque e mínimo, da unidade base.
 
 let produtosCache = [];
 let categoriasCache = [];
 let subcategoriasCacheGlobal = [];
-let unidadesCache = [];
+let unidadesCache = [];          // ativas: opções dos selects
+let siglasPorUnidade = {};       // todas (inclusive inativas): { id: "L" }
 let abaAtiva = "ativos";
 let produtoEmEdicaoId = null;
 
@@ -36,6 +38,17 @@ document.addEventListener("DOMContentLoaded", async () => {
     blocoPrecoVenda: document.getElementById("bloco-preco-venda"),
     campoPrecoCusto: document.getElementById("campo-preco-custo"),
     campoPrecoVenda: document.getElementById("campo-preco-venda"),
+    campoEmbalagem: document.getElementById("campo-embalagem"),
+    campoFator: document.getElementById("campo-fator"),
+    grupoEmbalagem: document.getElementById("grupo-embalagem"),
+    grupoFator: document.getElementById("grupo-fator"),
+    labelFator: document.getElementById("label-fator"),
+    labelPrecoCusto: document.getElementById("label-preco-custo"),
+    labelPrecoVenda: document.getElementById("label-preco-venda"),
+    labelEstoqueMinimo: document.getElementById("label-estoque-minimo"),
+    dicaCustoBase: document.getElementById("dica-custo-base"),
+    dicaEstoqueMinimo: document.getElementById("dica-estoque-minimo"),
+    campoEstoqueMinimo: document.getElementById("campo-estoque-minimo"),
     modalOverlay: document.getElementById("modal-produto"),
     modalTitulo: document.getElementById("modal-titulo"),
     modalFechar: document.getElementById("modal-fechar"),
@@ -74,19 +87,22 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   async function carregarListasDeApoio() {
     try {
-      [categoriasCache, unidadesCache, subcategoriasCacheGlobal] = await Promise.all([
+      let unidadesTodas;
+      [categoriasCache, unidadesTodas, subcategoriasCacheGlobal] = await Promise.all([
         categoriaService.listar(),
-        unidadeMedidaService.listar(),
+        unidadeMedidaService.listar({ incluirInativos: true }),
         subcategoriaService.listar()
       ]);
+      unidadesCache = unidadesTodas.filter(u => u.ativo);
+      siglasPorUnidade = Object.fromEntries(unidadesTodas.map(u => [u.id, u.sigla]));
 
       elementos.campoCategoria.innerHTML =
         `<option value="">Selecione...</option>` +
         categoriasCache.map(c => `<option value="${c.id}">${escaparHtml(c.nome)}</option>`).join("");
 
-      elementos.campoUnidade.innerHTML =
-        `<option value="">Selecione...</option>` +
-        unidadesCache.map(u => `<option value="${u.id}">${escaparHtml(u.nome)} (${escaparHtml(u.sigla)})</option>`).join("");
+      const opcoesUnidade = unidadesCache.map(u => `<option value="${u.id}">${escaparHtml(u.nome)} (${escaparHtml(u.sigla)})</option>`).join("");
+      elementos.campoUnidade.innerHTML = `<option value="">Selecione...</option>` + opcoesUnidade;
+      elementos.campoEmbalagem.innerHTML = `<option value="">Sem embalagem</option>` + opcoesUnidade;
     } catch (erro) {
       toast.erro("Não foi possível carregar categorias e unidades: " + erro.message);
     }
@@ -139,6 +155,39 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
     const precoVenda = custo + (custo * porcentagem / 100);
     elementos.campoPrecoVenda.value = numeroParaMoeda(precoVenda);
+  }
+
+  // ---------- Embalagem: rótulos e dicas acompanham o que está selecionado ----------
+
+  const siglaSelecionada = (select) => siglasPorUnidade[Number(select.value)] || "";
+
+  function atualizarEmbalagem() {
+    const base = siglaSelecionada(elementos.campoUnidade) || "unidade base";
+    const temEmb = Boolean(elementos.campoEmbalagem.value);
+    const emb = siglaSelecionada(elementos.campoEmbalagem) || "embalagem";
+    const fator = Number(elementos.campoFator.value);
+
+    elementos.campoFator.disabled = !temEmb;
+    if (!temEmb) {
+      elementos.campoFator.value = "";
+      elementos.grupoFator.classList.remove("invalido");
+    }
+    elementos.labelFator.textContent = temEmb ? `Quantos ${base} cabem em 1 ${emb} *` : "Quanto cabe em 1 embalagem";
+    elementos.labelPrecoCusto.textContent = temEmb ? `Preço de custo (por ${emb}) *` : "Preço de custo *";
+    elementos.labelPrecoVenda.textContent = temEmb ? `Preço de venda (por ${emb}, calculado)` : "Preço de venda (calculado)";
+    elementos.labelEstoqueMinimo.textContent = `Estoque mínimo (em ${base})`;
+
+    const custo = moedaParaNumero(elementos.campoPrecoCusto.value);
+    const valido = temEmb && fator > 0 && fator !== 1;
+    elementos.dicaCustoBase.hidden = !(valido && custo != null);
+    if (valido && custo != null) {
+      elementos.dicaCustoBase.textContent = `1 ${emb} = ${formatarNumero(fator)} ${base} · custo por ${base}: ${formatarMoeda(custo / fator)} (é o valor usado nas receitas e na produção).`;
+    }
+    const minimo = Number(elementos.campoEstoqueMinimo.value);
+    elementos.dicaEstoqueMinimo.hidden = !(valido && minimo > 0);
+    if (valido && minimo > 0) {
+      elementos.dicaEstoqueMinimo.textContent = `= ${formatarNumero(Math.round(minimo / fator * 1000) / 1000)} ${emb}`;
+    }
   }
 
   // ---------- Tabela ----------
@@ -226,10 +275,11 @@ document.addEventListener("DOMContentLoaded", async () => {
           <td class="celula-nome">${nome}</td>
           <td>${escaparHtml(nomeCategoria(produto.categoria_id))}</td>
           <td>${rotuloTipo(produto)}</td>
-          <td>${formatarMoeda(produto.preco_venda)}</td>
-          <td><span class="badge-estoque ${badgeEstoqueClasse}">${formatarNumero(produto.estoque_atual)}</span></td>
-          <td>${formatarNumero(produto.estoque_reservado ?? 0)}</td>
-          <td>${formatarNumero(produto.estoque_minimo)}</td>
+          <td>${formatarMoeda(produto.preco_venda)}${fatorEmbalagem(produto) !== 1 ? `<small class="celula-embalagem">por ${escaparHtml(siglaNegociacao(produto, siglasPorUnidade))}</small>` : ""}</td>
+          <td><span class="badge-estoque ${badgeEstoqueClasse}">${escaparHtml(textoEstoque(produto.estoque_atual, produto, siglasPorUnidade))}</span></td>
+          <td>${escaparHtml(textoEstoque(produto.estoque_reservado ?? 0, produto, siglasPorUnidade))}</td>
+          <td>${escaparHtml(textoEstoque(produto.estoque_disponivel ?? (produto.estoque_atual - (produto.estoque_reservado ?? 0)), produto, siglasPorUnidade))}</td>
+          <td>${escaparHtml(textoEstoque(produto.estoque_minimo, produto, siglasPorUnidade))}</td>
           <td><span class="badge-status ${badgeStatusClasse}">${produto.ativo ? "Ativo" : "Inativo"}</span></td>
           <td class="celula-acoes">
             <button class="botao-icone" data-acao="visualizar" data-id="${produto.id}" title="Visualizar" aria-label="Visualizar ${nome}">
@@ -249,17 +299,23 @@ document.addEventListener("DOMContentLoaded", async () => {
     document.getElementById("vis-categoria").textContent = nomeCategoria(produto.categoria_id);
     document.getElementById("vis-subcategoria").textContent = nomeSubcategoria(produto.subcategoria_id);
     document.getElementById("vis-unidade").textContent = nomeUnidade(produto.unidade_medida_id);
+    const comEmbalagem = fatorEmbalagem(produto) !== 1 && produto.embalagem_unidade_id;
+    const sufixoPreco = comEmbalagem ? ` por ${siglaNegociacao(produto, siglasPorUnidade)}` : "";
+    document.getElementById("vis-embalagem").textContent = comEmbalagem
+      ? `${siglasPorUnidade[produto.embalagem_unidade_id] || "—"} = ${formatarNumero(produto.fator_embalagem)} ${siglasPorUnidade[produto.unidade_medida_id] || ""}`
+      : "Sem embalagem";
     document.getElementById("vis-tipo").textContent = rotuloTipo(produto);
     document.getElementById("vis-descricao").textContent = produto.descricao ?? "—";
-    document.getElementById("vis-preco-custo").textContent = formatarMoeda(produto.preco_custo);
+    document.getElementById("vis-preco-custo").textContent = formatarMoeda(produto.preco_custo) + sufixoPreco
+      + (comEmbalagem ? ` (${formatarMoeda(produto.custo_unidade_base)} por ${siglasPorUnidade[produto.unidade_medida_id] || "unidade"})` : "");
     document.getElementById("vis-porcentagem").textContent =
       produto.porcentagem != null ? `${produto.porcentagem}%` : "—";
-    document.getElementById("vis-preco-venda").textContent = formatarMoeda(produto.preco_venda);
-    document.getElementById("vis-estoque-atual").textContent = formatarNumero(produto.estoque_atual);
-    document.getElementById("vis-estoque-minimo").textContent = formatarNumero(produto.estoque_minimo);
-    document.getElementById("vis-estoque-reservado").textContent = formatarNumero(produto.estoque_reservado ?? 0);
-    document.getElementById("vis-estoque-disponivel").textContent = formatarNumero(
-      produto.estoque_disponivel ?? (produto.estoque_atual - (produto.estoque_reservado ?? 0)));
+    document.getElementById("vis-preco-venda").textContent = produto.preco_venda != null ? formatarMoeda(produto.preco_venda) + sufixoPreco : "—";
+    document.getElementById("vis-estoque-atual").textContent = textoEstoque(produto.estoque_atual, produto, siglasPorUnidade);
+    document.getElementById("vis-estoque-minimo").textContent = textoEstoque(produto.estoque_minimo, produto, siglasPorUnidade);
+    document.getElementById("vis-estoque-reservado").textContent = textoEstoque(produto.estoque_reservado ?? 0, produto, siglasPorUnidade);
+    document.getElementById("vis-estoque-disponivel").textContent = textoEstoque(
+      produto.estoque_disponivel ?? (produto.estoque_atual - (produto.estoque_reservado ?? 0)), produto, siglasPorUnidade);
     document.getElementById("vis-criado-em").textContent = formatarData(produto.created_at);
 
     elementos.modalVisualizarOverlay.classList.add("aberto");
@@ -284,6 +340,10 @@ document.addEventListener("DOMContentLoaded", async () => {
       elementos.campoCategoria.value = produto.categoria_id;
       await atualizarSubcategoriasPorCategoria(produto.categoria_id, produto.subcategoria_id);
       elementos.campoUnidade.value = produto.unidade_medida_id;
+      if (produto.embalagem_unidade_id && fatorEmbalagem(produto) !== 1) {
+        elementos.campoEmbalagem.value = produto.embalagem_unidade_id;
+        elementos.campoFator.value = Number(produto.fator_embalagem);
+      }
       document.getElementById("campo-descricao").value = produto.descricao ?? "";
       elementos.campoEInsumo.checked = produto.e_insumo;
       elementos.campoEVendavel.checked = produto.e_vendavel;
@@ -298,6 +358,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       elementos.modalTitulo.textContent = "Novo produto";
       atualizarVisibilidadeCamposVenda();
     }
+    atualizarEmbalagem();
 
     elementos.modalOverlay.classList.add("aberto");
   }
@@ -335,6 +396,18 @@ document.addEventListener("DOMContentLoaded", async () => {
       valido = false;
     }
 
+    // Embalagem: unidade diferente da base e fator maior que zero e diferente de 1 (o backend valida de novo).
+    if (dados.embalagem_unidade_id) {
+      if (dados.embalagem_unidade_id === dados.unidade_medida_id) {
+        elementos.grupoEmbalagem.classList.add("invalido");
+        valido = false;
+      }
+      if (!(dados.fator_embalagem > 0) || dados.fator_embalagem === 1) {
+        elementos.grupoFator.classList.add("invalido");
+        valido = false;
+      }
+    }
+
     if (!dados.e_insumo && !dados.e_vendavel) {
       document.getElementById("erro-tipo-produto").style.display = "block";
       valido = false;
@@ -365,6 +438,8 @@ document.addEventListener("DOMContentLoaded", async () => {
       categoria_id: parseInt(elementos.campoCategoria.value, 10) || null,
       subcategoria_id: parseInt(elementos.campoSubcategoria.value, 10) || null,
       unidade_medida_id: parseInt(elementos.campoUnidade.value, 10) || null,
+      embalagem_unidade_id: parseInt(elementos.campoEmbalagem.value, 10) || null,
+      fator_embalagem: elementos.campoEmbalagem.value ? Number(elementos.campoFator.value) : null,
       e_insumo: elementos.campoEInsumo.checked,
       e_vendavel: eVendavel,
       preco_custo: moedaParaNumero(elementos.campoPrecoCusto.value),
@@ -486,6 +561,11 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
   elementos.campoEVendavel.addEventListener("change", atualizarVisibilidadeCamposVenda);
   elementos.campoPrecoCusto.addEventListener("input", atualizarPreviewPrecoVenda);
+  elementos.campoUnidade.addEventListener("change", atualizarEmbalagem);
+  elementos.campoEmbalagem.addEventListener("change", atualizarEmbalagem);
+  elementos.campoFator.addEventListener("input", atualizarEmbalagem);
+  elementos.campoPrecoCusto.addEventListener("input", atualizarEmbalagem);
+  elementos.campoEstoqueMinimo.addEventListener("input", atualizarEmbalagem);
   elementos.campoPorcentagem.addEventListener("input", atualizarPreviewPrecoVenda);
 
   await carregarListasDeApoio();

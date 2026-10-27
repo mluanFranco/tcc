@@ -97,5 +97,12 @@ Status da geladeira: `em_campo` | `manutencao` | `desativada`.
 ## Pendências conhecidas
 - Chave do Gemini foi exposta em conversa anterior: rotacionar.
 - `SECRET_KEY`/`ALGORITHM` não têm default (poderia haver checagem na inicialização); CORS está `*`; não há limite de tentativas de login.
-- Antes do commit final: README (troca de senha e auditoria da IA como entregues) e DER regenerado (`usuario.senha_alterada_em`).
-- Produto não tem múltiplo/embalagem (ex.: pote de 5 L): design em discussão.
+- DER: o SVG é regenerado por `python backend/scripts/gerar_der.py`; o PNG exige `playwright` instalado localmente.
+
+## Embalagem do produto (fator de conversão)
+- `produto.unidade_medida_id` = unidade BASE (estoque, estoque mínimo, receitas). Opcional: `embalagem_unidade_id` + `fator_embalagem` (sem embalagem, fator = 1; com embalagem, fator ≠ 1 e unidade ≠ base).
+- Itens de pedido de venda, pedido de compra e cotação guardam `quantidade` NA EMBALAGEM + cópia do `fator` do momento.
+- Toda movimentação de estoque converte com `core.estoque.quantidade_base(quantidade, fator)`; nunca multiplique à mão em outro lugar.
+- `preco_custo`/`preco_venda` são por embalagem; receitas e produção usam `produto.custo_unidade_base`.
+- Aprovação de cotação é bloqueada se o fator do produto mudou desde a cotação. Rankings trabalham na unidade base.
+- Frontend: `fatorEmbalagem`, `siglaNegociacao`, `textoQuantidadeItem` e `textoEstoque` em `js/core/formatadores.js`.

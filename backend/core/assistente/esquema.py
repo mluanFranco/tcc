@@ -33,11 +33,16 @@ _VENDA_STATUS = "aberto (reserva estoque), confirmado (é venda de fato, baixa e
 
 VIEWS: Dict[str, ViewInfo] = {v.nome: v for v in (
     ViewInfo("v_produtos", None,
-             "Produtos e insumos, com estoque. Estoque baixo = estoque_atual <= estoque_minimo (coluna abaixo_do_minimo).", (
+             "Produtos e insumos, com estoque. Estoque baixo = estoque_atual <= estoque_minimo (coluna abaixo_do_minimo). "
+             "Estoques ficam SEMPRE na unidade base (coluna unidade). Produto com embalagem (ex.: Pote de 5 L) é comprado e "
+             "vendido na embalagem: 1 embalagem = fator_embalagem unidades base, e os preços são da embalagem.", (
         _c("id", "inteiro"), _c("nome", "texto"), _c("categoria", "texto"), _c("subcategoria", "texto"),
-        _c("unidade", "texto", "sigla da unidade de medida, ex.: kg, un"),
+        _c("unidade", "texto", "sigla da unidade base (estoque e receitas), ex.: kg, L, un"),
+        _c("embalagem", "texto", "sigla da embalagem de compra/venda, ex.: Pote; nulo = sem embalagem"),
+        _c("fator_embalagem", "decimal", "quantas unidades base cabem em 1 embalagem; 1 se não tem embalagem"),
         _c("e_insumo", "booleano", "1 = matéria-prima usada na produção"), _c("e_vendavel", "booleano", "1 = pode ser vendido"),
-        _c("preco_custo", "decimal"), _c("preco_venda", "decimal", "pode ser nulo em insumos"),
+        _c("preco_custo", "decimal", "da embalagem (custo da unidade base = preco_custo / fator_embalagem)"),
+        _c("preco_venda", "decimal", "da embalagem; pode ser nulo em insumos"),
         _c("estoque_atual", "decimal"), _c("estoque_reservado", "decimal", "separado por vendas em aberto"),
         _c("estoque_disponivel", "decimal", "estoque_atual - estoque_reservado"), _c("estoque_minimo", "decimal"),
         _c("abaixo_do_minimo", "booleano", "1 = estoque_atual <= estoque_minimo"), _c("ativo", "booleano", "0 = produto desativado"),
@@ -69,13 +74,17 @@ VIEWS: Dict[str, ViewInfo] = {v.nome: v for v in (
              "com status 'confirmado', por confirmado_em.", (
         _c("pedido_venda_id", "inteiro"), _c("data_pedido", "data_hora"), _c("confirmado_em", "data_hora"), _c("status", "texto"),
         _c("cliente_id", "inteiro"), _c("cliente", "texto"), _c("produto_id", "inteiro"), _c("produto", "texto"),
-        _c("categoria", "texto"), _c("quantidade", "decimal"), _c("preco_unitario", "decimal"),
+        _c("categoria", "texto"), _c("quantidade", "decimal", "na embalagem do produto (ex.: potes)"),
+        _c("fator", "decimal", "unidades base por embalagem neste item"),
+        _c("quantidade_base", "decimal", "quantidade x fator, na unidade base (some esta para totais de volume/peso)"),
+        _c("preco_unitario", "decimal", "da embalagem"),
         _c("desconto", "decimal", "em reais, não em percentual"), _c("subtotal", "decimal", "quantidade x preço - desconto"),
     )),
     ViewInfo("v_venda_margem", "relatorios", "Margem de lucro por item vendido. Só vendas confirmadas. O custo é o do produto "
              "no momento da confirmação. Margem = subtotal - custo_total. Exige a permissão de relatórios.", (
         _c("pedido_venda_id", "inteiro"), _c("confirmado_em", "data_hora"), _c("cliente", "texto"), _c("produto_id", "inteiro"),
-        _c("produto", "texto"), _c("categoria", "texto"), _c("quantidade", "decimal"), _c("subtotal", "decimal", "receita do item"),
+        _c("produto", "texto"), _c("categoria", "texto"), _c("quantidade", "decimal", "na embalagem do produto"),
+        _c("subtotal", "decimal", "receita do item"),
         _c("custo_unitario", "decimal"), _c("custo_total", "decimal", "quantidade x custo_unitario"),
         _c("margem", "decimal", "subtotal - custo_total"),
     )),
@@ -88,13 +97,18 @@ VIEWS: Dict[str, ViewInfo] = {v.nome: v for v in (
     ViewInfo("v_compra_itens", "compras", "Itens dos pedidos de compra, com o que já foi recebido.", (
         _c("pedido_compra_id", "inteiro"), _c("data_pedido", "data_hora"), _c("status", "texto"),
         _c("fornecedor_id", "inteiro"), _c("fornecedor", "texto"), _c("produto_id", "inteiro"), _c("produto", "texto"),
-        _c("quantidade", "decimal"), _c("quantidade_recebida", "decimal"), _c("preco_unitario", "decimal"), _c("subtotal", "decimal"),
+        _c("quantidade", "decimal", "na embalagem do produto"), _c("quantidade_recebida", "decimal", "na embalagem"),
+        _c("fator", "decimal", "unidades base por embalagem neste item"),
+        _c("quantidade_base", "decimal", "quantidade x fator, na unidade base"),
+        _c("preco_unitario", "decimal", "da embalagem"), _c("subtotal", "decimal"),
     )),
     ViewInfo("v_cotacao_itens", "cotacoes", "Itens de cotações de compra (parte = fornecedor) e de venda (parte = cliente). "
              "Status: rascunho, enviada, recebida, aprovada ou recusada.", (
         _c("cotacao_id", "inteiro"), _c("tipo", "texto", "compra ou venda"), _c("data_cotacao", "data_hora"), _c("validade", "data"),
         _c("status", "texto"), _c("parte", "texto", "fornecedor (compra) ou cliente (venda)"), _c("produto_id", "inteiro"),
-        _c("produto", "texto"), _c("quantidade", "decimal"), _c("preco_unitario", "decimal", "nulo se o fornecedor ainda não respondeu"),
+        _c("produto", "texto"), _c("quantidade", "decimal", "na embalagem do produto"),
+        _c("fator", "decimal", "unidades base por embalagem neste item"),
+        _c("preco_unitario", "decimal", "da embalagem; nulo se o fornecedor ainda não respondeu"),
         _c("desconto", "decimal"), _c("subtotal", "decimal", "nulo se não houver preço"),
     )),
     ViewInfo("v_receitas", "producao", "Receitas de produção: uma linha por insumo de cada receita.", (

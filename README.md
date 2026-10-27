@@ -82,7 +82,7 @@ O modelo relacional é composto por **32 tabelas**, distribuídas nos domínios 
 
 Além das tabelas, o banco tem **15 views `v_*`** (somente leitura), que expõem os dados já com as regras de negócio aplicadas e **sem dados pessoais**. Elas são a única coisa que o Assistente de IA consegue consultar.
 
-> O diagrama abaixo mostra as **32 tabelas** e os **56 relacionamentos** (chaves estrangeiras) do banco. Ele é gerado direto de `backend/models.py` pelo script `backend/scripts/gerar_der.py`, então reflete o schema real. A cor do cabeçalho indica o módulo; a notação é pé de galinha (`||` um, `o|` zero ou um, `o<` muitos).
+> O diagrama abaixo mostra as **32 tabelas** e os **57 relacionamentos** (chaves estrangeiras) do banco. Ele é gerado direto de `backend/models.py` pelo script `backend/scripts/gerar_der.py`, então reflete o schema real. A cor do cabeçalho indica o módulo; a notação é pé de galinha (`||` um, `o|` zero ou um, `o<` muitos).
 
 ![Diagrama Entidade-Relacionamento](frontend/assets/images/der_nova_sorvetes.png)
 
@@ -91,9 +91,11 @@ Além das tabelas, o banco tem **15 views `v_*`** (somente leitura), que expõem
 | Campo | Descrição |
 |---|---|
 | `id` | Chave primária |
-| `nome`, `descricao`, `categoria_id`, `subcategoria_id`, `unidade_medida_id` | Identificação e categorização |
+| `nome`, `descricao`, `categoria_id`, `subcategoria_id` | Identificação e categorização |
+| `unidade_medida_id` | Unidade **base**, em que ficam o estoque, o estoque mínimo e as receitas (ex.: L) |
+| `embalagem_unidade_id`, `fator_embalagem` | Embalagem opcional em que o produto é comprado e vendido, e quantas unidades base cabem nela (ex.: Pote = 5 L). Sem embalagem, o fator é 1 |
 | `e_insumo`, `e_vendavel` | Define se entra em receitas (insumo) e/ou pode ser vendido |
-| `preco_custo`, `porcentagem`, `preco_venda` | Precificação |
+| `preco_custo`, `porcentagem`, `preco_venda` | Precificação (por embalagem, quando houver) |
 | `estoque_atual` | Quantidade física real, atualizada pelos pedidos e pela produção (até 3 casas decimais) |
 | `estoque_reservado` | Quantidade comprometida em pedidos de venda ainda não confirmados |
 | `estoque_minimo` | Base do alerta de estoque baixo |
@@ -170,6 +172,16 @@ Sem controle de concorrência, dois pedidos abertos ao mesmo tempo para o mesmo 
 
 As linhas de produto são travadas (`SELECT ... FOR UPDATE`) durante a operação, então duas requisições simultâneas nunca reservam o mesmo saldo.
 
+### Embalagem e fator de conversão
+
+Um produto pode ser negociado numa embalagem diferente da unidade em que é controlado, como um pote de 5 L ou um saco de 10 kg. O cadastro guarda a unidade base (L), a embalagem (Pote) e o fator (5):
+
+- **Pedidos e cotações** são digitados na embalagem (2 Pote) e aceitam fração (0,5 Pote). Cada item grava uma cópia do fator do momento (`fator`), então mudar o cadastro depois não altera pedidos antigos;
+- **Estoque, estoque mínimo e receitas** ficam sempre na unidade base. Toda entrada e saída converte por `quantidade × fator` em um único ponto (`core/estoque.py → quantidade_base`): comprar 4 potes soma 20 L ao estoque;
+- **Preços** de custo e de venda são por embalagem. Receitas e produção usam o custo da unidade base (`preco_custo ÷ fator`), e o custo congelado na venda é calculado com o fator do item;
+- **Cotação aprovada** é bloqueada se a embalagem do produto mudou depois que ela foi feita, para não gerar um pedido com quantidades erradas. O comparativo de fornecedores compara pelo preço na unidade base;
+- Os relatórios de ranking mostram quantidades e preços na unidade base, e os PDFs mostram a embalagem do item (ex.: "Pote (5 L)").
+
 ### Recebimento parcial e acumulativo em pedidos de compra
 
 Cada item rastreia `quantidade` (pedida) separadamente de `quantidade_recebida` (acumulado). O endpoint `POST /pedidos-compra/{id}/receber` pode ser chamado várias vezes, sempre com a quantidade **daquela entrega**. O pedido fica `pendente` até todos os itens completarem a quantidade pedida e então vira `recebido` automaticamente. O cancelamento estorna do estoque exatamente o que foi recebido, com validação para não deixar o estoque negativo. As contas a pagar nascem junto com o pedido.
@@ -209,12 +221,13 @@ Também existem o **fluxo de caixa realizado** (regime de caixa, pelas baixas e 
 - **Cadastros só tem `editar`:** a leitura dos cadastros é liberada a qualquer usuário logado, porque as telas de venda, compra e produção precisam listar produtos, clientes e fornecedores.
 - **Permissão efetiva** = permissões do grupo (se ativo) + permissões extras do usuário. O administrador tem tudo, independentemente de grupo.
 - **Grupos padrão** criados pelas migrations: *Gerência* (tudo), *Operacional* (operação, sem financeiro e relatórios) e *Consulta* (somente leitura operacional).
+- Cada usuário pode **trocar a própria senha** (pedindo a senha atual); a troca encerra as sessões abertas em outros dispositivos.
 - Proteções: um administrador não desativa a própria conta nem remove a própria permissão de administrador; o sistema nunca fica sem administrador ativo; um grupo com usuários ativos não pode ser desativado.
 - A proteção é aplicada em **dois níveis**: no frontend (redirecionamento e itens do menu) e no backend (cada router exige a permissão do seu módulo: `401` = não autenticado, `403` = sem permissão).
 
 ### Soft delete e auditoria
 
-Cadastros (produtos, categorias, subcategorias, unidades de medida, clientes, fornecedores, formas de pagamento), receitas, categorias financeiras, usuários e grupos nunca são removidos: são marcados como `ativo = False`, preservando o histórico. Cada módulo expõe a consulta de inativos (`/inativos`) e a reativação, por `PATCH .../reativar` ou pela própria edição (`ativo: true`). Cotações e registros de manutenção, por não estarem ligados a transações efetivadas, permitem exclusão real. O Assistente de IA registra **toda** chamada em `assistente_log`.
+Cadastros (produtos, categorias, subcategorias, unidades de medida, clientes, fornecedores, formas de pagamento), receitas, categorias financeiras, usuários e grupos nunca são removidos: são marcados como `ativo = False`, preservando o histórico. Cada módulo expõe a consulta de inativos (`/inativos`) e a reativação, por `PATCH .../reativar` ou pela própria edição (`ativo: true`). Cotações e registros de manutenção, por não estarem ligados a transações efetivadas, permitem exclusão real. O Assistente de IA registra **toda** chamada em `assistente_log`, consultável pelos administradores na tela de auditoria do assistente.
 
 ---
 
@@ -289,37 +302,174 @@ sist_gest_est_mon/
 
 ## Como Executar com Docker (recomendado)
 
-Sobe o sistema completo (MySQL, API e frontend) com um comando, sem instalar Python nem MySQL.
+Este passo a passo parte de um computador **sem nada instalado**. Os comandos são para o **Windows** (PowerShell); quando o comando for diferente no Linux ou no Mac, ele aparece ao lado como comentário.
 
-**Pré-requisito:** [Docker Desktop](https://www.docker.com/products/docker-desktop/) em execução (no Windows, com WSL 2).
+O sistema roda inteiro dentro do Docker: banco de dados (MySQL), API (FastAPI) e telas (Nginx). Você **não** precisa instalar o MySQL. O Python e o ambiente virtual servem para o editor reconhecer o código, gerar a chave secreta do `.env` e rodar os scripts auxiliares (como o que gera o diagrama do banco).
 
-### 1. Configurar o `.env`
+| O que instalar | Para quê |
+|---|---|
+| Git | Baixar (clonar) o projeto e receber as atualizações |
+| Python 3.12 | Ambiente virtual, chave secreta e scripts auxiliares |
+| Docker Desktop | Rodar o sistema (banco, API e telas) |
 
-Na raiz do repositório:
+> **Como abrir o PowerShell:** aperte a tecla **Windows**, digite `PowerShell` e tecle Enter. Depois de instalar um programa, **feche e abra o PowerShell de novo** para ele reconhecer os comandos novos.
+
+### Passo 1: Instalar o Git
+
+1. Baixe o instalador em [git-scm.com/downloads](https://git-scm.com/downloads) e instale com as opções padrão (é só ir clicando em *Next*).
+   Ou, pelo PowerShell: `winget install --id Git.Git -e`
+2. Confira a instalação:
 
 ```powershell
-Copy-Item .env.example .env       # Linux/Mac: cp .env.example .env
+git --version        # deve mostrar algo como: git version 2.x
 ```
 
-Abra o `.env` e troque, no mínimo: `DB_PASSWORD`, `MYSQL_ROOT_PASSWORD`, `SECRET_KEY`, `ADMIN_EMAIL` e `ADMIN_SENHA` (de 8 a 72 caracteres). Use senhas apenas com letras e números, sem `$ % # " '` ou espaços. `DB_USER` **não** pode ser `root`. O arquivo `.env` nunca é versionado.
+> Linux (Ubuntu/Debian): `sudo apt install git` · Mac: `xcode-select --install`
 
-### 2. Subir
+### Passo 2: Instalar o Python
+
+1. Baixe o **Python 3.12** em [python.org/downloads](https://www.python.org/downloads/).
+2. Na primeira tela do instalador, **marque a opção "Add python.exe to PATH"** e clique em *Install Now*.
+   Ou, pelo PowerShell: `winget install --id Python.Python.3.12 -e`
+3. Confira a instalação:
+
+```powershell
+python --version     # deve mostrar: Python 3.12.x
+pip --version
+```
+
+> Se o comando `python` abrir a Microsoft Store, desative o atalho em **Configurações → Aplicativos → Configurações avançadas de aplicativos → Aliases de execução de aplicativo** (desligue "python.exe" e "python3.exe") e abra o PowerShell de novo.
+>
+> Linux: `sudo apt install python3 python3-venv python3-pip` · Mac: instalador do python.org (use `python3` e `pip3` nos comandos)
+
+### Passo 3: Instalar o Docker Desktop
+
+1. **Só no Windows:** o Docker usa o WSL 2. Abra o PowerShell **como administrador** (botão direito → *Executar como administrador*), rode o comando abaixo e **reinicie o computador**:
+
+```powershell
+wsl --install
+```
+
+2. Baixe e instale o [Docker Desktop](https://www.docker.com/products/docker-desktop/) com as opções padrão (deixe marcado *Use WSL 2*). Reinicie se o instalador pedir.
+3. Abra o **Docker Desktop** e espere aparecer *Engine running* no canto inferior esquerdo. Ele precisa estar aberto sempre que for usar o sistema.
+4. Confira a instalação:
+
+```powershell
+docker --version
+docker compose version
+```
+
+> Linux: siga o guia oficial do [Docker Engine](https://docs.docker.com/engine/install/) (o plugin `docker compose` vem junto) · Mac: instale o Docker Desktop para Mac (Apple Silicon ou Intel, conforme o seu processador).
+
+### Passo 4: Clonar o repositório
+
+Escolha a pasta onde o projeto vai ficar (por exemplo, `Documentos`) e baixe o código:
+
+```powershell
+cd $HOME\Documents                                   # Linux/Mac: cd ~/Documents
+git clone https://github.com/mluanFranco/tcc.git
+cd tcc
+```
+
+A partir daqui, **todos os comandos são rodados dentro da pasta `tcc`** (a raiz do repositório).
+
+### Passo 5: Criar o ambiente virtual e instalar as dependências
+
+O ambiente virtual (`venv`) é uma pasta com um Python só deste projeto, para as bibliotecas dele não se misturarem com as de outros programas.
+
+```powershell
+python -m venv venv                                  # cria a pasta venv na raiz do projeto
+.\venv\Scripts\Activate.ps1                          # ativa (Linux/Mac: source venv/bin/activate)
+python -m pip install --upgrade pip
+pip install -r backend/requirements.txt              # instala as bibliotecas do backend
+```
+
+Com o ambiente ativo, o começo da linha do PowerShell mostra `(venv)`. Para desativar, digite `deactivate`. Sempre que abrir um PowerShell novo para usar os scripts do projeto, ative de novo com `.\venv\Scripts\Activate.ps1`.
+
+> Se aparecer *"a execução de scripts foi desabilitada neste sistema"*, libere os scripts para o seu usuário e tente ativar de novo:
+> `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned`
+>
+> No VS Code, escolha esse Python em **Ctrl+Shift+P → Python: Select Interpreter → `.\venv\Scripts\python.exe`**.
+
+### Passo 6: Configurar o `.env`
+
+O `.env` guarda as senhas e configurações do sistema. Ele **nunca** vai para o Git: cada computador tem o seu.
+
+1. Crie o arquivo a partir do modelo:
+
+```powershell
+Copy-Item .env.example .env                          # Linux/Mac: cp .env.example .env
+```
+
+2. Gere uma chave secreta (usada para assinar os logins) e copie o resultado:
+
+```powershell
+python -c "import secrets; print(secrets.token_hex(32))"
+```
+
+3. Abra o `.env` para editar:
+
+```powershell
+notepad .env                                         # ou: code .env  (VS Code)
+```
+
+4. Troque, no mínimo, estes valores e salve o arquivo:
+
+| Variável | O que colocar |
+|---|---|
+| `DB_PASSWORD` | Senha do usuário do banco usado pelo sistema |
+| `MYSQL_ROOT_PASSWORD` | Senha do administrador do MySQL |
+| `SECRET_KEY` | A chave gerada no item 2 |
+| `ADMIN_EMAIL` | E-mail do primeiro usuário administrador (é o seu login) |
+| `ADMIN_SENHA` | Senha desse administrador (de 8 a 72 caracteres) |
+| `IA_DB_PASSWORD` | Senha do usuário somente leitura do assistente de IA |
+
+**Regras importantes:**
+- Use senhas **só com letras e números**, sem `$ % # " ' \` ou espaços;
+- `DB_USER` **não** pode ser `root`;
+- As senhas do banco são gravadas na **primeira** vez que o sistema sobe. Para trocá-las depois, veja [Solução de Problemas](#solução-de-problemas);
+- O assistente de IA é opcional e começa desligado. Para ligar, preencha `GEMINI_API_KEY` e mude `IA_HABILITADO=true` (veja [Assistente de IA](#assistente-de-ia)).
+
+As demais variáveis estão explicadas em [Variáveis de Ambiente](#variáveis-de-ambiente).
+
+### Passo 7: Subir o sistema
+
+Com o Docker Desktop aberto, na raiz do projeto:
 
 ```powershell
 docker compose up -d --build
 ```
 
-Na primeira vez as imagens são baixadas e construídas (alguns minutos). Ao iniciar, o backend espera o banco, aplica as migrations, cria o usuário MySQL somente leitura do assistente de IA e o administrador inicial (só se o banco não tiver nenhum usuário). Acompanhe com `docker compose logs -f backend`.
+Na primeira vez o Docker baixa as imagens e monta o sistema, o que leva alguns minutos. Ao iniciar, o backend espera o banco ficar pronto, cria as tabelas (migrations), cria o usuário somente leitura do assistente de IA e o administrador inicial (só se o banco ainda não tiver nenhum usuário).
+
+Confira se os três serviços estão de pé:
+
+```powershell
+docker compose ps                                    # db e backend devem aparecer como "healthy"
+docker compose logs -f backend                       # acompanha o log (Ctrl+C sai do log; o sistema continua rodando)
+```
+
+### Passo 8: Acessar o sistema
 
 | Serviço | Endereço |
 |---|---|
-| Sistema (frontend) | http://localhost:8080 (redireciona para o login) |
+| Sistema (telas) | http://localhost:8080 (abre o login) |
 | API e documentação (Swagger) | http://localhost:8000/docs |
-| MySQL (opcional, DBeaver etc.) | `localhost:3307`, com o `DB_USER` e `DB_PASSWORD` do `.env` |
+| MySQL (opcional, para DBeaver, Workbench etc.) | `localhost:3307`, com o `DB_USER` e o `DB_PASSWORD` do `.env` |
 
-Entre com o `ADMIN_EMAIL` e a `ADMIN_SENHA` definidos no `.env`.
+Entre com o `ADMIN_EMAIL` e a `ADMIN_SENHA` que você definiu no `.env`. Depois, cadastre os demais usuários pela tela **Usuários**.
 
-### 3. Comandos do dia a dia
+### Atualizar para a versão mais nova do repositório
+
+```powershell
+git pull                                             # baixa as mudanças
+docker compose up -d --build                         # reconstrói e sobe (as migrations novas são aplicadas sozinhas)
+pip install -r backend/requirements.txt              # só se o requirements.txt mudou (com o venv ativo)
+```
+
+Os dados do banco e as fotos ficam guardados nos volumes do Docker e **não** se perdem ao atualizar.
+
+### Comandos do dia a dia
 
 ```powershell
 docker compose ps                       # situação dos containers
@@ -333,7 +483,7 @@ docker compose up -d --build            # reconstrói as imagens após mudar o c
 
 Os containers usam `restart: unless-stopped`: voltam sozinhos quando o Docker Desktop abre, a não ser que você os tenha parado. Também é possível iniciar e parar o grupo `nova-sorvetes` pela aba **Containers** do Docker Desktop (os botões ▶ e ■).
 
-### 4. Modo desenvolvimento (código espelhado e recarga automática)
+### Modo desenvolvimento (código espelhado e recarga automática)
 
 ```powershell
 docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
@@ -348,7 +498,7 @@ docker compose exec backend alembic upgrade head
 
 > No modo desenvolvimento, se existir um `backend/.env` local, ele também é lido dentro do container; as variáveis do `.env` da raiz têm prioridade.
 
-### 5. Backup e restauração do banco
+### Backup e restauração do banco
 
 ```powershell
 # Backup (gera backups/backup_AAAA-MM-DD.sql; arquivos backup_*.sql não são versionados)
@@ -369,8 +519,8 @@ docker compose restart backend
 
 ```bash
 # 1. Clonar o repositório
-git clone <url-do-repositorio>
-cd sist_gest_est_mon/backend
+git clone https://github.com/mluanFranco/tcc.git
+cd tcc/backend
 
 # 2. Criar e ativar o ambiente virtual
 python -m venv venv
@@ -458,6 +608,9 @@ Cada chamada é auditada em `assistente_log` (consulta pelo endpoint `GET /assis
 
 | Sintoma | Causa provável e solução |
 |---|---|
+| `docker` não é reconhecido como comando | O Docker Desktop não foi instalado ou o PowerShell foi aberto antes da instalação: feche e abra o PowerShell |
+| `error during connect` / `cannot find ... dockerDesktopLinuxEngine` | O Docker Desktop está fechado. Abra-o e espere *Engine running* |
+| Docker Desktop pede para atualizar o WSL | Rode `wsl --update` no PowerShell como administrador e reinicie o computador |
 | `env file ... .env not found` | Falta criar o `.env`: `Copy-Item .env.example .env` |
 | `required variable ... is missing a value` | Variável obrigatória vazia no `.env` (`DB_NAME`, `DB_USER`, `DB_PASSWORD` ou `MYSQL_ROOT_PASSWORD`) |
 | `port is already allocated` | Outro programa usa a porta (8080, 8000 ou 3307). Pare-o ou, para o MySQL, apague a linha `"3307:3306"` do compose |
@@ -474,11 +627,11 @@ Cada chamada é auditada em `assistente_log` (consulta pelo endpoint `GET /assis
 
 ### Concluído
 
-Backend completo com regras de negócio e controle de acesso por grupos; frontend redesenhado tela a tela (login, cadastros, pedidos, cotações, produção, formas de pagamento, financeiro, geladeiras, grupos de acesso, assistente de IA, usuários e dashboard); assistente de IA com avaliação; empacotamento em Docker; diagrama ER atualizado e gerado a partir dos modelos.
+Backend completo com regras de negócio e controle de acesso por grupos; frontend redesenhado tela a tela (login, cadastros, pedidos, cotações, produção, formas de pagamento, financeiro, geladeiras, grupos de acesso, assistente de IA, usuários e dashboard); troca de senha pelo próprio usuário; tela de auditoria do assistente de IA; embalagem com fator de conversão nos produtos; assistente de IA com avaliação; empacotamento em Docker; diagrama ER atualizado e gerado a partir dos modelos.
 
 ### Evoluções futuras
 
-Acesso via aplicativo móvel, monitoramento de temperatura das geladeiras por sensores IoT, troca de senha pelo próprio usuário, tela de auditoria do assistente de IA para administradores (o endpoint já existe) e restrição do CORS aos endereços do sistema.
+Acesso via aplicativo móvel, monitoramento de temperatura das geladeiras por sensores IoT e restrição do CORS aos endereços do sistema.
 
 ---
 

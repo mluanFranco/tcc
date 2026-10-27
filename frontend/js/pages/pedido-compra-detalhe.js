@@ -57,14 +57,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   const milesimos = (n) => Math.round((Number(n) || 0) * 1000);
   const restanteMil = (item) => Math.max(0, milesimos(item.quantidade) - milesimos(item.quantidade_recebida));
   const nomeDoProduto = (item) => produtosPorId[item.produto_id]?.nome ?? `Produto #${item.produto_id}`;
-  const siglaDoProduto = (item) => {
-    const produto = produtosPorId[item.produto_id];
-    return produto ? (siglasPorUnidade[produto.unidade_medida_id] || "") : "";
-  };
-  const comSigla = (valor, item) => {
-    const sigla = siglaDoProduto(item);
-    return `${formatarNumero(valor)}${sigla ? " " + sigla : ""}`;
-  };
+  // Quantidades do item estão na embalagem do produto; o fator gravado no item converte para a unidade base.
+  const comSigla = (valor, item) => textoQuantidadeItem(valor, item.fator, produtosPorId[item.produto_id], siglasPorUnidade);
 
   function mostrarErroDePagina(mensagem) {
     el.estadoPagina.textContent = mensagem;

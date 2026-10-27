@@ -418,6 +418,20 @@
   display: block;
 }
 
+/* Texto de ajuda abaixo de um campo ou grupo de campos */
+.dica-campo {
+  font-size: 12.5px;
+  line-height: 1.4;
+  color: var(--neutro-secundario);
+}
+
+/* "por Pote" abaixo do preço na tabela de produtos */
+.celula-embalagem {
+  display: block;
+  font-size: 12px;
+  color: var(--neutro-secundario);
+}
+
 .modal__rodape {
   display: flex;
   justify-content: flex-end;

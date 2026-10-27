@@ -80,7 +80,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     el.itensCorpo.innerHTML = cotacao.itens.slice().sort((a, b) => a.id - b.id).map(item => {
       const produto = produtosPorId[item.produto_id];
       const nome = produto ? produto.nome : `Produto #${item.produto_id}`;
-      const sigla = produto ? (siglasPorUnidade[produto.unidade_medida_id] || "") : "";
       const semPreco = item.preco_unitario === null || item.preco_unitario === undefined;
       const bruto = Number(item.quantidade) * Number(item.preco_unitario || 0);
       const pct = bruto > 0 ? Math.round((Number(item.desconto) / bruto) * 10000) / 100 : 0;
@@ -89,7 +88,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       return `
         <tr>
           <td>${escaparHtml(nome)}${obs}</td>
-          <td class="num">${formatarNumero(item.quantidade)}${sigla ? " " + escaparHtml(sigla) : ""}</td>
+          <td class="num">${escaparHtml(textoQuantidadeItem(item.quantidade, item.fator, produto, siglasPorUnidade))}</td>
           <td class="num${semPreco ? " celula-sem-valor" : ""}">${semPreco ? "A definir" : formatarMoeda(item.preco_unitario)}</td>
           ${venda ? `<td class="num">${desconto}</td>` : ""}
           <td class="num subtotal${semPreco ? " celula-sem-valor" : ""}">${semPreco ? "—" : formatarMoeda(item.subtotal)}</td>

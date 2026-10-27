@@ -1,7 +1,8 @@
 // Novo Pedido de Venda.
 // Regras que espelham o backend (core/pedidos.py):
 //  - só produtos ativos e vendáveis (inclui os que também são insumo);
-//  - a quantidade não pode passar do estoque disponível (atual − reservado);
+//  - a quantidade é digitada na embalagem do produto (ex.: 2 Pote) e, convertida para a unidade base
+//    (quantidade × fator), não pode passar do estoque disponível (atual − reservado);
 //  - o desconto é guardado em reais; na tela é digitado em % e convertido ao enviar;
 //  - a forma de pagamento é obrigatória (é dela que saem as parcelas do contas a receber);
 //  - o endereço de entrega, se informado, precisa ser um endereço ativo do próprio cliente.
@@ -59,7 +60,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   const disponivelDe = (produto) => Number(produto?.estoque_disponivel ?? 0);
-  const siglaDe = (produto) => siglasPorUnidade[produto?.unidade_medida_id] || "";
+  // A quantidade é digitada na embalagem do produto (ex.: Pote); o estoque está na unidade base (ex.: L).
+  const qtdNaBase = (produto, qtd) => Math.round(Number(qtd) * fatorEmbalagem(produto) * 1000) / 1000;
+  const excedeEstoque = (produto, qtd) => produto && qtdNaBase(produto, qtd) > disponivelDe(produto);
   const itemPorUid = (uid) => itens.find(i => i.uid === Number(uid));
 
   // ---------- Cliente e endereço de entrega ----------
@@ -175,8 +178,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       const semEstoque = disp <= 0;
       const ehSelecionado = String(p.id) === String(selecionado);
       const bloquear = !ehSelecionado && (semEstoque || usadosPorOutros.has(p.id));
-      const sigla = siglaDe(p);
-      const detalhe = semEstoque ? "sem estoque" : `disp. ${formatarNumero(disp)}${sigla ? " " + sigla : ""}`;
+      const detalhe = semEstoque ? "sem estoque" : `disp. ${textoEstoque(disp, p, siglasPorUnidade)}`;
       opcoes.push(`<option value="${p.id}"${ehSelecionado ? " selected" : ""}${bloquear ? " disabled" : ""}>${escaparHtml(`${p.nome} — ${detalhe}`)}</option>`);
     });
     select.innerHTML = opcoes.join("");
@@ -202,10 +204,11 @@ document.addEventListener("DOMContentLoaded", async () => {
       </td>
       <td class="col-qtd">
         <input type="number" data-campo="quantidade" min="0" step="0.001" inputmode="decimal" aria-label="Quantidade" value="${escaparHtml(item.quantidade)}">
+        <span class="item-dica" data-dica-conversao hidden></span>
       </td>
       <td class="col-preco">
         <input type="number" data-campo="preco" min="0" step="0.01" inputmode="decimal" aria-label="Preço unitário" placeholder="0,00" value="${escaparHtml(item.preco)}">
-        <span class="item-dica item-dica--aviso" hidden></span>
+        <span class="item-dica item-dica--aviso" data-dica-preco hidden></span>
       </td>
       <td class="col-desc">
         <input type="number" data-campo="desconto" min="0" max="100" step="0.01" inputmode="decimal" aria-label="Desconto em porcentagem" value="${escaparHtml(item.desconto)}">
@@ -230,8 +233,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     // aviso do produto: estoque tem prioridade sobre o erro de validação do último "Salvar"
     const aviso = tr.querySelector(".item-aviso");
     let mensagem = "";
-    if (produto && Number(item.quantidade) > disponivelDe(produto)) {
-      mensagem = `Quantidade acima do estoque disponível (${formatarNumero(disponivelDe(produto))}${siglaDe(produto) ? " " + siglaDe(produto) : ""}).`;
+    if (excedeEstoque(produto, item.quantidade)) {
+      mensagem = `Quantidade acima do estoque disponível (${textoEstoque(disponivelDe(produto), produto, siglasPorUnidade)}).`;
     } else if (item.erro) {
       mensagem = item.erro;
     }
@@ -239,8 +242,14 @@ document.addEventListener("DOMContentLoaded", async () => {
     aviso.hidden = !mensagem;
     tr.classList.toggle("item-invalido", Boolean(mensagem));
 
+    // produto com embalagem: mostra em que unidade a quantidade está e quanto dá na base
+    const conversao = tr.querySelector("[data-dica-conversao]");
+    const comEmbalagem = produto && fatorEmbalagem(produto) !== 1;
+    conversao.textContent = comEmbalagem ? textoQuantidadeItem(Number(item.quantidade) || 0, produto.fator_embalagem, produto, siglasPorUnidade) : "";
+    conversao.hidden = !comEmbalagem;
+
     // preço diferente do cadastro: só um aviso, o vendedor pode negociar
-    const dica = tr.querySelector(".item-dica");
+    const dica = tr.querySelector("[data-dica-preco]");
     const diferente = produto && produto.preco_venda != null && item.preco !== "" &&
       Math.abs(Number(item.preco) - Number(produto.preco_venda)) > 0.004;
     dica.textContent = diferente ? `Preço de tabela: ${formatarMoeda(produto.preco_venda)}` : "";
@@ -325,7 +334,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (!item.produto_id) { erro = "Selecione o produto."; campo = "produto_id"; }
       else if (item.quantidade === "" || !(qtd > 0)) { erro = "Informe uma quantidade maior que zero."; campo = "quantidade"; }
       else if (!casasDecimaisOk(qtd, 3)) { erro = "A quantidade aceita no máximo 3 casas decimais."; campo = "quantidade"; }
-      else if (produto && qtd > disponivelDe(produto)) { campo = "quantidade"; erro = ""; }   // o aviso de estoque já aparece na linha
+      else if (excedeEstoque(produto, qtd)) { campo = "quantidade"; erro = ""; }   // o aviso de estoque já aparece na linha
       else if (item.preco === "" || !(preco >= 0)) { erro = "Informe o preço unitário."; campo = "preco"; }
       else if (item.desconto !== "" && !(pct >= 0 && pct <= 100)) { erro = "O desconto deve ficar entre 0 e 100%."; campo = "desconto"; }
 

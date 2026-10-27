@@ -149,7 +149,7 @@ function criarFormularioReceita(raiz, { modo = "criar", receita = null, aoMudar 
 
   const custoDoItem = (item) => {
     const p = produtosPorId[item.produto_id];
-    return p ? Number(p.preco_custo || 0) : 0;
+    return p ? Number(p.custo_unidade_base ?? p.preco_custo ?? 0) : 0;   // custo na unidade base (embalagem ÷ fator)
   };
   const subtotalDoItem = (item) => (item.produto_id && Number(item.quantidade) > 0)
     ? arredondar2(Number(item.quantidade) * custoDoItem(item)) : 0;

@@ -54,7 +54,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     return arredondar2(itens.reduce((soma, item) => soma + subtotalDoItem(item), 0));
   }
 
-  const siglaDe = (produto) => siglasPorUnidade[produto?.unidade_medida_id] || "";
+  // Produto com embalagem é comprado na embalagem (ex.: Pote); sem embalagem, na unidade base.
+  const siglaDe = (produto) => siglaNegociacao(produto, siglasPorUnidade);
   const itemPorUid = (uid) => itens.find(i => i.uid === Number(uid));
 
   function hojeTexto() {
@@ -171,10 +172,11 @@ document.addEventListener("DOMContentLoaded", async () => {
       </td>
       <td class="col-qtd">
         <input type="number" data-campo="quantidade" min="0" step="0.001" inputmode="decimal" aria-label="Quantidade" value="${escaparHtml(item.quantidade)}">
+        <span class="item-dica" data-dica-conversao hidden></span>
       </td>
       <td class="col-preco">
         <input type="number" data-campo="preco" min="0" step="0.01" inputmode="decimal" aria-label="Preço unitário" placeholder="0,00" value="${escaparHtml(item.preco)}">
-        <span class="item-dica item-dica--aviso" hidden></span>
+        <span class="item-dica item-dica--aviso" data-dica-preco hidden></span>
       </td>
       <td class="col-subtotal" data-subtotal>R$ 0,00</td>
       <td class="col-acao">
@@ -198,8 +200,14 @@ document.addEventListener("DOMContentLoaded", async () => {
     aviso.hidden = !item.erro;
     tr.classList.toggle("item-invalido", Boolean(item.erro));
 
-    // preço diferente do custo cadastrado: só um aviso (o fornecedor pode ter reajustado)
-    const dica = tr.querySelector(".item-dica");
+    // produto com embalagem: mostra quanto entra no estoque, na unidade base
+    const conversao = tr.querySelector("[data-dica-conversao]");
+    const comEmbalagem = produto && fatorEmbalagem(produto) !== 1;
+    conversao.textContent = comEmbalagem ? textoQuantidadeItem(Number(item.quantidade) || 0, produto.fator_embalagem, produto, siglasPorUnidade) : "";
+    conversao.hidden = !comEmbalagem;
+
+    // preço diferente do custo cadastrado (que é por embalagem): só um aviso (o fornecedor pode ter reajustado)
+    const dica = tr.querySelector("[data-dica-preco]");
     const custo = produto && produto.preco_custo != null ? Number(produto.preco_custo) : null;
     const diferente = custo !== null && item.preco !== "" && Math.abs(Number(item.preco) - custo) > 0.004;
     dica.textContent = diferente ? `Custo cadastrado: ${formatarMoeda(custo)}` : "";

@@ -42,7 +42,7 @@ def _montar_resposta(ordem: OrdemProducao) -> OrdemProducaoResponse:
         itens = []
         for produto_id, consumo in calcular_consumo(ordem.receita, ordem.quantidade):
             insumo = itens_receita[produto_id].produto
-            custo = insumo.preco_custo or 0.0
+            custo = insumo.custo_unidade_base   # custo de 1 unidade base (embalagem ÷ fator)
             itens.append(_item_resposta(insumo, consumo, custo, round(float(consumo) * custo, 2)))
         previa = True
     else:
@@ -220,7 +220,7 @@ def atualizar_status_ordem_producao(
         custo_total = 0.0
         for produto_id, consumo in consumos:
             insumo = produtos[produto_id]
-            custo = insumo.preco_custo or 0.0
+            custo = insumo.custo_unidade_base   # custo de 1 unidade base (embalagem ÷ fator)
             subtotal = round(float(consumo) * custo, 2)
             custo_total += subtotal
             insumo.estoque_atual -= consumo

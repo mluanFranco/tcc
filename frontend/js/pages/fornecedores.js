@@ -88,7 +88,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         <tr>
           <td class="celula-nome">${escaparHtml(fornecedor.nome)}</td>
           <td>${escaparHtml(formatarDocumento(fornecedor.cnpj))}</td>
-          <td>${escaparHtml(fornecedor.telefone ?? "—")}</td>
+          <td>${escaparHtml(formatarTelefone(fornecedor.telefone))}</td>
           <td>${escaparHtml(cidadeUf)}</td>
           <td><span class="badge-status ${badgeStatusClasse}">${fornecedor.ativo ? "Ativo" : "Inativo"}</span></td>
           <td class="celula-acoes">
@@ -109,7 +109,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     document.getElementById("vis-nome").textContent = fornecedor.nome;
     document.getElementById("vis-status").textContent = fornecedor.ativo ? "Ativo" : "Inativo";
     document.getElementById("vis-cnpj").textContent = formatarDocumento(fornecedor.cnpj);
-    document.getElementById("vis-telefone").textContent = fornecedor.telefone ?? "—";
+    document.getElementById("vis-telefone").textContent = formatarTelefone(fornecedor.telefone);
     document.getElementById("vis-email").textContent = fornecedor.email ?? "—";
     document.getElementById("vis-cep").textContent = fornecedor.cep ?? "—";
     document.getElementById("vis-logradouro").textContent = fornecedor.logradouro ?? "—";
@@ -174,10 +174,10 @@ document.addEventListener("DOMContentLoaded", async () => {
       fornecedorEmEdicaoId = fornecedor.id;
       elementos.modalTitulo.textContent = "Editar fornecedor";
       document.getElementById("campo-nome").value = fornecedor.nome;
-      document.getElementById("campo-cnpj").value = fornecedor.cnpj;
-      document.getElementById("campo-telefone").value = fornecedor.telefone ?? "";
+      document.getElementById("campo-cnpj").value = mascararCnpj(fornecedor.cnpj);
+      document.getElementById("campo-telefone").value = fornecedor.telefone ? mascararTelefone(fornecedor.telefone) : "";
       document.getElementById("campo-email").value = fornecedor.email ?? "";
-      elementos.campoCep.value = fornecedor.cep ?? "";
+      elementos.campoCep.value = fornecedor.cep ? mascararCep(fornecedor.cep) : "";
       document.getElementById("campo-logradouro").value = fornecedor.logradouro ?? "";
       document.getElementById("campo-numero").value = fornecedor.numero ?? "";
       document.getElementById("campo-complemento").value = fornecedor.complemento ?? "";
@@ -331,6 +331,10 @@ document.addEventListener("DOMContentLoaded", async () => {
   elementos.abaAtivos.addEventListener("click", () => trocarAba("ativos"));
   elementos.abaInativos.addEventListener("click", () => trocarAba("inativos"));
   elementos.tabelaCorpo.addEventListener("click", tratarAcaoTabela);
+  aplicarMascara(document.getElementById("campo-cnpj"), mascararCnpj);
+  aplicarMascara(document.getElementById("campo-telefone"), mascararTelefone);
+  aplicarMascara(elementos.campoCep, mascararCep);
+  aplicarMascara(document.getElementById("campo-ddd"), mascararNumeros);
   elementos.campoCep.addEventListener("input", tratarBuscaCep);
   elementos.modalVisualizarFechar.addEventListener("click", fecharModalVisualizacao);
   elementos.modalVisualizarFecharRodape.addEventListener("click", fecharModalVisualizacao);

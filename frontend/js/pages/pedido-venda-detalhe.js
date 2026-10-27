@@ -65,7 +65,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     el.itensCorpo.innerHTML = pedido.itens.slice().sort((a, b) => a.id - b.id).map(item => {
       const produto = produtosPorId[item.produto_id];
       const nome = produto ? produto.nome : `Produto #${item.produto_id}`;
-      const sigla = produto ? (siglasPorUnidade[produto.unidade_medida_id] || "") : "";
       const bruto = Number(item.quantidade) * Number(item.preco_unitario);
       const pct = bruto > 0 ? Math.round((Number(item.desconto) / bruto) * 10000) / 100 : 0;
       const desconto = Number(item.desconto) > 0
@@ -74,7 +73,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       return `
         <tr>
           <td>${escaparHtml(nome)}</td>
-          <td class="num">${formatarNumero(item.quantidade)}${sigla ? " " + escaparHtml(sigla) : ""}</td>
+          <td class="num">${escaparHtml(textoQuantidadeItem(item.quantidade, item.fator, produto, siglasPorUnidade))}</td>
           <td class="num">${formatarMoeda(item.preco_unitario)}</td>
           <td class="num">${desconto}</td>
           <td class="num subtotal">${formatarMoeda(item.subtotal)}</td>

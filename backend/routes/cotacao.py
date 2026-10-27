@@ -14,6 +14,7 @@ from core.pedidos import registrar_pedido_venda, registrar_pedido_compra
 from core.permissoes import checar_permissao
 from typing import List, Optional
 from datetime import date, datetime, time
+from decimal import Decimal
 
 router = APIRouter(prefix="/cotacoes", tags=["Cotações"])
 
@@ -86,8 +87,8 @@ def _validar_forma(db: Session, forma_pagamento_id) -> None:
         raise HTTPException(status_code=400, detail="A forma de pagamento selecionada está inativa")
 
 
-def _validar_itens(db: Session, tipo: str, itens) -> None:
-    """Produtos existem e estão ativos; regras de preço/desconto que dependem do tipo."""
+def _validar_itens(db: Session, tipo: str, itens) -> dict:
+    """Produtos existem e estão ativos; regras de preço/desconto que dependem do tipo. Devolve {produto_id: Produto}."""
     produtos = {p.id: p for p in db.query(Produto).filter(Produto.id.in_([i.produto_id for i in itens])).all()}
     for item in itens:
         produto = produtos.get(item.produto_id)
@@ -99,6 +100,7 @@ def _validar_itens(db: Session, tipo: str, itens) -> None:
             raise HTTPException(status_code=400, detail=f"Em cotação de venda o item '{produto.nome}' precisa de preço")
         if tipo == "compra" and item.desconto != 0:
             raise HTTPException(status_code=400, detail="Desconto só existe em cotação de venda")
+    return produtos
 
 
 def _exigir_todos_os_precos(cotacao: Cotacao) -> None:
@@ -128,7 +130,7 @@ def criar_cotacao(
     _validar_parte(db, dados.tipo, dados.fornecedor_id, dados.cliente_id)
     _validar_forma(db, dados.forma_pagamento_id)
     _validar_endereco(db, dados.cliente_id, dados.endereco_entrega_id)
-    _validar_itens(db, dados.tipo, dados.itens)
+    produtos = _validar_itens(db, dados.tipo, dados.itens)
 
     cotacao = Cotacao(
         tipo=dados.tipo,
@@ -144,7 +146,7 @@ def criar_cotacao(
         observacao=dados.observacao,
         itens=[
             ItemCotacao(
-                produto_id=i.produto_id, quantidade=i.quantidade,
+                produto_id=i.produto_id, quantidade=i.quantidade, fator=produtos[i.produto_id].fator_embalagem,
                 preco_unitario=i.preco_unitario, desconto=i.desconto, observacao=i.observacao,
             )
             for i in dados.itens
@@ -200,6 +202,7 @@ def comparar_precos_produto(
             Cotacao.status.label("status"),
             ItemCotacao.preco_unitario,
             ItemCotacao.quantidade,
+            ItemCotacao.fator,
             Cotacao.data_cotacao,
         )
         .join(Cotacao, Cotacao.fornecedor_id == Fornecedor.id)
@@ -210,7 +213,8 @@ def comparar_precos_produto(
             Cotacao.tipo == "compra",
             Cotacao.status.in_(("recebida", "aprovada")),
         )
-        .order_by(ItemCotacao.preco_unitario.asc(), Cotacao.data_cotacao.desc())
+        # pelo preço da unidade base: compara certo mesmo se a embalagem mudou entre uma cotação e outra
+        .order_by((ItemCotacao.preco_unitario / ItemCotacao.fator).asc(), Cotacao.data_cotacao.desc())
         .all()
     )
 
@@ -255,8 +259,9 @@ def atualizar_cotacao(
             cotacao.data_entrega_prevista = dados.data_entrega_prevista
 
     if dados.itens is not None:
-        _validar_itens(db, cotacao.tipo, dados.itens)
-        # Atualiza por produto: mantém as linhas que continuam, cria as novas e remove as que saíram
+        produtos = _validar_itens(db, cotacao.tipo, dados.itens)
+        # Atualiza por produto: mantém as linhas que continuam, cria as novas e remove as que saíram.
+        # Editar o item atualiza o fator para a embalagem atual do produto.
         atuais = {i.produto_id: i for i in cotacao.itens}
         novos_ids = {i.produto_id for i in dados.itens}
         for produto_id, item in atuais.items():
@@ -266,12 +271,13 @@ def atualizar_cotacao(
             if novo.produto_id in atuais:
                 existente = atuais[novo.produto_id]
                 existente.quantidade = novo.quantidade
+                existente.fator = produtos[novo.produto_id].fator_embalagem
                 existente.preco_unitario = novo.preco_unitario
                 existente.desconto = novo.desconto
                 existente.observacao = novo.observacao
             else:
                 cotacao.itens.append(ItemCotacao(
-                    produto_id=novo.produto_id, quantidade=novo.quantidade,
+                    produto_id=novo.produto_id, quantidade=novo.quantidade, fator=produtos[novo.produto_id].fator_embalagem,
                     preco_unitario=novo.preco_unitario, desconto=novo.desconto, observacao=novo.observacao,
                 ))
 
@@ -340,6 +346,15 @@ def aprovar_cotacao(
     if cotacao.validade is not None and cotacao.validade < date.today():
         raise HTTPException(status_code=400, detail=f"A cotação venceu em {cotacao.validade.isoformat()}")
     _exigir_todos_os_precos(cotacao)
+    # Quantidade e preço da cotação valem para a embalagem do dia em que foram digitados.
+    # Se o cadastro mudou de embalagem/fator desde então, aprovar geraria um pedido com outra quantidade real.
+    mudaram = [i.produto.nome for i in cotacao.itens if Decimal(i.fator) != Decimal(i.produto.fator_embalagem)]
+    if mudaram:
+        raise HTTPException(
+            status_code=400,
+            detail=f"A embalagem de {', '.join(mudaram)} mudou no cadastro depois desta cotação. "
+                   "Edite a cotação e confira quantidade e preço antes de aprovar.",
+        )
     if cotacao.forma_pagamento_id is None:
         raise HTTPException(
             status_code=400,

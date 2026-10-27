@@ -33,7 +33,8 @@ class PedidoVendaStatusUpdate(BaseModel):
 class ItemPedidoVendaResponse(BaseModel):
     id: int
     produto_id: int
-    quantidade: QuantidadeSaida
+    quantidade: QuantidadeSaida          # na embalagem do produto
+    fator: QuantidadeSaida = 1           # unidades base por embalagem (estoque movido = quantidade x fator)
     preco_unitario: float
     desconto: float
     subtotal: float

@@ -132,7 +132,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         <tr>
           <td class="celula-nome">${nome}</td>
           <td>${rotuloDocumento}: ${escaparHtml(formatarDocumento(cliente.cpf_cnpj))}</td>
-          <td>${escaparHtml(cliente.telefone ?? "—")}</td>
+          <td>${escaparHtml(formatarTelefone(cliente.telefone))}</td>
           <td>${escaparHtml(cidadeUf(enderecoPrincipal(cliente)))}</td>
           <td><span class="badge-status ${badgeStatusClasse}">${cliente.ativo ? "Ativo" : "Inativo"}</span></td>
           <td class="celula-acoes">
@@ -153,7 +153,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     campo("vis-status").textContent = cliente.ativo ? "Ativo" : "Inativo";
     campo("vis-tipo").textContent = cliente.tipo === "PJ" ? "Pessoa Jurídica" : "Pessoa Física";
     campo("vis-documento").textContent = formatarDocumento(cliente.cpf_cnpj);
-    campo("vis-telefone").textContent = cliente.telefone ?? "—";
+    campo("vis-telefone").textContent = formatarTelefone(cliente.telefone);
     campo("vis-email").textContent = cliente.email ?? "—";
     campo("vis-cep").textContent = principal.cep ? formatarCep(principal.cep) : "—";
     campo("vis-logradouro").textContent = principal.logradouro ?? "—";
@@ -186,7 +186,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     const tipo = elementos.campoTipo.value;
     elementos.labelDocumento.textContent = tipo === "PJ" ? "CNPJ *" : "CPF *";
     elementos.campoDocumento.placeholder = tipo === "PJ" ? "00.000.000/0000-00" : "000.000.000-00";
+    elementos.campoDocumento.value = mascararDocumento(elementos.campoDocumento.value);   // reencaixa ao trocar PF/PJ
   }
+
+  const mascararDocumento = (valor) => (elementos.campoTipo.value === "PJ" ? mascararCnpj(valor) : mascararCpf(valor));
 
   function limparStatusCep(statusEl) {
     statusEl.className = "campo-cep-status";
@@ -258,7 +261,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       campo("campo-nome").value = cliente.nome;
       elementos.campoTipo.value = cliente.tipo ?? "PF";
       elementos.campoDocumento.value = formatarDocumento(cliente.cpf_cnpj);
-      campo("campo-telefone").value = cliente.telefone ?? "";
+      campo("campo-telefone").value = cliente.telefone ? mascararTelefone(cliente.telefone) : "";
       campo("campo-email").value = cliente.email ?? "";
       elementos.campoCep.value = principal.cep ? formatarCep(principal.cep) : "";
       campo("campo-logradouro").value = principal.logradouro ?? "";
@@ -608,6 +611,12 @@ document.addEventListener("DOMContentLoaded", async () => {
   elementos.abaInativos.addEventListener("click", () => trocarAba("inativos"));
   elementos.tabelaCorpo.addEventListener("click", tratarAcaoTabela);
   elementos.campoTipo.addEventListener("change", atualizarLabelDocumento);
+  aplicarMascara(elementos.campoDocumento, mascararDocumento);
+  aplicarMascara(campo("campo-telefone"), mascararTelefone);
+  aplicarMascara(elementos.campoCep, mascararCep);
+  aplicarMascara(campo("campo-ddd"), mascararNumeros);
+  aplicarMascara(campo("end-cep"), mascararCep);
+  aplicarMascara(campo("end-ddd"), mascararNumeros);
   elementos.campoCep.addEventListener("input", tratarBuscaCep);
   campo("botao-novo-endereco").addEventListener("click", () => abrirModalEndereco());
   campo("lista-entregas-form").addEventListener("click", tratarAcaoEntrega);

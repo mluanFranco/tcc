@@ -15,7 +15,7 @@ from decimal import Decimal
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from core.estoque import travar_produtos
+from core.estoque import quantidade_base, travar_produtos
 from core.financeiro import gerar_titulos
 from models import (
     PedidoVenda, ItemPedidoVenda, PedidoCompra, ItemPedidoCompra,
@@ -23,6 +23,16 @@ from models import (
 )
 from schemas.pedido_venda import PedidoVendaCreate
 from schemas.pedido_compra import PedidoCompraCreate
+
+
+def _texto_qtd(quantidade_na_base: Decimal, produto) -> str:
+    """'10.000 L (2.000 Pote)' para produto com embalagem; '10.000 L' sem embalagem."""
+    base = produto.unidade_medida.sigla if produto.unidade_medida else ""
+    texto = f"{quantidade_na_base:.3f} {base}".strip()
+    if produto.embalagem_unidade_id is not None and produto.fator_embalagem:
+        emb = produto.embalagem_unidade.sigla if produto.embalagem_unidade else "emb."
+        texto += f" ({quantidade_na_base / Decimal(produto.fator_embalagem):.3f} {emb})"
+    return texto
 
 
 def _validar_forma_pagamento(db: Session, forma_pagamento_id) -> FormaPagamento:
@@ -71,9 +81,10 @@ def registrar_pedido_venda(db: Session, usuario_id: int, dados: PedidoVendaCreat
 
     # Disponibilidade: soma as linhas do mesmo produto antes de comparar com o saldo,
     # senão duas linhas do mesmo produto passariam, cada uma, sozinha.
+    # A quantidade do item está na embalagem (ex.: potes); o estoque está na unidade base (ex.: litros).
     solicitado = defaultdict(Decimal)
     for item in dados.itens:
-        solicitado[item.produto_id] += item.quantidade
+        solicitado[item.produto_id] += quantidade_base(item.quantidade, produtos[item.produto_id].fator_embalagem)
 
     for produto_id, quantidade in solicitado.items():
         produto = produtos[produto_id]
@@ -82,7 +93,7 @@ def registrar_pedido_venda(db: Session, usuario_id: int, dados: PedidoVendaCreat
             raise HTTPException(
                 status_code=400,
                 detail=f"Estoque disponível insuficiente para '{produto.nome}'. "
-                       f"Disponível: {disponivel:.3f}, solicitado: {quantidade:.3f}"
+                       f"Disponível: {_texto_qtd(disponivel, produto)}, solicitado: {_texto_qtd(quantidade, produto)}"
             )
 
     valor_total = 0.0
@@ -106,15 +117,17 @@ def registrar_pedido_venda(db: Session, usuario_id: int, dados: PedidoVendaCreat
     db.flush()  # garante pedido.id disponível sem commitar ainda
 
     for item, subtotal in itens_para_criar:
+        produto = produtos[item.produto_id]
         db.add(ItemPedidoVenda(
             pedido_venda_id=pedido.id,
             produto_id=item.produto_id,
             quantidade=item.quantidade,
+            fator=produto.fator_embalagem,     # congela a conversão: mudar o cadastro depois não afeta este pedido
             preco_unitario=item.preco_unitario,
             desconto=item.desconto,
             subtotal=subtotal
         ))
-        produtos[item.produto_id].estoque_reservado += item.quantidade  # reserva, não debita ainda
+        produto.estoque_reservado += quantidade_base(item.quantidade, produto.fator_embalagem)  # reserva, não debita ainda
 
     db.flush()
     return pedido
@@ -168,6 +181,7 @@ def registrar_pedido_compra(db: Session, usuario_id: int, dados: PedidoCompraCre
             produto_id=item.produto_id,
             quantidade=item.quantidade,
             quantidade_recebida=0,
+            fator=produtos[item.produto_id].fator_embalagem,   # o recebimento entra no estoque como quantidade x fator
             preco_unitario=item.preco_unitario,
             subtotal=subtotal
         ))

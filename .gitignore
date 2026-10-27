@@ -1,5 +1,5 @@
 # Ambiente virtual
-backend/venv/
+venv/
 
 # Banco de dados SQLite (caso de testes)
 backend/banco.db

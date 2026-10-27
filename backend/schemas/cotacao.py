@@ -90,7 +90,8 @@ class CotacaoUpdateStatus(BaseModel):
 class ItemCotacaoResponse(BaseModel):
     id: int
     produto_id: int
-    quantidade: QuantidadeSaida
+    quantidade: QuantidadeSaida          # na embalagem do produto
+    fator: QuantidadeSaida = 1
     preco_unitario: Optional[float]
     desconto: float
     observacao: Optional[str]
@@ -145,8 +146,14 @@ class ComparativoFornecedor(BaseModel):
     fornecedor_nome: str
     cotacao_id: int
     status: str
-    preco_unitario: float
+    preco_unitario: float                # da embalagem
     quantidade: QuantidadeSaida
+    fator: QuantidadeSaida = 1
     data_cotacao: datetime
+
+    @computed_field
+    @property
+    def preco_unidade_base(self) -> float:
+        return round(self.preco_unitario / float(self.fator or 1), 4)
 
     model_config = {"from_attributes": True}

@@ -194,9 +194,10 @@ document.addEventListener("DOMContentLoaded", async () => {
         el.estadoVazioComparativo.hidden = false;
         return;
       }
-      const melhor = Number(resultados[0].preco_unitario);
+      // Compara pelo preço na unidade base: cotações feitas com embalagens diferentes (ex.: Pote de 5 L x Litro) ficam justas.
+      const melhor = Number(resultados[0].preco_unidade_base);
       el.tabelaComparativoCorpo.innerHTML = resultados.map((item, i) => {
-        const preco = Number(item.preco_unitario);
+        const preco = Number(item.preco_unidade_base);
         const pct = melhor > 0 ? ((preco - melhor) / melhor) * 100 : 0;
         const diferenca = i === 0 || pct < 0.005
           ? '<span class="diferenca-melhor">Menor preço</span>'
@@ -207,7 +208,8 @@ document.addEventListener("DOMContentLoaded", async () => {
           <tr>
             <td><span class="posicao-ranking ${i === 0 ? "posicao-ranking--melhor" : ""}">${i + 1}</span></td>
             <td class="celula-nome">${escaparHtml(item.fornecedor_nome)}</td>
-            <td class="celula-numero">${formatarMoeda(item.preco_unitario)}</td>
+            <td class="celula-numero">${formatarMoeda(item.preco_unitario)}${Number(item.fator) !== 1
+              ? `<small class="celula-embalagem">embalagem com ${formatarNumero(item.fator)} · ${formatarMoeda(item.preco_unidade_base)} cada</small>` : ""}</td>
             <td class="celula-numero">${diferenca}</td>
             <td class="celula-numero">${formatarNumero(item.quantidade)}</td>
             <td>${link}</td>

@@ -4,7 +4,7 @@ from database import get_db
 from models import PedidoVenda, ItemPedidoVenda, Usuario, TituloFinanceiro
 from schemas.pedido_venda import PedidoVendaCreate, PedidoVendaStatusUpdate, PedidoVendaResponse
 from core.security import get_current_user
-from core.estoque import travar_produtos
+from core.estoque import quantidade_base, travar_produtos
 from core.pedidos import registrar_pedido_venda
 from core.financeiro import gerar_titulos, cancelar_titulos_do_pedido
 from core.permissoes import exigir
@@ -112,9 +112,10 @@ def atualizar_status_pedido_venda(
 
     itens = db.query(ItemPedidoVenda).filter(ItemPedidoVenda.pedido_venda_id == pedido.id).all()
 
+    # Na unidade base do estoque, com o fator gravado em cada item (o mesmo usado na reserva)
     quantidade_por_produto = defaultdict(Decimal)
     for item in itens:
-        quantidade_por_produto[item.produto_id] += item.quantidade
+        quantidade_por_produto[item.produto_id] += quantidade_base(item.quantidade, item.fator)
 
     produtos = travar_produtos(db, quantidade_por_produto.keys())
 
@@ -133,9 +134,10 @@ def atualizar_status_pedido_venda(
             produto.estoque_reservado -= quantidade
             produto.estoque_atual -= quantidade
         # Congela o custo de cada item e a data da confirmação (base dos relatórios de margem)
+        # O custo é o da embalagem do item: custo da unidade base x fator gravado no item (CMV = quantidade x custo_unitario)
         for item in itens:
-            custo = produtos[item.produto_id].preco_custo
-            item.custo_unitario = Decimal(str(custo or 0)).quantize(Decimal("0.0001"))
+            custo = Decimal(str(produtos[item.produto_id].custo_unidade_base)) * Decimal(item.fator)
+            item.custo_unitario = custo.quantize(Decimal("0.0001"))
         pedido.confirmado_em = datetime.now()
         # Contas a receber: nascem na confirmação (a venda se concretiza aqui), vencendo a partir de hoje
         gerar_titulos(db, tipo="receber", pedido=pedido, forma=pedido.forma_pagamento, data_base=date.today())

@@ -119,7 +119,7 @@ class UnidadeMedida(Base):
     created_at = Column(DateTime, default=datetime.now)
     updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
 
-    produtos = relationship("Produto", back_populates="unidade_medida")
+    produtos = relationship("Produto", back_populates="unidade_medida", foreign_keys="Produto.unidade_medida_id")
 
 
 # ─────────────────────────────────────────
@@ -134,14 +134,19 @@ class Produto(Base):
 
     categoria_id       = Column(Integer, ForeignKey("categoria.id"), nullable=False)
     subcategoria_id    = Column(Integer, ForeignKey("subcategoria.id"), nullable=False)
-    unidade_medida_id  = Column(Integer, ForeignKey("unidade_medida.id"), nullable=False)
+    unidade_medida_id  = Column(Integer, ForeignKey("unidade_medida.id"), nullable=False)   # unidade BASE: estoque e receitas
 
-    e_insumo           = Column(Boolean, default=False, nullable=False)
+    # Embalagem de compra e venda (ex.: Pote com fator 5 = 5 L). Sem embalagem, o fator é 1 e nada é convertido.
+    # Pedidos e cotações são digitados na embalagem; o estoque recebe quantidade x fator (na unidade base).
+    embalagem_unidade_id = Column(Integer, ForeignKey("unidade_medida.id", name="fk_produto_embalagem_unidade"), nullable=True)
+    fator_embalagem      = Column(QTD, nullable=False, default=Decimal("1"))
+
+    e_insumo          = Column(Boolean, default=False, nullable=False)
     e_vendavel         = Column(Boolean, default=False, nullable=False)
 
-    preco_custo        = Column(Float, nullable=False)
+    preco_custo        = Column(Float, nullable=False)  # da embalagem (ou da unidade base, sem embalagem)
     porcentagem        = Column(Float, nullable=True)   # só relevante se e_vendavel=True
-    preco_venda        = Column(Float, nullable=True)   # calculado e gravado pelo backend
+    preco_venda        = Column(Float, nullable=True)   # calculado e gravado pelo backend (também da embalagem)
 
     estoque_atual      = Column(QTD, default=Decimal("0"))
     estoque_reservado  = Column(QTD, default=Decimal("0"))
@@ -153,7 +158,13 @@ class Produto(Base):
 
     categoria       = relationship("Categoria", back_populates="produtos")
     subcategoria    = relationship("Subcategoria", back_populates="produtos")
-    unidade_medida  = relationship("UnidadeMedida", back_populates="produtos")
+    unidade_medida  = relationship("UnidadeMedida", back_populates="produtos", foreign_keys=[unidade_medida_id])
+    embalagem_unidade = relationship("UnidadeMedida", foreign_keys=[embalagem_unidade_id])
+
+    @property
+    def custo_unidade_base(self) -> float:
+        """Custo de 1 unidade base (ex.: 1 L de um pote de 5 L). É o que receitas e produção usam."""
+        return (self.preco_custo or 0.0) / float(self.fator_embalagem or 1)
 
 
 # ─────────────────────────────────────────
@@ -290,7 +301,8 @@ class ItemPedidoVenda(Base):
     id              = Column(Integer, primary_key=True, autoincrement=True)
     pedido_venda_id = Column(Integer, ForeignKey("pedido_venda.id"), nullable=False)
     produto_id      = Column(Integer, ForeignKey("produto.id"), nullable=False)
-    quantidade      = Column(QTD, nullable=False)
+    quantidade      = Column(QTD, nullable=False)   # na embalagem do produto (ex.: potes)
+    fator           = Column(QTD, nullable=False, default=Decimal("1"))   # fator da embalagem no dia do pedido; estoque = quantidade x fator
     preco_unitario  = Column(Float, nullable=False)
     desconto        = Column(Float, default=0.0)
     subtotal        = Column(Float, nullable=False)
@@ -330,8 +342,9 @@ class ItemPedidoCompra(Base):
     id                  = Column(Integer, primary_key=True, autoincrement=True)
     pedido_compra_id    = Column(Integer, ForeignKey("pedido_compra.id"), nullable=False)
     produto_id          = Column(Integer, ForeignKey("produto.id"), nullable=False)
-    quantidade          = Column(QTD, nullable=False)            # quantidade pedida
-    quantidade_recebida = Column(QTD, default=Decimal("0"), nullable=False) # acumulado já recebido
+    quantidade          = Column(QTD, nullable=False)            # quantidade pedida, na embalagem do produto
+    quantidade_recebida = Column(QTD, default=Decimal("0"), nullable=False) # acumulado já recebido, na embalagem
+    fator               = Column(QTD, nullable=False, default=Decimal("1"))  # fator da embalagem no dia do pedido
     preco_unitario      = Column(Float, nullable=False)
     subtotal            = Column(Float, nullable=False)
 
@@ -378,7 +391,8 @@ class ItemCotacao(Base):
     id             = Column(Integer, primary_key=True, autoincrement=True)
     cotacao_id     = Column(Integer, ForeignKey("cotacao.id"), nullable=False)
     produto_id     = Column(Integer, ForeignKey("produto.id"), nullable=False)
-    quantidade     = Column(QTD, nullable=False, default=Decimal("1"))
+    quantidade     = Column(QTD, nullable=False, default=Decimal("1"))   # na embalagem do produto
+    fator          = Column(QTD, nullable=False, default=Decimal("1"))   # fator da embalagem quando o item foi gravado
     preco_unitario = Column(Float)          # pode ficar nulo em cotação de compra que aguarda o fornecedor
     desconto       = Column(Float, nullable=False, default=0.0)   # em reais; só em cotação de venda
     observacao     = Column(String(255))

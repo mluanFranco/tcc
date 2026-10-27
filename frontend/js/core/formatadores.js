@@ -51,6 +51,15 @@ function formatarDocumento(valor) {
   return String(valor);
 }
 
+// "19999998888" -> "(19) 99999-8888". Telefones gravados em outro formato aparecem como vieram.
+function formatarTelefone(valor) {
+  if (!valor) return "—";
+  const d = String(valor).replace(/\D/g, "");
+  if (d.length === 11) return d.replace(/(\d{2})(\d{5})(\d{4})/, "($1) $2-$3");
+  if (d.length === 10) return d.replace(/(\d{2})(\d{4})(\d{4})/, "($1) $2-$3");
+  return String(valor);
+}
+
 // 13911068 -> "13911-068"
 function formatarCep(valor) {
   if (!valor) return "—";
@@ -65,6 +74,44 @@ function formatarEndereco(e) {
   const cidadeUf = [e.cidade, e.uf].filter(Boolean).join("/");
   const partes = [rua, e.complemento, e.bairro, cidadeUf, e.cep ? `CEP ${formatarCep(e.cep)}` : null].filter(Boolean);
   return partes.length ? partes.join(" — ") : "—";
+}
+
+// ---------- Embalagem do produto ----------
+// Produto pode ter embalagem (ex.: Pote com fator 5 = 5 L). Pedidos e cotações são digitados na embalagem;
+// estoque, estoque mínimo e receitas ficam na unidade base. A conversão de verdade é feita pelo backend.
+
+function fatorEmbalagem(produto) {
+  const f = Number(produto?.fator_embalagem);
+  return f > 0 ? f : 1;
+}
+
+// Sigla em que o produto é negociado: a da embalagem, se houver; senão a da unidade base.
+// `siglas` = { unidade_medida_id: "L" }.
+function siglaNegociacao(produto, siglas) {
+  if (!produto) return "";
+  if (produto.embalagem_unidade_id && fatorEmbalagem(produto) !== 1) return siglas[produto.embalagem_unidade_id] || "emb.";
+  return siglas[produto.unidade_medida_id] || "";
+}
+
+// Texto da quantidade de um item: "2 Pote (= 10 L)" com embalagem, "2 L" sem. Usa o fator gravado no item.
+// Devolve texto puro: escape com escaparHtml() antes de pôr em innerHTML.
+function textoQuantidadeItem(quantidade, fator, produto, siglas) {
+  const f = Number(fator) || 1;
+  const base = produto ? (siglas[produto.unidade_medida_id] || "") : "";
+  const q = formatarNumero(quantidade);
+  if (f === 1) return `${q}${base ? " " + base : ""}`;
+  // o fator vem do item: mesmo que a embalagem tenha sido removida do cadastro depois, a conversão continua certa
+  const emb = siglas[produto?.embalagem_unidade_id] || "emb.";
+  return `${q} ${emb} (= ${formatarNumero(Math.round(Number(quantidade) * f * 1000) / 1000)}${base ? " " + base : ""})`;
+}
+
+// Quantidade na unidade base mostrada também em embalagens: "200 L (40 Pote)". Sem embalagem: "200 L".
+function textoEstoque(quantidadeBase, produto, siglas) {
+  const base = siglas[produto?.unidade_medida_id] || "";
+  const texto = `${formatarNumero(quantidadeBase)}${base ? " " + base : ""}`;
+  const f = fatorEmbalagem(produto);
+  if (!produto?.embalagem_unidade_id || f === 1) return texto;
+  return `${texto} (${formatarNumero(Math.round(Number(quantidadeBase) / f * 1000) / 1000)} ${siglas[produto.embalagem_unidade_id] || "emb."})`;
 }
 
 // 58 -> "00058" (o número do pedido nas telas e no protótipo tem 5 dígitos).

@@ -7,7 +7,7 @@ from schemas.pedido_compra import (
     PedidoCompraResponse, RegistrarRecebimento
 )
 from core.security import get_current_user
-from core.estoque import travar_produtos
+from core.estoque import quantidade_base, travar_produtos
 from core.pedidos import registrar_pedido_compra
 from core.financeiro import cancelar_titulos_do_pedido
 from core.permissoes import exigir
@@ -128,8 +128,8 @@ def registrar_recebimento(
 
     for item_id, quantidade in recebido_agora.items():
         item = itens_do_pedido[item_id]
-        produtos[item.produto_id].estoque_atual += quantidade
-        item.quantidade_recebida += quantidade
+        produtos[item.produto_id].estoque_atual += quantidade_base(quantidade, item.fator)   # 2 potes = 10 L no estoque
+        item.quantidade_recebida += quantidade                                               # o acumulado fica na embalagem
 
     if all(i.quantidade_recebida >= i.quantidade for i in todos_itens):
         pedido.status = "recebido"
@@ -179,7 +179,7 @@ def atualizar_status_pedido_compra(
     a_estornar = defaultdict(Decimal)
     for item in itens:
         if item.quantidade_recebida > 0:
-            a_estornar[item.produto_id] += item.quantidade_recebida
+            a_estornar[item.produto_id] += quantidade_base(item.quantidade_recebida, item.fator)
 
     produtos = travar_produtos(db, a_estornar.keys())
 

@@ -126,7 +126,9 @@ function criarFormularioCotacao(raiz, { modo = "criar", tipoInicial = "compra", 
   const ehVenda = () => tipo === "venda";
   const arredondar2 = (n) => Math.round((n + Number.EPSILON) * 100) / 100;
   const itemPorUid = (uid) => itens.find(i => i.uid === Number(uid));
-  const siglaDe = (produto) => siglasPorUnidade[produto?.unidade_medida_id] || "";
+  // Produto com embalagem é cotado na embalagem (ex.: Pote); o estoque continua na unidade base (ex.: L).
+  const siglaDe = (produto) => siglaNegociacao(produto, siglasPorUnidade);
+  const qtdNaBase = (produto, qtd) => Math.round(Number(qtd) * fatorEmbalagem(produto) * 1000) / 1000;
   const disponivelDe = (produto) => Number(produto?.estoque_disponivel ?? 0);
 
   function hojeTexto() {
@@ -333,7 +335,7 @@ function criarFormularioCotacao(raiz, { modo = "criar", tipoInicial = "compra", 
     if (!p.ativo) texto += " — inativo";
     else if (ehVenda()) {
       const disp = disponivelDe(p);
-      texto += disp <= 0 ? " — sem estoque" : ` — disp. ${formatarNumero(disp)}`;
+      texto += disp <= 0 ? " — sem estoque" : ` — disp. ${textoEstoque(disp, p, siglasPorUnidade)}`;
     }
     return texto;
   }
@@ -370,6 +372,7 @@ function criarFormularioCotacao(raiz, { modo = "criar", tipoInicial = "compra", 
       </td>
       <td class="col-qtd">
         <input type="number" data-campo="quantidade" min="0" step="0.001" inputmode="decimal" aria-label="Quantidade" value="${escaparHtml(item.quantidade)}">
+        <span class="item-dica" data-dica-conversao hidden></span>
       </td>
       <td class="col-preco">
         <input type="number" data-campo="preco" min="0" step="0.01" inputmode="decimal" aria-label="Preço unitário" placeholder="${ehVenda() ? "0,00" : "a definir"}" value="${escaparHtml(item.preco)}">
@@ -403,13 +406,19 @@ function criarFormularioCotacao(raiz, { modo = "criar", tipoInicial = "compra", 
 
     // venda acima do estoque: só avisa (a cotação não reserva estoque; a trava real é na aprovação)
     const dicaEstoque = tr.querySelector("[data-dica-estoque]");
-    const acima = ehVenda() && produto && produto.ativo && Number(item.quantidade) > disponivelDe(produto);
+    const acima = ehVenda() && produto && produto.ativo && qtdNaBase(produto, item.quantidade) > disponivelDe(produto);
     dicaEstoque.textContent = acima
-      ? `Acima do estoque disponível (${formatarNumero(disponivelDe(produto))}${siglaDe(produto) ? " " + siglaDe(produto) : ""}): a aprovação pode ser recusada.`
+      ? `Acima do estoque disponível (${textoEstoque(disponivelDe(produto), produto, siglasPorUnidade)}): a aprovação pode ser recusada.`
       : "";
     dicaEstoque.hidden = !acima;
 
-    // preço diferente do cadastro: só uma referência
+    // produto com embalagem: mostra quanto a quantidade dá na unidade base
+    const conversao = tr.querySelector("[data-dica-conversao]");
+    const comEmbalagem = produto && fatorEmbalagem(produto) !== 1;
+    conversao.textContent = comEmbalagem ? textoQuantidadeItem(Number(item.quantidade) || 0, produto.fator_embalagem, produto, siglasPorUnidade) : "";
+    conversao.hidden = !comEmbalagem;
+
+    // preço diferente do cadastro (que é por embalagem): só uma referência
     const dicaPreco = tr.querySelector("[data-dica-preco]");
     const referencia = produto ? (ehVenda() ? produto.preco_venda : produto.preco_custo) : null;
     const diferente = referencia != null && temPreco(item) && Math.abs(Number(item.preco) - Number(referencia)) > 0.004;

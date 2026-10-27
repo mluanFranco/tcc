@@ -39,10 +39,13 @@ margem bruta, compras (investimento, fora do resultado), despesas e outras recei
 usa a data do pagamento das baixas (estornadas não contam). FLUXO PREVISTO usa o saldo em aberto pelo vencimento. VENCIDOS agrupa o atraso
 em faixas (1-30, 31-60, 61-90, mais de 90 dias). Há também séries (mês, trimestre, estação, ano), comparativo entre dois períodos e
 rankings de produtos, clientes e fornecedores. Exigem a permissão de relatórios."""),
-    "estoque": ("estoque minimo reservado disponivel baixo produto produtos insumo vendavel unidade", """\
+    "estoque": ("estoque minimo reservado disponivel baixo produto produtos insumo vendavel unidade embalagem pote saco caixa fator conversao", """\
 ESTOQUE. Cada produto tem estoque_atual, estoque_reservado (separado por vendas em aberto), estoque_disponivel (atual - reservado) e
 estoque_minimo. Estoque baixo = estoque_atual <= estoque_minimo. Produto pode ser insumo (matéria-prima), vendável ou ambos. As quantidades
-aceitam casas decimais (ex.: kg)."""),
+aceitam casas decimais (ex.: kg).
+EMBALAGEM. O estoque e as receitas ficam sempre na unidade base do produto (ex.: litro). O produto pode ter uma embalagem de compra e venda
+(ex.: Pote) com um fator (ex.: 5 = 5 litros por pote). Pedidos e cotações são feitos na embalagem e o estoque se move em quantidade x fator
+(2 potes = 10 L). Os preços do cadastro são da embalagem; o custo da unidade base (usado nas receitas e na produção) é o custo / fator."""),
     "geladeiras": ("geladeira geladeiras manutencao freezer expositora equipamento alocacao", """\
 GELADEIRAS. Equipamentos do negócio alocados em clientes, com tipo, modelo, marca, número de série, data de alocação e status
 (em_campo, manutencao ou desativada). Cada geladeira tem histórico de manutenções (data, tipo e custo)."""),

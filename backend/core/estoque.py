@@ -1,6 +1,18 @@
+from decimal import Decimal, ROUND_HALF_UP
 from typing import Iterable, Dict
 from sqlalchemy.orm import Session
 from models import Produto
+
+_TRES_CASAS = Decimal("0.001")
+
+
+def quantidade_base(quantidade, fator) -> Decimal:
+    """
+    Converte a quantidade de um item (na embalagem do produto) para a unidade base do estoque:
+    2 potes x fator 5 = 10 L. Produto sem embalagem tem fator 1 e nada muda.
+    É o ÚNICO lugar onde a conversão acontece: todo movimento de estoque de pedido passa por aqui.
+    """
+    return (Decimal(quantidade) * Decimal(fator or 1)).quantize(_TRES_CASAS, rounding=ROUND_HALF_UP)
 
 
 def travar_produtos(db: Session, ids: Iterable[int]) -> Dict[int, Produto]:

@@ -273,8 +273,15 @@ def _pares_parte(rotulo: str, nome, documento, telefone, email, endereco: str) -
     return [(rotulo, _txt(nome)), ("CPF/CNPJ", _txt(documento)), ("Telefone", _txt(telefone)), ("E-mail", _txt(email)), ("Endereço", endereco)]
 
 
-def _unidade(produto) -> str:
-    return _txt(produto.unidade_medida.sigla if produto.unidade_medida else None)
+def _unidade_item(item) -> str:
+    """Unidade em que o item foi negociado: 'Pote (5 L)' para embalagem, 'L' sem embalagem."""
+    produto = item.produto
+    base = produto.unidade_medida.sigla if produto.unidade_medida else None
+    fator = Decimal(str(item.fator or 1))
+    if fator != 1:
+        emb = produto.embalagem_unidade.sigla if produto.embalagem_unidade else "emb."
+        return _txt(f"{emb} ({qtd(fator)} {base or ''})".replace(" )", ")"))
+    return _txt(base)
 
 
 # ---------------------------------------------------------------- cotação
@@ -312,13 +319,13 @@ def pdf_cotacao(db: Session, cotacao_id: int, emitido_por: str) -> Tuple[bytes, 
         q = Decimal(str(i.quantidade))
         if i.preco_unitario is None:
             falta_preco = True
-            linha = [_txt(i.produto.nome), _unidade(i.produto), qtd(q), "A definir"]
+            linha = [_txt(i.produto.nome), _unidade_item(i), qtd(q), "A definir"]
             subtotal_txt = "—"
         else:
             desconto = Decimal(str(i.desconto or 0))
             subtotal = (q * Decimal(str(i.preco_unitario)) - desconto).quantize(Decimal("0.01"))
             total += subtotal; descontos += desconto
-            linha = [_txt(i.produto.nome), _unidade(i.produto), qtd(q), brl(i.preco_unitario)]
+            linha = [_txt(i.produto.nome), _unidade_item(i), qtd(q), brl(i.preco_unitario)]
             subtotal_txt = brl(subtotal)
         if venda:
             linha.append(brl(i.desconto) if i.desconto else "—")
@@ -362,7 +369,7 @@ def pdf_pedido_venda(db: Session, pedido_id: int, emitido_por: str) -> Tuple[byt
     linhas, descontos = [], Decimal("0")
     for i in sorted(ped.itens, key=lambda x: x.id):
         descontos += Decimal(str(i.desconto or 0))
-        linhas.append([_txt(i.produto.nome), _unidade(i.produto), qtd(i.quantidade), brl(i.preco_unitario),
+        linhas.append([_txt(i.produto.nome), _unidade_item(i), qtd(i.quantidade), brl(i.preco_unitario),
                        brl(i.desconto) if i.desconto else "—", brl(i.subtotal)])
     tabela = _tabela(["Produto", "Un.", "Qtd.", "Preço unit.", "Desconto", "Subtotal"], linhas, [5, 1, 1.3, 2, 2, 2.2], {2, 3, 4, 5})
     totais = ([("Descontos", brl(descontos))] if descontos else []) + [("Total", brl(ped.valor_total))]
@@ -393,7 +400,7 @@ def pdf_pedido_compra(db: Session, pedido_id: int, emitido_por: str) -> Tuple[by
 
     linhas = []
     for i in sorted(ped.itens, key=lambda x: x.id):
-        linhas.append([_txt(i.produto.nome), _unidade(i.produto), qtd(i.quantidade), qtd(i.quantidade_recebida),
+        linhas.append([_txt(i.produto.nome), _unidade_item(i), qtd(i.quantidade), qtd(i.quantidade_recebida),
                        brl(i.preco_unitario), brl(i.subtotal)])
     tabela = _tabela(["Produto", "Un.", "Qtd. pedida", "Qtd. recebida", "Preço unit.", "Subtotal"], linhas, [5, 1, 1.6, 1.8, 2, 2.2], {2, 3, 4, 5})
     titulos = db.query(TituloFinanceiro).filter(TituloFinanceiro.pedido_compra_id == ped.id).order_by(TituloFinanceiro.numero_parcela).all()

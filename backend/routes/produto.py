@@ -2,8 +2,9 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from database import get_db
 from models import Produto, Categoria, Subcategoria, UnidadeMedida
-from schemas.produto import ProdutoCreate, ProdutoUpdate, ProdutoResponse
+from schemas.produto import ProdutoCreate, ProdutoUpdate, ProdutoResponse, validar_embalagem
 from core.security import get_current_user
+from decimal import Decimal
 from typing import List
 
 router = APIRouter(prefix="/produtos", tags=["Produtos"])
@@ -41,6 +42,17 @@ def _validar_referencias(
         raise HTTPException(status_code=400, detail="A unidade de medida selecionada está inativa")
 
 
+def _validar_unidade_embalagem(db: Session, embalagem_unidade_id: int, unidade_base_id: int) -> None:
+    """A embalagem (ex.: Pote) é uma unidade ativa e diferente da unidade base (ex.: L)."""
+    if embalagem_unidade_id == unidade_base_id:
+        raise HTTPException(status_code=400, detail="A embalagem precisa ser diferente da unidade base (ex.: base Litro, embalagem Pote)")
+    unidade = db.query(UnidadeMedida).filter(UnidadeMedida.id == embalagem_unidade_id).first()
+    if not unidade:
+        raise HTTPException(status_code=404, detail="Unidade da embalagem não encontrada")
+    if not unidade.ativo:
+        raise HTTPException(status_code=400, detail="A unidade da embalagem está inativa")
+
+
 def _calcular_preco_venda(preco_custo: float, porcentagem: float) -> float:
     return round(preco_custo + (preco_custo * porcentagem / 100), 2)
 
@@ -49,8 +61,12 @@ def _calcular_preco_venda(preco_custo: float, porcentagem: float) -> float:
 def criar_produto(dados: ProdutoCreate, db: Session = Depends(get_db), _=Depends(get_current_user)):
     # Na criação, tudo precisa estar ativo
     _validar_referencias(db, dados.categoria_id, dados.subcategoria_id, dados.unidade_medida_id)
+    if dados.embalagem_unidade_id is not None:
+        _validar_unidade_embalagem(db, dados.embalagem_unidade_id, dados.unidade_medida_id)
 
     payload = dados.model_dump()
+    if payload["embalagem_unidade_id"] is None:
+        payload["fator_embalagem"] = Decimal("1")
 
     if payload["e_vendavel"]:
         payload["preco_venda"] = _calcular_preco_venda(payload["preco_custo"], payload["porcentagem"])
@@ -111,8 +127,9 @@ def atualizar_produto(produto_id: int, dados: ProdutoUpdate, db: Session = Depen
     if not produto:
         raise HTTPException(status_code=404, detail="Produto não encontrado")
 
-    # Só o que foi enviado muda. A descrição aceita null (apagar); porcentagem e preço de venda são tratados abaixo.
-    atualizacoes = {c: v for c, v in dados.model_dump(exclude_unset=True).items() if v is not None or c == "descricao"}
+    # Só o que foi enviado muda. Descrição e embalagem aceitam null (apagar); porcentagem e preço de venda são tratados abaixo.
+    anulaveis = {"descricao", "embalagem_unidade_id"}
+    atualizacoes = {c: v for c, v in dados.model_dump(exclude_unset=True).items() if v is not None or c in anulaveis}
 
     # estado final resultante da mesclagem (banco + payload), para validar as regras cruzadas
     categoria_final = atualizacoes.get("categoria_id", produto.categoria_id)
@@ -122,6 +139,23 @@ def atualizar_produto(produto_id: int, dados: ProdutoUpdate, db: Session = Depen
     e_vendavel_final = atualizacoes.get("e_vendavel", produto.e_vendavel)
     preco_custo_final = atualizacoes.get("preco_custo", produto.preco_custo)
     porcentagem_final = atualizacoes.get("porcentagem", produto.porcentagem)
+
+    # Embalagem: sem ela o fator volta a 1. Trocar o fator não mexe no estoque (ele está na unidade base)
+    # nem nos pedidos já feitos (cada item guarda o fator do dia em que foi gravado).
+    embalagem_final = atualizacoes.get("embalagem_unidade_id", produto.embalagem_unidade_id)
+    if embalagem_final is None:
+        fator_final = Decimal("1")
+    else:
+        fator_final = atualizacoes.get("fator_embalagem", produto.fator_embalagem)
+        if "embalagem_unidade_id" in atualizacoes and produto.embalagem_unidade_id is None and "fator_embalagem" not in atualizacoes:
+            fator_final = None   # ganhou embalagem agora: o fator precisa vir junto
+    try:
+        validar_embalagem(embalagem_final, fator_final)
+    except ValueError as erro:
+        raise HTTPException(status_code=400, detail=str(erro))
+    if embalagem_final is not None and (embalagem_final != produto.embalagem_unidade_id or unidade_final != produto.unidade_medida_id):
+        _validar_unidade_embalagem(db, embalagem_final, unidade_final)
+    atualizacoes["fator_embalagem"] = fator_final
 
     if not e_insumo_final and not e_vendavel_final:
         raise HTTPException(

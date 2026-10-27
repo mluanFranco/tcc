@@ -25,7 +25,7 @@ def _montar_resposta(receita: Receita) -> ReceitaResponse:
     itens = []
     custo_total = 0.0
     for item in receita.itens:
-        subtotal = round(float(item.quantidade) * (item.produto.preco_custo or 0.0), 2)
+        subtotal = round(float(item.quantidade) * item.produto.custo_unidade_base, 2)
         custo_total += subtotal
         itens.append(ReceitaItemResponse(
             id=item.id,
@@ -33,7 +33,7 @@ def _montar_resposta(receita: Receita) -> ReceitaResponse:
             produto_nome=item.produto.nome,
             unidade_sigla=_sigla(item.produto),
             quantidade=item.quantidade,
-            preco_custo=item.produto.preco_custo or 0.0,
+            preco_custo=item.produto.custo_unidade_base,   # custo da unidade base (embalagem ÷ fator)
             subtotal=subtotal,
             insumo_ativo=bool(item.produto.ativo),
         ))
@@ -168,7 +168,7 @@ def simular_producao(
         necessario = consumos[item.produto_id]
         disponivel = (insumo.estoque_atual or Decimal("0")) - (insumo.estoque_reservado or Decimal("0"))
         falta = max(Decimal("0"), necessario - disponivel)
-        custo += float(necessario) * (insumo.preco_custo or 0.0)
+        custo += float(necessario) * insumo.custo_unidade_base
         itens.append(SimulacaoItem(
             produto_id=insumo.id,
             produto_nome=insumo.nome,

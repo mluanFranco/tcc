@@ -4,6 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Clientes — Nova Sorvetes</title>
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" href="../assets/icons/favicon-32.png" sizes="32x32">
+  <link rel="apple-touch-icon" href="../assets/icons/apple-touch-icon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../css/base.css">
@@ -90,7 +93,7 @@
             </div>
             <div class="campo-form">
               <label for="campo-documento" id="label-documento">CPF *</label>
-              <input type="text" id="campo-documento" placeholder="000.000.000-00" required>
+              <input type="text" id="campo-documento" placeholder="000.000.000-00" maxlength="18" autocomplete="off" required>
               <span class="campo-erro-msg">Informe o documento.</span>
             </div>
           </div>
@@ -98,7 +101,7 @@
           <div class="campo-form-linha">
             <div class="campo-form">
               <label for="campo-telefone">Telefone</label>
-              <input type="text" id="campo-telefone" placeholder="(00) 00000-0000">
+              <input type="tel" id="campo-telefone" placeholder="(00) 00000-0000" maxlength="15">
             </div>
             <div class="campo-form">
               <label for="campo-email">Email</label>
@@ -149,7 +152,7 @@
 
           <div class="campo-form">
             <label for="campo-ddd">DDD</label>
-            <input type="text" id="campo-ddd" maxlength="3" style="max-width: 100px;">
+            <input type="text" id="campo-ddd" maxlength="3" inputmode="numeric" style="max-width: 100px;">
           </div>
 
           <p class="secao-titulo">Endereços de entrega</p>
@@ -225,7 +228,7 @@
 
           <div class="campo-form">
             <label for="end-ddd">DDD</label>
-            <input type="text" id="end-ddd" maxlength="3" style="max-width: 100px;">
+            <input type="text" id="end-ddd" maxlength="3" inputmode="numeric" style="max-width: 100px;">
           </div>
 
         </div>

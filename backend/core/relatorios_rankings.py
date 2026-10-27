@@ -5,6 +5,8 @@ e formas de pagamento (valor, prazo médio e taxa).
 Mesmas regras do resumo (12c.1):
 - Venda conta quando CONFIRMADA (confirmado_em); receita = subtotal dos itens; CMV = quantidade x custo congelado.
 - Compra conta quando NÃO cancelada, pela data do pedido.
+- Quantidades e preços médios/mínimos/máximos dos rankings de produto ficam na unidade BASE (quantidade x fator do item),
+  então "unidade" é sempre a sigla base (L, kg, un) mesmo para produtos vendidos em embalagem.
 Os totais são do período inteiro; `limite` só corta a lista exibida.
 Tudo é somado em SQL (decimais exatos) e arredondado só na saída.
 """
@@ -110,8 +112,9 @@ def compras_por_produto(db: Session, inicio: date, fim: date, limite: int, orden
         for pid, nome, sigla, n, qtd, total, pmin, pmax in (
             db.query(
                 Produto.id, Produto.nome, UnidadeMedida.sigla, func.count(func.distinct(PedidoCompra.id)),
-                func.sum(ItemPedidoCompra.quantidade), func.sum(cast(ItemPedidoCompra.subtotal, Numeric(14, 2))),
-                func.min(ItemPedidoCompra.preco_unitario), func.max(ItemPedidoCompra.preco_unitario),
+                # quantidades e preços na unidade BASE (litro, kg...): não mistura potes com litros se a embalagem mudar
+                func.sum(ItemPedidoCompra.quantidade * ItemPedidoCompra.fator), func.sum(cast(ItemPedidoCompra.subtotal, Numeric(14, 2))),
+                func.min(ItemPedidoCompra.preco_unitario / ItemPedidoCompra.fator), func.max(ItemPedidoCompra.preco_unitario / ItemPedidoCompra.fator),
             )
             .select_from(ItemPedidoCompra)
             .join(PedidoCompra, PedidoCompra.id == ItemPedidoCompra.pedido_compra_id)
@@ -128,7 +131,7 @@ def compras_por_produto(db: Session, inicio: date, fim: date, limite: int, orden
     ultimo = {}
     if escolhidas:
         for pid, preco in (
-            db.query(ItemPedidoCompra.produto_id, ItemPedidoCompra.preco_unitario)
+            db.query(ItemPedidoCompra.produto_id, ItemPedidoCompra.preco_unitario / ItemPedidoCompra.fator)
             .join(PedidoCompra, PedidoCompra.id == ItemPedidoCompra.pedido_compra_id)
             .filter(*filtro, ItemPedidoCompra.produto_id.in_([l["produto_id"] for l in escolhidas]))
             .order_by(ItemPedidoCompra.produto_id, PedidoCompra.data_pedido.desc(), ItemPedidoCompra.id.desc())
@@ -162,7 +165,7 @@ def vendas_por_produto(db: Session, inicio: date, fim: date, limite: int, ordena
         for pid, nome, sigla, n, qtd, receita, cmv, sem in (
             db.query(
                 Produto.id, Produto.nome, UnidadeMedida.sigla, func.count(func.distinct(PedidoVenda.id)),
-                func.sum(ItemPedidoVenda.quantidade), _RECEITA, _CMV, _SEM_CUSTO,
+                func.sum(ItemPedidoVenda.quantidade * ItemPedidoVenda.fator), _RECEITA, _CMV, _SEM_CUSTO,   # quantidade na unidade base
             )
             .select_from(ItemPedidoVenda)
             .join(PedidoVenda, PedidoVenda.id == ItemPedidoVenda.pedido_venda_id)
