@@ -45,7 +45,7 @@ estoque_minimo. Estoque baixo = estoque_atual <= estoque_minimo. Produto pode se
 aceitam casas decimais (ex.: kg)."""),
     "geladeiras": ("geladeira geladeiras manutencao freezer expositora equipamento alocacao", """\
 GELADEIRAS. Equipamentos do negócio alocados em clientes, com tipo, modelo, marca, número de série, data de alocação e status
-(ex.: em_campo, em_manutencao). Cada geladeira tem histórico de manutenções (data, tipo e custo)."""),
+(em_campo, manutencao ou desativada). Cada geladeira tem histórico de manutenções (data, tipo e custo)."""),
     "cadastros": ("cadastro cadastros cliente fornecedor produto categoria subcategoria unidade forma pagamento", """\
 CADASTROS: produtos (com categoria, subcategoria e unidade de medida), clientes (vários endereços), fornecedores e formas de pagamento
 (com parcelas, prazos e taxa). Cadastros são desativados (soft delete), não apagados, para preservar o histórico."""),

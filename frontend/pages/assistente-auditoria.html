@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Auditoria da IA — Nova Sorvetes</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/base.css">
+  <link rel="stylesheet" href="../css/sidebar.css">
+  <link rel="stylesheet" href="../css/listagem-crud.css">
+  <link rel="stylesheet" href="../css/assistente-auditoria.css">
+  <link rel="stylesheet" href="../css/feedback.css">
+</head>
+<body>
+
+  <div class="app-layout">
+    <aside id="sidebar" class="sidebar"></aside>
+
+    <main class="conteudo-principal">
+
+      <div class="pagina-topo">
+        <div>
+          <h1>Auditoria da IA</h1>
+          <p class="aud-subtitulo">Cada consulta, relatório e falha do assistente fica registrado aqui. As respostas escritas pela IA não são exibidas, só o que ela acionou.</p>
+        </div>
+      </div>
+
+      <section class="aud-cartoes" aria-label="Resumo do período">
+        <button type="button" class="aud-cartao aud-cartao--ativo" id="cartao-total" data-filtro="">
+          <span class="aud-cartao__rotulo">Ações registradas</span>
+          <strong class="aud-cartao__valor" id="kpi-total">—</strong>
+        </button>
+        <button type="button" class="aud-cartao aud-cartao--ok" id="cartao-ok" data-filtro="ok">
+          <span class="aud-cartao__rotulo">Concluídas</span>
+          <strong class="aud-cartao__valor" id="kpi-ok">—</strong>
+        </button>
+        <button type="button" class="aud-cartao aud-cartao--alerta" id="cartao-barradas" data-filtro="sql_recusado,sem_permissao">
+          <span class="aud-cartao__rotulo">Barradas pelas travas</span>
+          <strong class="aud-cartao__valor" id="kpi-barradas">—</strong>
+        </button>
+        <button type="button" class="aud-cartao aud-cartao--erro" id="cartao-erros" data-filtro="erro_execucao,erro_ferramenta,erro_provedor">
+          <span class="aud-cartao__rotulo">Erros</span>
+          <strong class="aud-cartao__valor" id="kpi-erros">—</strong>
+        </button>
+        <div class="aud-cartao aud-cartao--info">
+          <span class="aud-cartao__rotulo">Tempo médio</span>
+          <strong class="aud-cartao__valor" id="kpi-duracao">—</strong>
+        </div>
+        <div class="aud-cartao aud-cartao--info">
+          <span class="aud-cartao__rotulo">Usuários</span>
+          <strong class="aud-cartao__valor" id="kpi-usuarios">—</strong>
+        </div>
+      </section>
+
+      <form class="aud-filtros" id="form-filtros" novalidate>
+        <div class="aud-campo">
+          <label for="filtro-usuario">Usuário</label>
+          <select id="filtro-usuario"><option value="">Todos</option></select>
+        </div>
+        <div class="aud-campo">
+          <label for="filtro-status">Resultado</label>
+          <select id="filtro-status">
+            <option value="">Todos</option>
+            <option value="ok">Concluída</option>
+            <option value="sql_recusado,sem_permissao">Barradas (SQL recusado ou sem permissão)</option>
+            <option value="sql_recusado">SQL recusado</option>
+            <option value="sem_permissao">Sem permissão</option>
+            <option value="erro_execucao,erro_ferramenta,erro_provedor">Erros (todos)</option>
+            <option value="erro_execucao">Erro na execução</option>
+            <option value="erro_ferramenta">Erro na ferramenta</option>
+            <option value="erro_provedor">Erro do provedor</option>
+          </select>
+        </div>
+        <div class="aud-campo">
+          <label for="filtro-ferramenta">Ferramenta</label>
+          <select id="filtro-ferramenta">
+            <option value="">Todas</option>
+            <option value="consultar_banco">Consulta ao banco</option>
+            <option value="relatorio_financeiro">Relatório financeiro</option>
+            <option value="como_usar">Ajuda de uso</option>
+            <option value="provedor">Provedor de IA</option>
+          </select>
+        </div>
+        <div class="aud-campo">
+          <label for="filtro-inicio">De</label>
+          <input type="date" id="filtro-inicio">
+        </div>
+        <div class="aud-campo">
+          <label for="filtro-fim">Até</label>
+          <input type="date" id="filtro-fim">
+        </div>
+        <button type="button" class="aud-botao" id="botao-limpar">Limpar filtros</button>
+        <p class="aud-erro-filtro" id="erro-filtro" role="alert" hidden></p>
+      </form>
+
+      <div class="tabela-container">
+        <div class="aud-tabela-rolagem">
+          <table class="tabela aud-tabela">
+            <thead>
+              <tr>
+                <th>Data e hora</th>
+                <th>Usuário</th>
+                <th>Pergunta</th>
+                <th>Ferramenta</th>
+                <th>Resultado</th>
+                <th class="aud-num">Linhas</th>
+                <th class="aud-num">Duração</th>
+              </tr>
+            </thead>
+            <tbody id="tabela-corpo"></tbody>
+          </table>
+        </div>
+        <div class="estado-carregando" id="estado-carregando">Carregando registros...</div>
+        <div class="estado-vazio" id="estado-vazio" hidden></div>
+        <div class="aud-paginacao" id="paginacao" hidden>
+          <span id="paginacao-texto"></span>
+          <div class="aud-paginacao__botoes">
+            <button type="button" class="aud-botao" id="botao-anterior">Anterior</button>
+            <button type="button" class="aud-botao" id="botao-proxima">Próxima</button>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- Painel de detalhe -->
+  <div class="aud-painel-overlay" id="painel-overlay" hidden></div>
+  <aside class="aud-painel" id="painel" role="dialog" aria-modal="true" aria-labelledby="painel-titulo" hidden>
+    <div class="aud-painel__topo">
+      <h2 id="painel-titulo">Detalhe do registro</h2>
+      <button type="button" class="aud-painel__fechar" id="painel-fechar" aria-label="Fechar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+      </button>
+    </div>
+    <div class="aud-painel__corpo" id="painel-corpo"></div>
+  </aside>
+
+  <script src="../js/core/config.js"></script>
+  <script src="../js/core/api.js"></script>
+  <script src="../js/core/auth.js"></script>
+  <script src="../js/core/formatadores.js"></script>
+  <script src="../js/components/sidebar.js"></script>
+  <script src="../js/components/feedback.js"></script>
+  <script src="../js/services/usuarioService.js"></script>
+  <script src="../js/services/auditoriaIaService.js"></script>
+  <script src="../js/pages/assistente-auditoria.js"></script>
+</body>
+</html>

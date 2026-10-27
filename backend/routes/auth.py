@@ -63,7 +63,9 @@ def alterar_senha(dados: AlterarSenhaRequest, db: Session = Depends(get_db), log
     if _confere_senha(dados.senha_nova, usuario.senha_hash):
         raise HTTPException(status_code=400, detail="A nova senha deve ser diferente da atual")
 
-    agora = datetime.utcnow()
+    # Sem microssegundos: o MySQL ARREDONDA a coluna DATETIME(0) (12:00:00.7 vira 12:00:01) e o "iat" do token
+    # é cortado no segundo; com fração, o token novo podia nascer "mais velho" que a troca e ser recusado.
+    agora = datetime.utcnow().replace(microsecond=0)
     usuario.senha_hash = bcrypt.hashpw(dados.senha_nova.encode(), bcrypt.gensalt()).decode()
     usuario.senha_alterada_em = agora
     db.commit()

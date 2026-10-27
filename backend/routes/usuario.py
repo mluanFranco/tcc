@@ -164,7 +164,7 @@ def atualizar_usuario(usuario_id: int, dados: UsuarioUpdate, db: Session = Depen
         usuario.nome = dados.nome
     if dados.senha is not None:
         usuario.senha_hash = bcrypt.hashpw(dados.senha.encode(), bcrypt.gensalt()).decode()
-        usuario.senha_alterada_em = datetime.utcnow()   # redefinição pelo administrador: as sessões abertas desse usuário caem
+        usuario.senha_alterada_em = datetime.utcnow().replace(microsecond=0)   # redefinição pelo administrador: as sessões abertas desse usuário caem
     if dados.admin is not None:
         usuario.admin = dados.admin
     if dados.ativo is not None:

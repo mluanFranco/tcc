@@ -65,7 +65,9 @@ def atualizar_fornecedor(fornecedor_id: int, dados: FornecedorUpdate, db: Sessio
     if not fornecedor:
         raise HTTPException(status_code=404, detail="Fornecedor não encontrado")
 
-    atualizacoes = dados.model_dump(exclude_none=True)
+    # Só o que foi enviado muda. Contato e endereço aceitam null (apagar o valor); nome, CNPJ e ativo, não.
+    anulaveis = {"telefone", "email", "cep", "logradouro", "numero", "complemento", "bairro", "cidade", "uf", "ddd"}
+    atualizacoes = {c: v for c, v in dados.model_dump(exclude_unset=True).items() if v is not None or c in anulaveis}
 
     if "cnpj" in atualizacoes and _cnpj_duplicado(db, atualizacoes["cnpj"], ignorar_id=fornecedor_id):
         raise HTTPException(status_code=400, detail=MSG_CNPJ_DUPLICADO)

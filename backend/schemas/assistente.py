@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field, field_validator
-from typing import Any, List, Optional
+from typing import Any, Dict, List, Optional
 from datetime import datetime
 
 
@@ -79,3 +79,12 @@ class LogResponse(BaseModel):
 class AuditoriaResponse(BaseModel):
     total: int
     itens: List[LogResponse]
+
+
+class AuditoriaResumoResponse(BaseModel):
+    total: int
+    por_status: Dict[str, int]                 # contagem por status (ok, sql_recusado, ...)
+    recusados: int                             # sql_recusado + sem_permissao (tentativas barradas pelas travas)
+    erros: int                                 # erro_execucao + erro_ferramenta + erro_provedor
+    duracao_media_ms: Optional[int] = None     # média só das ferramentas que registraram duração
+    usuarios: int                              # usuários distintos no período

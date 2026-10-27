@@ -13,7 +13,7 @@ from core.security import get_current_user
 from database import get_db
 from models import AssistenteConversa, AssistenteLog, AssistenteMensagem, Usuario
 from schemas.assistente import (
-    AuditoriaResponse, ConversaDetalheResponse, ConversaResponse, LogResponse, MensagemCreate, MensagemHistorico,
+    AuditoriaResponse, AuditoriaResumoResponse, ConversaDetalheResponse, ConversaResponse, LogResponse, MensagemCreate, MensagemHistorico,
     MensagemResponse, StatusResponse, TabelaResponse,
 )
 
@@ -149,22 +149,50 @@ def excluir_conversa(conversa_id: int, db: Session = Depends(get_db), usuario: U
     return {"mensagem": "Conversa excluída"}
 
 
-@router.get("/auditoria", response_model=AuditoriaResponse, dependencies=[Depends(exigir_admin)])
-def auditoria(usuario_id: Optional[int] = None, status: Optional[str] = None, ferramenta: Optional[str] = None,
-              data_inicio: Optional[date] = None, data_fim: Optional[date] = None,
-              limite: int = Query(default=50, ge=1, le=200), offset: int = Query(default=0, ge=0), db: Session = Depends(get_db)):
-    """Só administrador: quem perguntou o quê, qual SQL/relatório a IA acionou, com que resultado e em quanto tempo."""
-    q = db.query(AssistenteLog, Usuario.nome).join(Usuario, Usuario.id == AssistenteLog.usuario_id)
+STATUS_RECUSADOS = ("sql_recusado", "sem_permissao")
+STATUS_ERROS = ("erro_execucao", "erro_ferramenta", "erro_provedor")
+
+
+def _filtrar_log(q, usuario_id, ferramenta, data_inicio, data_fim):
+    """Filtros comuns da lista e do resumo. As datas são o dia do servidor (TZ America/Sao_Paulo no Docker),
+    o mesmo relógio que grava created_at; data_fim é inclusiva."""
     if usuario_id is not None:
         q = q.filter(AssistenteLog.usuario_id == usuario_id)
-    if status:
-        q = q.filter(AssistenteLog.status == status)
     if ferramenta:
         q = q.filter(AssistenteLog.ferramenta == ferramenta)
     if data_inicio:
         q = q.filter(AssistenteLog.created_at >= datetime.combine(data_inicio, time.min))
     if data_fim:
         q = q.filter(AssistenteLog.created_at < datetime.combine(data_fim + timedelta(days=1), time.min))
+    return q
+
+
+@router.get("/auditoria/resumo", response_model=AuditoriaResumoResponse, dependencies=[Depends(exigir_admin)])
+def auditoria_resumo(usuario_id: Optional[int] = None, ferramenta: Optional[str] = None,
+                     data_inicio: Optional[date] = None, data_fim: Optional[date] = None, db: Session = Depends(get_db)):
+    """Só administrador: números do período para os cartões da tela (ignora o filtro de status, para mostrar o quadro todo)."""
+    base = _filtrar_log(db.query(AssistenteLog), usuario_id, ferramenta, data_inicio, data_fim)
+    por_status = {s: n for s, n in base.with_entities(AssistenteLog.status, func.count(AssistenteLog.id)).group_by(AssistenteLog.status).all()}
+    media = base.filter(AssistenteLog.duracao_ms.isnot(None)).with_entities(func.avg(AssistenteLog.duracao_ms)).scalar()
+    usuarios = base.with_entities(func.count(func.distinct(AssistenteLog.usuario_id))).scalar() or 0
+    return AuditoriaResumoResponse(
+        total=sum(por_status.values()), por_status=por_status,
+        recusados=sum(por_status.get(s, 0) for s in STATUS_RECUSADOS),
+        erros=sum(por_status.get(s, 0) for s in STATUS_ERROS),
+        duracao_media_ms=int(round(float(media))) if media is not None else None, usuarios=usuarios)
+
+
+@router.get("/auditoria", response_model=AuditoriaResponse, dependencies=[Depends(exigir_admin)])
+def auditoria(usuario_id: Optional[int] = None, status: Optional[str] = None, ferramenta: Optional[str] = None,
+              data_inicio: Optional[date] = None, data_fim: Optional[date] = None,
+              limite: int = Query(default=50, ge=1, le=200), offset: int = Query(default=0, ge=0), db: Session = Depends(get_db)):
+    """Só administrador: quem perguntou o quê, qual SQL/relatório a IA acionou, com que resultado e em quanto tempo.
+    `status` aceita vários valores separados por vírgula (ex.: sql_recusado,sem_permissao)."""
+    q = db.query(AssistenteLog, Usuario.nome).join(Usuario, Usuario.id == AssistenteLog.usuario_id)
+    q = _filtrar_log(q, usuario_id, ferramenta, data_inicio, data_fim)
+    estados = [s.strip() for s in (status or "").split(",") if s.strip()]
+    if estados:
+        q = q.filter(AssistenteLog.status.in_(estados))
     total = q.count()
     linhas = q.order_by(AssistenteLog.id.desc()).offset(offset).limit(limite).all()
     itens = [LogResponse(id=l.id, usuario_id=l.usuario_id, usuario_nome=nome, conversa_id=l.conversa_id, pergunta=l.pergunta,

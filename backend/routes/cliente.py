@@ -106,7 +106,9 @@ def buscar_cliente(cliente_id: int, db: Session = Depends(get_db), _=Depends(get
 def atualizar_cliente(cliente_id: int, dados: ClienteUpdate, db: Session = Depends(get_db), _=Depends(get_current_user)):
     cliente = _buscar_cliente_ou_404(db, cliente_id)
 
-    atualizacoes = dados.model_dump(exclude_none=True)
+    # Só o que foi enviado muda. Telefone e e-mail aceitam null (apagar o valor); nos demais, null = não mexer.
+    anulaveis = {"telefone", "email"}
+    atualizacoes = {c: v for c, v in dados.model_dump(exclude_unset=True).items() if v is not None or c in anulaveis}
 
     if "cpf_cnpj" in atualizacoes and _documento_duplicado(db, atualizacoes["cpf_cnpj"], ignorar_id=cliente_id):
         raise HTTPException(status_code=400, detail=MSG_DOCUMENTO_DUPLICADO)

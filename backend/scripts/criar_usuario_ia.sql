@@ -3,11 +3,12 @@
 -- Troque SENHA_FORTE_AQUI e o nome do banco (DB_NAME do seu .env), e use a mesma senha em IA_DB_PASSWORD.
 -- Para repetir: DROP USER 'sistema_ia'@'%'; e rode de novo.
 
-CREATE USER IF NOT EXISTS 'sistema_ia'@'%' IDENTIFIED BY 'IaUser@2026';
-ALTER USER 'sistema_ia'@'%' IDENTIFIED BY 'IaUser@2026'
+CREATE USER IF NOT EXISTS 'sistema_ia'@'%' IDENTIFIED BY 'SENHA_FORTE_AQUI';
+ALTER USER 'sistema_ia'@'%' IDENTIFIED BY 'SENHA_FORTE_AQUI'
     WITH MAX_USER_CONNECTIONS 5;
 
--- SELECT apenas nas views (nunca nas tabelas). Troque nova_sorvetes pelo nome do seu banco.
+-- SELECT apenas nas views (nunca nas tabelas). Troque sist_gest_est_mon pelo nome do seu banco.
+-- No Docker este script não é necessário: o docker/preparar_banco.py cria o usuário sozinho.
 GRANT SELECT ON sist_gest_est_mon.v_produtos        TO 'sistema_ia'@'%';
 GRANT SELECT ON sist_gest_est_mon.v_clientes        TO 'sistema_ia'@'%';
 GRANT SELECT ON sist_gest_est_mon.v_fornecedores    TO 'sistema_ia'@'%';

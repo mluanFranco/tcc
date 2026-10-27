@@ -369,7 +369,8 @@ document.addEventListener("DOMContentLoaded", async () => {
       e_vendavel: eVendavel,
       preco_custo: moedaParaNumero(elementos.campoPrecoCusto.value),
       porcentagem: eVendavel ? parseFloat(elementos.campoPorcentagem.value) : null,
-      estoque_minimo: parseInt(document.getElementById("campo-estoque-minimo").value || "0", 10)
+      descricao: document.getElementById("campo-descricao").value.trim() || null,
+      estoque_minimo: Number(document.getElementById("campo-estoque-minimo").value || "0")   // aceita até 3 casas (kg, L)
     };
 
     if (!validarForm(dados)) return;

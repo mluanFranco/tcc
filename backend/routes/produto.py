@@ -111,7 +111,8 @@ def atualizar_produto(produto_id: int, dados: ProdutoUpdate, db: Session = Depen
     if not produto:
         raise HTTPException(status_code=404, detail="Produto não encontrado")
 
-    atualizacoes = dados.model_dump(exclude_none=True)
+    # Só o que foi enviado muda. A descrição aceita null (apagar); porcentagem e preço de venda são tratados abaixo.
+    atualizacoes = {c: v for c, v in dados.model_dump(exclude_unset=True).items() if v is not None or c == "descricao"}
 
     # estado final resultante da mesclagem (banco + payload), para validar as regras cruzadas
     categoria_final = atualizacoes.get("categoria_id", produto.categoria_id)

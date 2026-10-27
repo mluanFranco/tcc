@@ -33,6 +33,7 @@ const ITENS_MENU = [
   { label: "Geladeiras",          href: "geladeiras.html",       tambem: ["geladeira-detalhe.html"], permissao: "geladeiras.ver", icone: "geladeira" },
   { label: "Grupos de Acesso",    href: "grupos-acesso.html",    apenasAdmin: true, icone: "grupo" },
   { label: "Assistente de IA",    href: "assistente.html",       permissao: "assistente.ver", icone: "assistente" },
+  { label: "Auditoria da IA",     href: "assistente-auditoria.html", apenasAdmin: true, icone: "auditoria" },
   { label: "Usuários",            href: "usuarios.html",         apenasAdmin: true, icone: "usuario" }
 ];
 
@@ -49,6 +50,7 @@ const ICONES_SVG = {
   pagamento: _svg('<rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line>'),
   grupo:     _svg('<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><polyline points="9 12 11 14 15 10"></polyline>'),
   assistente: _svg('<path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z"></path><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"></path>'),
+  auditoria: _svg('<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><circle cx="11.5" cy="14.5" r="2.5"></circle><line x1="13.3" y1="16.3" x2="16" y2="19"></line>'),
   usuario:   _svg('<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle>')
 };
 

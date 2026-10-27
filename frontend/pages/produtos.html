@@ -112,7 +112,7 @@
 
           <div class="campo-form">
             <label for="campo-descricao">Descrição</label>
-            <textarea id="campo-descricao"></textarea>
+            <textarea id="campo-descricao" maxlength="255"></textarea>
           </div>
 
           <div class="campo-form">
@@ -154,7 +154,7 @@
 
           <div class="campo-form">
             <label for="campo-estoque-minimo">Estoque mínimo</label>
-            <input type="number" id="campo-estoque-minimo" step="1" min="0" value="0">
+            <input type="number" id="campo-estoque-minimo" step="0.001" min="0" value="0" inputmode="decimal">
           </div>
 
         </div>
