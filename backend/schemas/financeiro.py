@@ -52,6 +52,8 @@ class TituloResponse(BaseModel):
     tipo: str
     pedido_venda_id: Optional[int]
     pedido_compra_id: Optional[int]
+    historico_manutencao_id: Optional[int] = None
+    manutencao_geladeira_id: Optional[int] = None   # para o link "abrir a geladeira"
     cliente_id: Optional[int]
     cliente_nome: Optional[str]
     fornecedor_id: Optional[int]
@@ -92,6 +94,8 @@ class TituloResponse(BaseModel):
             return f"Pedido de venda #{self.pedido_venda_id}"
         if self.pedido_compra_id:
             return f"Pedido de compra #{self.pedido_compra_id}"
+        if self.historico_manutencao_id:
+            return self.descricao or "Manutenção de geladeira"
         return self.descricao or "Lançamento avulso"
 
 

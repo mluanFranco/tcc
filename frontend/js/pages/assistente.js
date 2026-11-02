@@ -1,6 +1,6 @@
-// Assistente de IA: chat com conversas salvas. A IA responde em texto, pode anexar uma tabela com o resultado da
-// consulta e sempre informa o SQL usado ("Ver consulta usada"). O que ela enxerga é limitado pelas permissões do usuário
-// no backend; a tela só mostra o que a API devolve.
+// Nova IA (assistente de IA): chat com conversas salvas. A IA responde em texto, pode anexar uma tabela com o resultado da
+// consulta. O SQL usado não aparece no chat: fica registrado só na Auditoria Nova IA. O que ela enxerga é limitado pelas
+// permissões do usuário no backend; a tela só mostra o que a API devolve.
 //
 // Pontos de atenção:
 //  - a resposta pode demorar vários segundos: o envio fica travado e aparece "Consultando os dados...";
@@ -97,12 +97,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     return `<div class="chat-tabela-wrap" tabindex="0"><table class="chat-tabela"><thead><tr>${cabecalho}</tr></thead><tbody>${corpo}</tbody></table></div>${nota}`;
   }
 
-  function sqlHtml(consultas) {
-    if (!Array.isArray(consultas) || !consultas.length) return "";
-    const blocos = consultas.map(c => `<pre>${escaparHtml(c)}</pre>`).join("");
-    return `<details class="chat-sql"><summary>Ver consulta usada</summary>${blocos}</details>`;
-  }
-
   // ---------- Mensagens ----------
   function rolarParaFim() { el.mensagens.scrollTop = el.mensagens.scrollHeight; }
 
@@ -117,10 +111,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     return d;
   }
 
-  function adicionarAssistente({ texto, tabela, consultas }) {
+  function adicionarAssistente({ texto, tabela }) {
     const d = document.createElement("div");
     d.className = "balao balao--assistente";
-    d.innerHTML = textoParaHtml(texto) + tabelaHtml(tabela) + sqlHtml(consultas);
+    d.innerHTML = textoParaHtml(texto) + tabelaHtml(tabela);
     el.mensagens.appendChild(d);
     rolarParaFim();
     return d;
@@ -159,8 +153,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     limparMensagens();
     const d = document.createElement("div");
     d.className = "chat-vazio";
-    d.innerHTML = `<h2>Como posso ajudar?</h2>
-      <p>Pergunte em linguagem natural sobre estoque, vendas, compras, produção, geladeiras e financeiro. Eu só enxergo o que o seu usuário tem permissão para ver, e mostro a consulta que usei.</p>
+    d.innerHTML = `<img class="chat-avatar chat-avatar--vazio" src="../assets/images/nova-ia-avatar.svg" alt="">
+      <h2>Como posso ajudar?</h2>
       <div class="chat-sugestoes">${SUGESTOES.map(s => `<button type="button" class="chat-sugestao">${escaparHtml(s)}</button>`).join("")}</div>`;
     el.mensagens.appendChild(d);
     atualizarEstadoEnvio();
@@ -250,7 +244,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       digitando.remove();
       if (conversaAtualId === conversaDaPergunta) {      // o usuário não trocou de conversa enquanto esperava
         conversaAtualId = r.conversa_id;
-        adicionarAssistente({ texto: r.resposta, tabela: r.tabela, consultas: r.consultas });
+        adicionarAssistente({ texto: r.resposta, tabela: r.tabela });
       }
       if (status) status.restantes_na_hora = r.restantes_na_hora;
       await carregarConversas();
@@ -329,7 +323,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       limparMensagens();
       c.mensagens.forEach(m => {
         if (m.papel === "usuario") adicionarUsuario(m.conteudo);
-        else adicionarAssistente({ texto: m.conteudo, tabela: m.tabela, consultas: m.consultas });
+        else adicionarAssistente({ texto: m.conteudo, tabela: m.tabela });
       });
       renderizarConversas();
       fecharPainelMobile();

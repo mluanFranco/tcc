@@ -10,6 +10,9 @@ class HistoricoManutencaoCreate(BaseModel):
     tipo: str                                # preventiva | corretiva (validado na rota, com 400)
     descricao: Optional[str] = Field(default=None, max_length=500)
     custo: Optional[float] = Field(default=0.0, ge=0, le=9999999.99)
+    # Só valem quando há custo: viram o título a pagar (categoria "Manutenção"). Sem vencimento = data da manutenção.
+    fornecedor_id: Optional[int] = Field(default=None, gt=0)
+    vencimento: Optional[date] = None
 
     @field_validator("descricao", mode="before")
     @classmethod
@@ -41,5 +44,10 @@ class HistoricoManutencaoResponse(BaseModel):
     tipo: str
     descricao: Optional[str]
     custo: float
+    # título a pagar gerado pelo custo (nulos quando a manutenção não tem custo)
+    titulo_id: Optional[int] = None
+    titulo_status: Optional[str] = None          # aberto | parcial | pago | cancelado
+    titulo_vencimento: Optional[date] = None
+    fornecedor_nome: Optional[str] = None
 
     model_config = {"from_attributes": True}

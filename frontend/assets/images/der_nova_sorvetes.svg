@@ -1,7 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="2840" height="1798" viewBox="0 0 2840 1798" font-family="Inter, 'DejaVu Sans', Arial, sans-serif">
 <rect width="100%" height="100%" fill="#ffffff"/>
 <text x="1420.0" y="52" text-anchor="middle" font-size="34" font-weight="700" fill="#0f172a">DER — Sistema de Gestão de Estoque — Nova Sorvetes</text>
-<text x="1420.0" y="84" text-anchor="middle" font-size="18" fill="#475569">Banco sist_gest_est_mon (MySQL 8) · 32 tabelas · 57 relacionamentos</text>
+<text x="1420.0" y="84" text-anchor="middle" font-size="18" fill="#475569">Banco sist_gest_est_mon (MySQL 8) · 32 tabelas · 58 relacionamentos</text>
 <rect x="70" y="100" width="16" height="16" rx="3" fill="#2563eb"/>
 <text x="94" y="113" font-size="15" fill="#334155">Controle de acesso</text>
 <rect x="278.79999999999995" y="100" width="16" height="16" rx="3" fill="#16a34a"/>
@@ -32,7 +32,7 @@
 <path d="M 870.0,720.0 L 840.0,720.0 L 840.0,520.0 L 770.0,520.0" fill="none" stroke="#ea580c" stroke-width="1.5" stroke-linejoin="round" opacity="0.85"/>
 <path d="M 1170.0,740.0 L 1190.0,740.0 L 1190.0,520.0 L 1270.0,520.0" fill="none" stroke="#ea580c" stroke-width="1.5" stroke-linejoin="round" opacity="0.85"/>
 <path d="M 1170.0,970.0 L 1190.0,970.0 L 1190.0,930.0 L 1270.0,930.0" fill="none" stroke="#ea580c" stroke-width="1.5" stroke-linejoin="round" opacity="0.85"/>
-<path d="M 2370.0,870.0 L 2390.0,870.0 L 2390.0,750.0 L 2470.0,750.0" fill="none" stroke="#ca8a04" stroke-width="1.5" stroke-linejoin="round" opacity="0.85"/>
+<path d="M 2370.0,890.0 L 2390.0,890.0 L 2390.0,750.0 L 2470.0,750.0" fill="none" stroke="#ca8a04" stroke-width="1.5" stroke-linejoin="round" opacity="0.85"/>
 <path d="M 2470.0,210.0 L 2450.0,210.0 L 2450.0,190.0 L 2370.0,190.0" fill="none" stroke="#db2777" stroke-width="1.5" stroke-linejoin="round" opacity="0.85"/>
 <path d="M 470.0,540.0 L 440.0,540.0 L 440.0,930.0 L 470.0,930.0" fill="none" stroke="#ea580c" stroke-width="1.5" stroke-linejoin="round" opacity="0.85"/>
 <path d="M 1170.0,950.0 L 1200.0,950.0 L 1200.0,520.0 L 1170.0,520.0" fill="none" stroke="#ea580c" stroke-width="1.5" stroke-linejoin="round" opacity="0.85"/>
@@ -40,7 +40,7 @@
 <path d="M 1270.0,990.0 L 1250.0,990.0 L 1250.0,1370.0 L 1270.0,1370.0" fill="none" stroke="#16a34a" stroke-width="1.5" stroke-linejoin="round" opacity="0.85"/>
 <path d="M 470.0,1230.0 L 450.0,1230.0 L 450.0,1310.0 L 370.0,1310.0" fill="none" stroke="#0891b2" stroke-width="1.5" stroke-linejoin="round" opacity="0.85"/>
 <path d="M 2470.0,1310.0 L 2450.0,1310.0 L 2450.0,1190.0 L 2370.0,1190.0" fill="none" stroke="#7c3aed" stroke-width="1.5" stroke-linejoin="round" opacity="0.85"/>
-<path d="M 2070.0,850.0 L 2050.0,850.0 L 2050.0,930.0 L 1970.0,930.0" fill="none" stroke="#ca8a04" stroke-width="1.5" stroke-linejoin="round" opacity="0.85"/>
+<path d="M 2070.0,870.0 L 2050.0,870.0 L 2050.0,930.0 L 1970.0,930.0" fill="none" stroke="#ca8a04" stroke-width="1.5" stroke-linejoin="round" opacity="0.85"/>
 <path d="M 2370.0,450.0 L 2440.0,450.0 L 2440.0,190.0 L 2470.0,190.0" fill="none" stroke="#db2777" stroke-width="1.5" stroke-linejoin="round" opacity="0.85"/>
 <path d="M 1570.0,1030.0 L 1590.0,1030.0 L 1590.0,1550.0 L 1570.0,1550.0" fill="none" stroke="#16a34a" stroke-width="1.5" stroke-linejoin="round" opacity="0.85"/>
 <path d="M 1570.0,1050.0 L 1600.0,1050.0 L 1600.0,1550.0 L 1570.0,1550.0" fill="none" stroke="#16a34a" stroke-width="1.5" stroke-linejoin="round" opacity="0.85"/>
@@ -68,8 +68,9 @@
 <path d="M 370.0,210.0 L 390.0,210.0 L 390.0,120.0 L 1640.0,120.0 L 1640.0,190.0 L 1670.0,190.0" fill="none" stroke="#2563eb" stroke-width="1.5" stroke-linejoin="round" opacity="0.85"/>
 <path d="M 370.0,560.0 L 450.0,560.0 L 450.0,870.0 L 1230.0,870.0 L 1230.0,930.0 L 1270.0,930.0" fill="none" stroke="#ea580c" stroke-width="1.5" stroke-linejoin="round" opacity="0.85"/>
 <path d="M 2470.0,1490.0 L 2440.0,1490.0 L 2440.0,1350.0 L 2020.0,1350.0 L 2020.0,1280.0 L 1630.0,1280.0 L 1630.0,950.0 L 1600.0,950.0 L 1600.0,930.0 L 1570.0,930.0" fill="none" stroke="#7c3aed" stroke-width="1.5" stroke-linejoin="round" opacity="0.85"/>
-<path d="M 2070.0,830.0 L 1190.0,830.0 L 1190.0,860.0 L 810.0,860.0 L 810.0,930.0 L 770.0,930.0" fill="none" stroke="#ca8a04" stroke-width="1.5" stroke-linejoin="round" opacity="0.85"/>
+<path d="M 2070.0,850.0 L 810.0,850.0 L 810.0,930.0 L 770.0,930.0" fill="none" stroke="#ca8a04" stroke-width="1.5" stroke-linejoin="round" opacity="0.85"/>
 <path d="M 2070.0,790.0 L 2050.0,790.0 L 2050.0,460.0 L 810.0,460.0 L 810.0,520.0 L 770.0,520.0" fill="none" stroke="#ca8a04" stroke-width="1.5" stroke-linejoin="round" opacity="0.85"/>
+<path d="M 2070.0,830.0 L 1190.0,830.0 L 1190.0,860.0 L 840.0,860.0 L 840.0,1210.0 L 770.0,1210.0" fill="none" stroke="#ca8a04" stroke-width="1.5" stroke-linejoin="round" opacity="0.85"/>
 <path d="M 2470.0,1090.0 L 2450.0,1090.0 L 2450.0,320.0 L 1220.0,320.0 L 1220.0,190.0 L 1170.0,190.0" fill="none" stroke="#ca8a04" stroke-width="1.5" stroke-linejoin="round" opacity="0.85"/>
 <path d="M 2470.0,1170.0 L 2430.0,1170.0 L 2430.0,330.0 L 1250.0,330.0 L 1250.0,180.0 L 1200.0,180.0 L 1200.0,190.0 L 1170.0,190.0" fill="none" stroke="#ca8a04" stroke-width="1.5" stroke-linejoin="round" opacity="0.85"/>
 <path d="M 2070.0,1530.0 L 2010.0,1530.0 L 2010.0,420.0 L 1190.0,420.0 L 1190.0,200.0 L 1200.0,200.0 L 1200.0,190.0 L 1170.0,190.0" fill="none" stroke="#7c3aed" stroke-width="1.5" stroke-linejoin="round" opacity="0.85"/>
@@ -861,8 +862,8 @@
 <text x="2760" y="834.5" text-anchor="end" font-size="11.5" fill="#64748b">BOOLEAN</text>
 </g>
 <g>
-<rect x="2072" y="713" width="300" height="378" rx="7" fill="#0f172a" opacity="0.10"/>
-<rect x="2070" y="710" width="300" height="378" rx="7" fill="#ffffff" stroke="#ca8a04" stroke-width="1.8"/>
+<rect x="2072" y="713" width="300" height="398" rx="7" fill="#0f172a" opacity="0.10"/>
+<rect x="2070" y="710" width="300" height="398" rx="7" fill="#ffffff" stroke="#ca8a04" stroke-width="1.8"/>
 <path d="M 2070 740 L 2070 717 Q 2070 710 2077 710 L 2363 710 Q 2370 710 2370 717 L 2370 740 Z" fill="#ca8a04"/>
 <text x="2220.0" y="730" text-anchor="middle" font-size="16" font-weight="700" fill="#fff">titulo_financeiro</text>
 <text x="2080" y="754.5" font-size="10.5" font-weight="700" fill="#ca8a04">PK</text>
@@ -879,40 +880,44 @@
 <text x="2120" y="814.5" font-size="13.5" font-weight="400" font-style="italic" fill="#0f172a">pedido_compra_id</text>
 <text x="2360" y="814.5" text-anchor="end" font-size="11.5" fill="#64748b">INT</text>
 <text x="2080" y="834.5" font-size="10.5" font-weight="700" fill="#ca8a04">FK</text>
-<text x="2120" y="834.5" font-size="13.5" font-weight="400" font-style="italic" fill="#0f172a">cliente_id</text>
+<text x="2120" y="834.5" font-size="13.5" font-weight="400" font-style="italic" fill="#0f172a">historico_manutencao_id</text>
 <text x="2360" y="834.5" text-anchor="end" font-size="11.5" fill="#64748b">INT</text>
 <rect x="2071" y="840" width="298" height="20" fill="#f8fafc"/>
 <text x="2080" y="854.5" font-size="10.5" font-weight="700" fill="#ca8a04">FK</text>
-<text x="2120" y="854.5" font-size="13.5" font-weight="400" font-style="italic" fill="#0f172a">fornecedor_id</text>
+<text x="2120" y="854.5" font-size="13.5" font-weight="400" font-style="italic" fill="#0f172a">cliente_id</text>
 <text x="2360" y="854.5" text-anchor="end" font-size="11.5" fill="#64748b">INT</text>
 <text x="2080" y="874.5" font-size="10.5" font-weight="700" fill="#ca8a04">FK</text>
-<text x="2120" y="874.5" font-size="13.5" font-weight="400" font-style="italic" fill="#0f172a">categoria_id</text>
+<text x="2120" y="874.5" font-size="13.5" font-weight="400" font-style="italic" fill="#0f172a">fornecedor_id</text>
 <text x="2360" y="874.5" text-anchor="end" font-size="11.5" fill="#64748b">INT</text>
 <rect x="2071" y="880" width="298" height="20" fill="#f8fafc"/>
-<text x="2120" y="894.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">descricao</text>
-<text x="2360" y="894.5" text-anchor="end" font-size="11.5" fill="#64748b">VARCHAR(255)</text>
-<text x="2120" y="914.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">numero_parcela</text>
-<text x="2360" y="914.5" text-anchor="end" font-size="11.5" fill="#64748b">INT</text>
+<text x="2080" y="894.5" font-size="10.5" font-weight="700" fill="#ca8a04">FK</text>
+<text x="2120" y="894.5" font-size="13.5" font-weight="400" font-style="italic" fill="#0f172a">categoria_id</text>
+<text x="2360" y="894.5" text-anchor="end" font-size="11.5" fill="#64748b">INT</text>
+<text x="2120" y="914.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">descricao</text>
+<text x="2360" y="914.5" text-anchor="end" font-size="11.5" fill="#64748b">VARCHAR(255)</text>
 <rect x="2071" y="920" width="298" height="20" fill="#f8fafc"/>
-<text x="2120" y="934.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">total_parcelas</text>
+<text x="2120" y="934.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">numero_parcela</text>
 <text x="2360" y="934.5" text-anchor="end" font-size="11.5" fill="#64748b">INT</text>
-<text x="2120" y="954.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">vencimento</text>
-<text x="2360" y="954.5" text-anchor="end" font-size="11.5" fill="#64748b">DATE</text>
+<text x="2120" y="954.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">total_parcelas</text>
+<text x="2360" y="954.5" text-anchor="end" font-size="11.5" fill="#64748b">INT</text>
 <rect x="2071" y="960" width="298" height="20" fill="#f8fafc"/>
-<text x="2120" y="974.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">valor</text>
-<text x="2360" y="974.5" text-anchor="end" font-size="11.5" fill="#64748b">DECIMAL(12,2)</text>
-<text x="2120" y="994.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">taxa_percentual</text>
-<text x="2360" y="994.5" text-anchor="end" font-size="11.5" fill="#64748b">DECIMAL(5,2)</text>
+<text x="2120" y="974.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">vencimento</text>
+<text x="2360" y="974.5" text-anchor="end" font-size="11.5" fill="#64748b">DATE</text>
+<text x="2120" y="994.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">valor</text>
+<text x="2360" y="994.5" text-anchor="end" font-size="11.5" fill="#64748b">DECIMAL(12,2)</text>
 <rect x="2071" y="1000" width="298" height="20" fill="#f8fafc"/>
-<text x="2120" y="1014.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">valor_pago</text>
-<text x="2360" y="1014.5" text-anchor="end" font-size="11.5" fill="#64748b">DECIMAL(12,2)</text>
-<text x="2120" y="1034.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">status</text>
-<text x="2360" y="1034.5" text-anchor="end" font-size="11.5" fill="#64748b">VARCHAR(20)</text>
+<text x="2120" y="1014.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">taxa_percentual</text>
+<text x="2360" y="1014.5" text-anchor="end" font-size="11.5" fill="#64748b">DECIMAL(5,2)</text>
+<text x="2120" y="1034.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">valor_pago</text>
+<text x="2360" y="1034.5" text-anchor="end" font-size="11.5" fill="#64748b">DECIMAL(12,2)</text>
 <rect x="2071" y="1040" width="298" height="20" fill="#f8fafc"/>
-<text x="2120" y="1054.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">created_at</text>
-<text x="2360" y="1054.5" text-anchor="end" font-size="11.5" fill="#64748b">DATETIME</text>
-<text x="2120" y="1074.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">updated_at</text>
+<text x="2120" y="1054.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">status</text>
+<text x="2360" y="1054.5" text-anchor="end" font-size="11.5" fill="#64748b">VARCHAR(20)</text>
+<text x="2120" y="1074.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">created_at</text>
 <text x="2360" y="1074.5" text-anchor="end" font-size="11.5" fill="#64748b">DATETIME</text>
+<rect x="2071" y="1080" width="298" height="20" fill="#f8fafc"/>
+<text x="2120" y="1094.5" font-size="13.5" font-weight="400" font-style="normal" fill="#0f172a">updated_at</text>
+<text x="2360" y="1094.5" text-anchor="end" font-size="11.5" fill="#64748b">DATETIME</text>
 </g>
 <g>
 <rect x="2472" y="973" width="300" height="238" rx="7" fill="#0f172a" opacity="0.10"/>
@@ -1079,7 +1084,7 @@
 <line x1="1260" y1="513.0" x2="1260" y2="527.0" stroke="#334155" stroke-width="1.8"/><circle cx="1250" cy="520.0" r="5" fill="#fff" stroke="#334155" stroke-width="1.8"/>
 <path d="M 1184 970.0 L 1170 962.0 M 1184 970.0 L 1170 978.0 M 1184 970.0 L 1170 970.0" stroke="#334155" stroke-width="1.8" fill="none"/><circle cx="1192" cy="970.0" r="5" fill="#fff" stroke="#334155" stroke-width="1.8"/>
 <line x1="1260" y1="923.0" x2="1260" y2="937.0" stroke="#334155" stroke-width="1.8"/><line x1="1254" y1="923.0" x2="1254" y2="937.0" stroke="#334155" stroke-width="1.8"/>
-<path d="M 2384 870.0 L 2370 862.0 M 2384 870.0 L 2370 878.0 M 2384 870.0 L 2370 870.0" stroke="#334155" stroke-width="1.8" fill="none"/><circle cx="2392" cy="870.0" r="5" fill="#fff" stroke="#334155" stroke-width="1.8"/>
+<path d="M 2384 890.0 L 2370 882.0 M 2384 890.0 L 2370 898.0 M 2384 890.0 L 2370 890.0" stroke="#334155" stroke-width="1.8" fill="none"/><circle cx="2392" cy="890.0" r="5" fill="#fff" stroke="#334155" stroke-width="1.8"/>
 <line x1="2460" y1="743.0" x2="2460" y2="757.0" stroke="#334155" stroke-width="1.8"/><line x1="2454" y1="743.0" x2="2454" y2="757.0" stroke="#334155" stroke-width="1.8"/>
 <path d="M 2456 210.0 L 2470 202.0 M 2456 210.0 L 2470 218.0 M 2456 210.0 L 2470 210.0" stroke="#334155" stroke-width="1.8" fill="none"/><circle cx="2448" cy="210.0" r="5" fill="#fff" stroke="#334155" stroke-width="1.8"/>
 <line x1="2380" y1="183.0" x2="2380" y2="197.0" stroke="#334155" stroke-width="1.8"/><line x1="2386" y1="183.0" x2="2386" y2="197.0" stroke="#334155" stroke-width="1.8"/>
@@ -1095,7 +1100,7 @@
 <line x1="380" y1="1303.0" x2="380" y2="1317.0" stroke="#334155" stroke-width="1.8"/><line x1="386" y1="1303.0" x2="386" y2="1317.0" stroke="#334155" stroke-width="1.8"/>
 <path d="M 2456 1310.0 L 2470 1302.0 M 2456 1310.0 L 2470 1318.0 M 2456 1310.0 L 2470 1310.0" stroke="#334155" stroke-width="1.8" fill="none"/><circle cx="2448" cy="1310.0" r="5" fill="#fff" stroke="#334155" stroke-width="1.8"/>
 <line x1="2380" y1="1183.0" x2="2380" y2="1197.0" stroke="#334155" stroke-width="1.8"/><line x1="2386" y1="1183.0" x2="2386" y2="1197.0" stroke="#334155" stroke-width="1.8"/>
-<path d="M 2056 850.0 L 2070 842.0 M 2056 850.0 L 2070 858.0 M 2056 850.0 L 2070 850.0" stroke="#334155" stroke-width="1.8" fill="none"/><circle cx="2048" cy="850.0" r="5" fill="#fff" stroke="#334155" stroke-width="1.8"/>
+<path d="M 2056 870.0 L 2070 862.0 M 2056 870.0 L 2070 878.0 M 2056 870.0 L 2070 870.0" stroke="#334155" stroke-width="1.8" fill="none"/><circle cx="2048" cy="870.0" r="5" fill="#fff" stroke="#334155" stroke-width="1.8"/>
 <line x1="1980" y1="923.0" x2="1980" y2="937.0" stroke="#334155" stroke-width="1.8"/><circle cx="1990" cy="930.0" r="5" fill="#fff" stroke="#334155" stroke-width="1.8"/>
 <path d="M 2384 450.0 L 2370 442.0 M 2384 450.0 L 2370 458.0 M 2384 450.0 L 2370 450.0" stroke="#334155" stroke-width="1.8" fill="none"/><circle cx="2392" cy="450.0" r="5" fill="#fff" stroke="#334155" stroke-width="1.8"/>
 <line x1="2460" y1="183.0" x2="2460" y2="197.0" stroke="#334155" stroke-width="1.8"/><circle cx="2450" cy="190.0" r="5" fill="#fff" stroke="#334155" stroke-width="1.8"/>
@@ -1151,10 +1156,12 @@
 <line x1="1260" y1="923.0" x2="1260" y2="937.0" stroke="#334155" stroke-width="1.8"/><line x1="1254" y1="923.0" x2="1254" y2="937.0" stroke="#334155" stroke-width="1.8"/>
 <path d="M 2456 1490.0 L 2470 1482.0 M 2456 1490.0 L 2470 1498.0 M 2456 1490.0 L 2470 1490.0" stroke="#334155" stroke-width="1.8" fill="none"/><circle cx="2448" cy="1490.0" r="5" fill="#fff" stroke="#334155" stroke-width="1.8"/>
 <line x1="1580" y1="923.0" x2="1580" y2="937.0" stroke="#334155" stroke-width="1.8"/><line x1="1586" y1="923.0" x2="1586" y2="937.0" stroke="#334155" stroke-width="1.8"/>
-<path d="M 2056 830.0 L 2070 822.0 M 2056 830.0 L 2070 838.0 M 2056 830.0 L 2070 830.0" stroke="#334155" stroke-width="1.8" fill="none"/><circle cx="2048" cy="830.0" r="5" fill="#fff" stroke="#334155" stroke-width="1.8"/>
+<path d="M 2056 850.0 L 2070 842.0 M 2056 850.0 L 2070 858.0 M 2056 850.0 L 2070 850.0" stroke="#334155" stroke-width="1.8" fill="none"/><circle cx="2048" cy="850.0" r="5" fill="#fff" stroke="#334155" stroke-width="1.8"/>
 <line x1="780" y1="923.0" x2="780" y2="937.0" stroke="#334155" stroke-width="1.8"/><circle cx="790" cy="930.0" r="5" fill="#fff" stroke="#334155" stroke-width="1.8"/>
 <path d="M 2056 790.0 L 2070 782.0 M 2056 790.0 L 2070 798.0 M 2056 790.0 L 2070 790.0" stroke="#334155" stroke-width="1.8" fill="none"/><circle cx="2048" cy="790.0" r="5" fill="#fff" stroke="#334155" stroke-width="1.8"/>
 <line x1="780" y1="513.0" x2="780" y2="527.0" stroke="#334155" stroke-width="1.8"/><circle cx="790" cy="520.0" r="5" fill="#fff" stroke="#334155" stroke-width="1.8"/>
+<path d="M 2056 830.0 L 2070 822.0 M 2056 830.0 L 2070 838.0 M 2056 830.0 L 2070 830.0" stroke="#334155" stroke-width="1.8" fill="none"/><circle cx="2048" cy="830.0" r="5" fill="#fff" stroke="#334155" stroke-width="1.8"/>
+<line x1="780" y1="1203.0" x2="780" y2="1217.0" stroke="#334155" stroke-width="1.8"/><circle cx="790" cy="1210.0" r="5" fill="#fff" stroke="#334155" stroke-width="1.8"/>
 <path d="M 2456 1090.0 L 2470 1082.0 M 2456 1090.0 L 2470 1098.0 M 2456 1090.0 L 2470 1090.0" stroke="#334155" stroke-width="1.8" fill="none"/><circle cx="2448" cy="1090.0" r="5" fill="#fff" stroke="#334155" stroke-width="1.8"/>
 <line x1="1180" y1="183.0" x2="1180" y2="197.0" stroke="#334155" stroke-width="1.8"/><line x1="1186" y1="183.0" x2="1186" y2="197.0" stroke="#334155" stroke-width="1.8"/>
 <path d="M 2456 1170.0 L 2470 1162.0 M 2456 1170.0 L 2470 1178.0 M 2456 1170.0 L 2470 1170.0" stroke="#334155" stroke-width="1.8" fill="none"/><circle cx="2448" cy="1170.0" r="5" fill="#fff" stroke="#334155" stroke-width="1.8"/>

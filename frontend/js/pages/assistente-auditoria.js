@@ -1,4 +1,4 @@
-// Auditoria da IA (só administrador): o que o assistente acionou, para quem, com que resultado e em quanto tempo.
+// Auditoria Nova IA (só administrador): o que o assistente acionou, para quem, com que resultado e em quanto tempo.
 //
 // Regras que a tela espelha do backend:
 //  - mostra só o log de ferramentas (assistente_log); o texto das respostas da IA não é exibido;

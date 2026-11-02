@@ -7,18 +7,18 @@
 // caracteres de formatação como ponto e vírgula.
 function aplicarMascaraMoeda(input) {
   input.addEventListener("input", () => {
-    let valor = input.value.replace(/\D/g, ""); // mantém só dígitos
-
-    if (!valor) {
-      input.value = "";
-      return;
-    }
-
-    valor = (parseInt(valor, 10) / 100).toFixed(2);
-    input.value = valor
-      .replace(".", ",")
-      .replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    input.value = formatarMoedaDigitada(input.value);
   });
+}
+
+// "123456" (ou "1.234,56" com um dígito a mais) -> "1.234,56": os dígitos entram pela direita, como numa calculadora.
+// Usada também em campos criados dinamicamente (itens de cotação), onde não dá para ligar o listener um a um.
+function formatarMoedaDigitada(texto) {
+  const valor = String(texto ?? "").replace(/\D/g, "").replace(/^0+(?=\d)/, ""); // mantém só dígitos
+  if (!valor) return "";
+  return (parseInt(valor, 10) / 100).toFixed(2)
+    .replace(".", ",")
+    .replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 }
 
 // Converte o valor mascarado ("1.234,56") para número puro (1234.56),

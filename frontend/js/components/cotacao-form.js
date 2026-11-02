@@ -375,7 +375,7 @@ function criarFormularioCotacao(raiz, { modo = "criar", tipoInicial = "compra", 
         <span class="item-dica" data-dica-conversao hidden></span>
       </td>
       <td class="col-preco">
-        <input type="number" data-campo="preco" min="0" step="0.01" inputmode="decimal" aria-label="Preço unitário" placeholder="${ehVenda() ? "0,00" : "a definir"}" value="${escaparHtml(item.preco)}">
+        <input type="text" data-campo="preco" inputmode="numeric" autocomplete="off" maxlength="14" aria-label="Preço unitário" placeholder="${ehVenda() ? "0,00" : "a definir"}" value="${escaparHtml(precoNaTela(item.preco))}">
         <span class="item-dica item-dica--aviso" data-dica-preco hidden></span>
       </td>
       <td class="col-desc"${ehVenda() ? "" : " hidden"}>
@@ -461,12 +461,23 @@ function criarFormularioCotacao(raiz, { modo = "criar", tipoInicial = "compra", 
     if (focar) tr.querySelector('[data-campo="produto_id"]').focus();
   }
 
+  // O preço é mostrado com máscara ("1.234,56"), mas guardado em item.preco como "1234.56" (o formato que os cálculos usam).
+  function precoNaTela(preco) {
+    return (preco === "" || preco === null || preco === undefined) ? "" : numeroParaMoeda(Number(preco));
+  }
+
   el.corpo.addEventListener("input", (evento) => {
     const campo = evento.target.dataset.campo;
     const tr = evento.target.closest("tr[data-uid]");
     if (!campo || !tr) return;
     const item = itemPorUid(tr.dataset.uid);
-    item[campo] = evento.target.value;
+    if (campo === "preco") {
+      evento.target.value = formatarMoedaDigitada(evento.target.value);
+      const numero = moedaParaNumero(evento.target.value);
+      item.preco = numero === null ? "" : numero.toFixed(2);
+    } else {
+      item[campo] = evento.target.value;
+    }
     item.erro = "";
     evento.target.classList.remove("campo-invalido");
 
@@ -474,7 +485,7 @@ function criarFormularioCotacao(raiz, { modo = "criar", tipoInicial = "compra", 
       const produto = produtosPorId[item.produto_id];
       // Venda já sugere o preço de tabela; compra espera a resposta do fornecedor (a referência aparece como dica)
       item.preco = ehVenda() && produto && produto.preco_venda != null ? Number(produto.preco_venda).toFixed(2) : "";
-      tr.querySelector('[data-campo="preco"]').value = item.preco;
+      tr.querySelector('[data-campo="preco"]').value = precoNaTela(item.preco);
       sincronizarSelects();
     }
     atualizarLinha(tr);

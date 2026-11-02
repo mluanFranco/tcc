@@ -39,3 +39,5 @@ backup_*.sql
 banco_da_*.sql
 *.dump
 backend/backups/
+# Instruções locais do Claude Code (não versionar)
+CLAUDE.md

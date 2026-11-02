@@ -34,7 +34,7 @@ def _barrar_sistema(categoria: CategoriaFinanceira, acao: str) -> None:
     if categoria.sistema:
         raise HTTPException(
             status_code=400,
-            detail=f"A categoria '{categoria.nome}' é do sistema (os pedidos usam ela) e não pode ser {acao}",
+            detail=f"A categoria '{categoria.nome}' é do sistema (pedidos ou manutenções usam ela) e não pode ser {acao}",
         )
 
 

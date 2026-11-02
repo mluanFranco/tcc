@@ -438,10 +438,28 @@ class HistoricoManutencao(Base):
 
     geladeira = relationship("Geladeira", back_populates="historico_manutencao")
     usuario   = relationship("Usuario")
+    # Manutenção com custo gera 1 título a pagar (categoria "Manutenção"); sem custo, não há título.
+    titulo    = relationship("TituloFinanceiro", back_populates="manutencao", uselist=False)
 
     @property
     def usuario_nome(self):
         return self.usuario.nome if self.usuario else None
+
+    @property
+    def titulo_id(self):
+        return self.titulo.id if self.titulo else None
+
+    @property
+    def titulo_status(self):
+        return self.titulo.status if self.titulo else None
+
+    @property
+    def titulo_vencimento(self):
+        return self.titulo.vencimento if self.titulo else None
+
+    @property
+    def fornecedor_nome(self):
+        return self.titulo.fornecedor.nome if self.titulo and self.titulo.fornecedor else None
 
 
 # ─────────────────────────────────────────
@@ -540,11 +558,14 @@ class TituloFinanceiro(Base):
             name="ck_titulo_avulso_descricao",
         ),
         Index("ix_titulo_tipo_status_vencimento", "tipo", "status", "vencimento"),
+        UniqueConstraint("historico_manutencao_id", name="uq_titulo_manutencao"),
     )
     id               = Column(Integer, primary_key=True, autoincrement=True)
     tipo             = Column(String(10), nullable=False)    # pagar | receber
     pedido_venda_id  = Column(Integer, ForeignKey("pedido_venda.id"))
     pedido_compra_id = Column(Integer, ForeignKey("pedido_compra.id"))
+    # despesa de manutenção de geladeira (a manutenção é excluída de verdade: o título cancelado fica, sem o vínculo)
+    historico_manutencao_id = Column(Integer, ForeignKey("historico_manutencao.id", name="fk_titulo_manutencao", ondelete="SET NULL"))
     cliente_id       = Column(Integer, ForeignKey("cliente.id"))
     fornecedor_id    = Column(Integer, ForeignKey("fornecedor.id"))
     categoria_id     = Column(Integer, ForeignKey("categoria_financeira.id"), nullable=False)
@@ -562,6 +583,7 @@ class TituloFinanceiro(Base):
     fornecedor = relationship("Fornecedor")
     categoria  = relationship("CategoriaFinanceira")
     baixas     = relationship("BaixaTitulo", back_populates="titulo", order_by="BaixaTitulo.id")
+    manutencao = relationship("HistoricoManutencao", back_populates="titulo")
 
     @property
     def cliente_nome(self):
@@ -577,7 +599,12 @@ class TituloFinanceiro(Base):
 
     @property
     def avulso(self):
-        return self.pedido_venda_id is None and self.pedido_compra_id is None
+        """Lançado à mão no Financeiro. Títulos de pedido ou de manutenção acompanham a origem e não são editados isoladamente."""
+        return self.pedido_venda_id is None and self.pedido_compra_id is None and self.historico_manutencao_id is None
+
+    @property
+    def manutencao_geladeira_id(self):
+        return self.manutencao.geladeira_id if self.manutencao else None
 
 
 class BaixaTitulo(Base):
@@ -645,4 +672,4 @@ class AssistenteLog(Base):
     linhas = Column(Integer)
     duracao_ms = Column(Integer)
     erro = Column(String(255))
-    created_at = Column(DateTime, default=datetime.now, index=True)
+    created_at = Column(DateTime, default=datetime.now, index=True)

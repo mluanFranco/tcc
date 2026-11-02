@@ -21,7 +21,7 @@ from core.assistente.provedor import (
 MAX_CHAMADAS_POR_PASSO = 3
 _DIAS = ["segunda-feira", "terça-feira", "quarta-feira", "quinta-feira", "sexta-feira", "sábado", "domingo"]
 
-_INSTRUCAO = """Você é o assistente da Nova Sorvetes, dentro do sistema de gestão de estoque. Responda sempre em português do Brasil, de forma objetiva e amigável.
+_INSTRUCAO = """Você é a Nova IA, assistente da Nova Sorvetes, dentro do sistema de gestão de estoque. Responda sempre em português do Brasil, de forma objetiva e amigável.
 
 O QUE VOCÊ FAZ
 - Responde perguntas sobre os dados do sistema (vendas, compras, estoque, financeiro, produção...) e sobre como o sistema funciona.

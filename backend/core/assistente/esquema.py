@@ -122,11 +122,12 @@ VIEWS: Dict[str, ViewInfo] = {v.nome: v for v in (
         _c("confirmada_em", "data_hora"), _c("cancelada_em", "data_hora"),
     )),
     ViewInfo("v_titulos", "financeiro", "Contas a pagar (tipo 'pagar', de compras) e a receber (tipo 'receber', de vendas), uma parcela por linha, "
-             "incluindo lançamentos avulsos (origem 'avulso', ex.: aluguel). Status: aberto, parcial, pago ou cancelado. "
+             "incluindo lançamentos avulsos (origem 'avulso', ex.: aluguel) e despesas de manutenção de geladeira (origem 'manutencao', "
+             "categoria Manutenção). Status: aberto, parcial, pago ou cancelado. "
              "Saldo = o que falta pagar/receber. Vencido = status aberto/parcial com dias_em_atraso > 0.", (
-        _c("id", "inteiro"), _c("tipo", "texto", "pagar ou receber"), _c("origem", "texto", "pedido_venda, pedido_compra ou avulso"),
-        _c("pedido_id", "inteiro", "id do pedido de origem; nulo se avulso"), _c("parte", "texto", "cliente (receber) ou fornecedor (pagar)"),
-        _c("categoria", "texto", "ex.: Vendas, Compra de insumos, Aluguel"), _c("descricao", "texto", "só nos avulsos"),
+        _c("id", "inteiro"), _c("tipo", "texto", "pagar ou receber"), _c("origem", "texto", "pedido_venda, pedido_compra, manutencao ou avulso"),
+        _c("pedido_id", "inteiro", "id do pedido de origem; nulo se avulso ou manutencao"), _c("parte", "texto", "cliente (receber) ou fornecedor (pagar)"),
+        _c("categoria", "texto", "ex.: Vendas, Compra de insumos, Aluguel"), _c("descricao", "texto", "nos avulsos e nas manutenções (ex.: 'Manutenção corretiva — geladeira FZ-...')"),
         _c("numero_parcela", "inteiro"), _c("total_parcelas", "inteiro"), _c("vencimento", "data"),
         _c("valor", "decimal"), _c("valor_pago", "decimal"), _c("saldo", "decimal", "0 se pago ou cancelado"),
         _c("taxa_percentual", "decimal", "taxa da forma de pagamento (só em 'receber')"),

@@ -120,12 +120,14 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     // Avisos sobre o que dá (ou não) para fazer com este título.
     let aviso = "";
-    if (!t.avulso) {
+    if (!t.avulso && t.historico_manutencao_id) {
+      aviso = `Este título é a despesa de uma manutenção de geladeira e acompanha o registro: para cancelá-lo, exclua a manutenção${link ? ` (<a href="${escaparHtml(link)}">abrir a geladeira</a>)` : ""}. Se já houver pagamento, estorne-o antes.`;
+    } else if (!t.avulso) {
       aviso = `Este título nasceu de um pedido e acompanha o pedido: para cancelá-lo, cancele o pedido${link ? ` (<a href="${escaparHtml(link)}">abrir o pedido</a>)` : ""}. Se já houver baixa, estorne-a antes.`;
     } else if (podeEditar && t.status !== "cancelado" && temBaixaValida()) {
       aviso = "Este lançamento já tem baixa registrada. Para editar ou cancelar, estorne as baixas primeiro.";
     }
-    el.aviso.innerHTML = aviso;
+    el.aviso.innerHTML = aviso ? `<span>${aviso}</span>` : "";   // um só item no flex: o link não vira uma coluna à parte
     el.aviso.hidden = !aviso;
 
     el.botaoBaixa.textContent = receber ? "Registrar recebimento" : "Registrar pagamento";

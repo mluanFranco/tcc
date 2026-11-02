@@ -46,9 +46,11 @@ aceitam casas decimais (ex.: kg).
 EMBALAGEM. O estoque e as receitas ficam sempre na unidade base do produto (ex.: litro). O produto pode ter uma embalagem de compra e venda
 (ex.: Pote) com um fator (ex.: 5 = 5 litros por pote). Pedidos e cotações são feitos na embalagem e o estoque se move em quantidade x fator
 (2 potes = 10 L). Os preços do cadastro são da embalagem; o custo da unidade base (usado nas receitas e na produção) é o custo / fator."""),
-    "geladeiras": ("geladeira geladeiras manutencao freezer expositora equipamento alocacao", """\
+    "geladeiras": ("geladeira geladeiras manutencao manutenção freezer expositora equipamento alocacao custo despesa", """\
 GELADEIRAS. Equipamentos do negócio alocados em clientes, com tipo, modelo, marca, número de série, data de alocação e status
-(em_campo, manutencao ou desativada). Cada geladeira tem histórico de manutenções (data, tipo e custo)."""),
+(em_campo, manutencao ou desativada). Cada geladeira tem histórico de manutenções (data, tipo e custo).
+Manutenção com custo gera um título a pagar na categoria Manutenção (v_titulos com origem 'manutencao'): é por ali que se vê
+quanto foi gasto com manutenção e o que já foi pago."""),
     "cadastros": ("cadastro cadastros cliente fornecedor produto categoria subcategoria unidade forma pagamento", """\
 CADASTROS: produtos (com categoria, subcategoria e unidade de medida), clientes (vários endereços), fornecedores e formas de pagamento
 (com parcelas, prazos e taxa). Cadastros são desativados (soft delete), não apagados, para preservar o histórico."""),

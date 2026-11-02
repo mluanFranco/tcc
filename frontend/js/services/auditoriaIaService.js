@@ -1,4 +1,4 @@
-// Service da Auditoria da IA (só administrador) — conversa com /assistente/auditoria e /assistente/auditoria/resumo.
+// Service da Auditoria Nova IA (só administrador) — conversa com /assistente/auditoria e /assistente/auditoria/resumo.
 // Nenhuma lógica de UI aqui, apenas chamadas à API.
 
 const auditoriaIaService = {

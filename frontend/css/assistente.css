@@ -97,8 +97,13 @@
 }
 
 .chat-vazio { margin: auto; max-width: 560px; text-align: center; padding: 12px; }
-.chat-vazio h2 { font-size: 18px; font-weight: 700; color: var(--neutro-texto); margin: 0 0 6px; }
-.chat-vazio p { font-size: 14px; color: var(--neutro-secundario); margin: 0 0 16px; line-height: 1.5; }
+
+/* Avatar da Nova IA: no título, na tela inicial e ao lado de cada resposta */
+.chat-titulo { display: flex; align-items: center; gap: 12px; }
+.chat-avatar { display: block; flex-shrink: 0; }
+.chat-avatar--titulo { width: 36px; height: 36px; }
+.chat-avatar--vazio { width: 72px; height: 72px; margin: 0 auto 14px; }
+.chat-vazio h2 { font-size: 18px; font-weight: 700; color: var(--neutro-texto); margin: 0 0 16px; }
 .chat-sugestoes { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
 .chat-sugestao {
   font: inherit;
@@ -122,7 +127,16 @@
   overflow-wrap: anywhere;
 }
 .balao--usuario { align-self: flex-end; background: var(--azul-acao); color: #fff; border-bottom-right-radius: 4px; white-space: pre-wrap; }
-.balao--assistente { align-self: flex-start; background: #F3F4F6; color: var(--neutro-texto); border-bottom-left-radius: 4px; }
+.balao--assistente { align-self: flex-start; background: #F3F4F6; color: var(--neutro-texto); border-bottom-left-radius: 4px; position: relative; margin-left: 38px; max-width: min(760px, calc(92% - 38px)); }
+.balao--assistente::before {
+  content: "";
+  position: absolute;
+  left: -38px;
+  bottom: 0;
+  width: 28px;
+  height: 28px;
+  background: url("../assets/images/nova-ia-avatar.svg") center / contain no-repeat;
+}
 .balao--erro { align-self: flex-start; background: #FEF2F2; color: #991B1B; border: 1px solid #FECACA; border-bottom-left-radius: 4px; }
 .balao--erro .botao-secundario { margin-top: 8px; }
 .balao p { margin: 0 0 8px; }
@@ -146,9 +160,6 @@
 .chat-tabela .num { text-align: right; font-variant-numeric: tabular-nums; }
 .chat-tabela-nota { margin: 6px 0 0; font-size: 12.5px; color: var(--neutro-secundario); }
 
-.chat-sql { margin-top: 8px; font-size: 12.5px; }
-.chat-sql summary { cursor: pointer; color: var(--neutro-secundario); font-weight: 600; }
-.chat-sql pre { margin: 6px 0 0; padding: 10px 12px; background: #1F2937; color: #E5E7EB; border-radius: 10px; overflow-x: auto; font-family: ui-monospace, Consolas, monospace; font-size: 12px; line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere; }
 
 /* Campo de envio */
 .chat-compositor { border-top: 1px solid var(--neutro-borda); padding: 12px 14px; display: flex; flex-direction: column; gap: 6px; }
@@ -182,4 +193,5 @@
   .botao-conversas-mobile { display: inline-flex; }
   .chat-mensagens { padding: 14px; }
   .balao { max-width: 96%; }
+  .balao--assistente { max-width: calc(96% - 38px); }
 }

@@ -85,3 +85,19 @@
 
 .tabela-rolavel { position: relative; overflow-x: auto; }
 .tabela-rolavel .tabela--manutencoes { min-width: 680px; }
+
+/* Despesa da manutenção (título a pagar gerado pelo custo) */
+.manut-despesa { display: flex; flex-direction: column; gap: 10px; padding: 12px 14px; border: 1px dashed var(--neutro-borda); border-radius: 10px; background: #FAFAFB; }
+.manut-despesa[hidden] { display: none; }
+.manut-despesa__dica { margin: 0; font-size: 12.5px; line-height: 1.4; color: var(--neutro-secundario); }
+.despesa-manut { display: inline-flex; padding: 3px 9px; border-radius: 8px; font-size: 12.5px; font-weight: 600; white-space: nowrap; }
+.despesa-manut--sem { padding: 0; color: var(--neutro-secundario); font-weight: 400; }
+.despesa-manut--aberto { background: #EFF6FF; color: #1D4ED8; }
+.despesa-manut--parcial { background: #FEF9C3; color: #854D0E; }
+.despesa-manut--pago { background: #F0FDF4; color: #15803D; }
+.despesa-manut--vencida { background: #FEF2F2; color: #B91C1C; }
+.despesa-manut--cancelado { background: #F3F4F6; color: var(--neutro-secundario); }
+.despesa-manut__fornecedor { display: block; margin-top: 3px; font-size: 12px; color: var(--neutro-secundario); }
+.despesa-manut__link { text-decoration: none; }
+.despesa-manut__link:hover .despesa-manut { text-decoration: underline; }
+

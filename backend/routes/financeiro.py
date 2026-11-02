@@ -85,8 +85,8 @@ def _aplicar_filtros(db: Session, query, f: SimpleNamespace):
     if f.categoria_id:
         query = query.filter(T.categoria_id == f.categoria_id)
     if f.avulso is not None:
-        sem_pedido = and_(T.pedido_venda_id.is_(None), T.pedido_compra_id.is_(None))
-        query = query.filter(sem_pedido if f.avulso else ~sem_pedido)
+        sem_origem = and_(T.pedido_venda_id.is_(None), T.pedido_compra_id.is_(None), T.historico_manutencao_id.is_(None))
+        query = query.filter(sem_origem if f.avulso else ~sem_origem)
     if f.vencido is not None:
         eh_vencido = and_(T.status.in_(STATUS_EM_ABERTO), T.vencimento < date.today())
         query = query.filter(eh_vencido if f.vencido else ~eh_vencido)

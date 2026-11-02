@@ -235,7 +235,8 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (!termoBusca) return true;
       return (
         produto.nome.toLowerCase().includes(termoBusca) ||
-        nomeCategoria(produto.categoria_id).toLowerCase().includes(termoBusca)
+        nomeCategoria(produto.categoria_id).toLowerCase().includes(termoBusca) ||
+        nomeSubcategoria(produto.subcategoria_id).toLowerCase().includes(termoBusca)
       );
     });
 
@@ -274,6 +275,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         <tr>
           <td class="celula-nome">${nome}</td>
           <td>${escaparHtml(nomeCategoria(produto.categoria_id))}</td>
+          <td>${escaparHtml(nomeSubcategoria(produto.subcategoria_id))}</td>
           <td>${rotuloTipo(produto)}</td>
           <td>${formatarMoeda(produto.preco_venda)}${fatorEmbalagem(produto) !== 1 ? `<small class="celula-embalagem">por ${escaparHtml(siglaNegociacao(produto, siglasPorUnidade))}</small>` : ""}</td>
           <td><span class="badge-estoque ${badgeEstoqueClasse}">${escaparHtml(textoEstoque(produto.estoque_atual, produto, siglasPorUnidade))}</span></td>

@@ -32,8 +32,8 @@ const ITENS_MENU = [
   { label: "Financeiro",          href: "financeiro.html",       tambem: ["titulo-detalhe.html"], permissao: "financeiro.ver", icone: "financeiro" },
   { label: "Geladeiras",          href: "geladeiras.html",       tambem: ["geladeira-detalhe.html"], permissao: "geladeiras.ver", icone: "geladeira" },
   { label: "Grupos de Acesso",    href: "grupos-acesso.html",    apenasAdmin: true, icone: "grupo" },
-  { label: "Assistente de IA",    href: "assistente.html",       permissao: "assistente.ver", icone: "assistente" },
-  { label: "Auditoria da IA",     href: "assistente-auditoria.html", apenasAdmin: true, icone: "auditoria" },
+  { label: "Nova IA",             href: "assistente.html",       permissao: "assistente.ver", icone: "assistente" },
+  { label: "Auditoria Nova IA",   href: "assistente-auditoria.html", apenasAdmin: true, icone: "auditoria" },
   { label: "Usuários",            href: "usuarios.html",         apenasAdmin: true, icone: "usuario" }
 ];
 

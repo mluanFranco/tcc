@@ -4,6 +4,7 @@ from database import get_db
 from models import HistoricoManutencao, Geladeira, Usuario
 from schemas.historico_manutencao import HistoricoManutencaoCreate, HistoricoManutencaoResponse
 from core.security import get_current_user
+from core.financeiro import criar_titulo_manutencao, cancelar_titulo_da_manutencao
 from typing import List
 from datetime import datetime
 
@@ -35,6 +36,11 @@ def criar_manutencao(
         custo=dados.custo
     )
     db.add(manutencao)
+    db.flush()
+    # Custo é despesa: vira 1 título a pagar na mesma transação (se o fornecedor for inválido, nada é gravado)
+    if manutencao.custo and manutencao.custo > 0:
+        criar_titulo_manutencao(db, manutencao, geladeira, vencimento=dados.vencimento or manutencao.data.date(),
+                                fornecedor_id=dados.fornecedor_id)
     db.commit()
     db.refresh(manutencao)
     return manutencao
@@ -46,7 +52,7 @@ def listar_manutencoes(
     db: Session = Depends(get_db),
     _=Depends(get_current_user)
 ):
-    query = db.query(HistoricoManutencao).options(joinedload(HistoricoManutencao.usuario))
+    query = db.query(HistoricoManutencao).options(joinedload(HistoricoManutencao.usuario), joinedload(HistoricoManutencao.titulo))
     if geladeira_id:
         query = query.filter(HistoricoManutencao.geladeira_id == geladeira_id)
     return query.order_by(HistoricoManutencao.data.desc(), HistoricoManutencao.id.desc()).all()
@@ -66,6 +72,8 @@ def excluir_manutencao(manutencao_id: int, db: Session = Depends(get_db), _=Depe
     if not manutencao:
         raise HTTPException(status_code=404, detail="Registro de manutenção não encontrado")
 
+    # O título da despesa é cancelado junto (fica no Financeiro, sem o vínculo); se já foi pago, a exclusão é barrada
+    cancelar_titulo_da_manutencao(db, manutencao.id)
     db.delete(manutencao)
     db.commit()
-    return {"message": "Registro de manutenção excluído com sucesso"}
+    return {"message": "Registro de manutenção excluído com sucesso"}

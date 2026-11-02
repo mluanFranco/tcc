@@ -27,8 +27,7 @@ class MensagemResponse(BaseModel):
     mensagem_id: int
     resposta: str
     tabela: Optional[TabelaResponse] = None
-    consultas: List[str] = []                  # SQL executado (transparência: o usuário pode conferir)
-    restantes_na_hora: int
+    restantes_na_hora: int                     # o SQL usado não vai para o chat: fica só na auditoria (assistente_log)
 
 
 class MensagemHistorico(BaseModel):
@@ -36,7 +35,6 @@ class MensagemHistorico(BaseModel):
     papel: str
     conteudo: str
     tabela: Optional[TabelaResponse] = None
-    consultas: List[str] = []
     created_at: datetime
 
 

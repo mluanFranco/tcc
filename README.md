@@ -33,16 +33,16 @@ Sistema de gestão desenvolvido para a empresa [Nova Sorvetes](https://www.insta
 O sistema entrega uma solução funcional para o controle da operação de uma fábrica de sorvetes e do monitoramento dos equipamentos refrigerados (geladeiras e freezers) alocados nos clientes. Com ele, é possível:
 
 - Controlar entradas e saídas de produtos via pedidos de compra e de venda, com **reserva automática de estoque**;
-- Cadastrar clientes (com vários endereços) e fornecedores, com preenchimento automático de endereço via CEP;
+- Cadastrar produtos com **embalagem e fator de conversão** (ex.: pote de 5 L), clientes (com vários endereços) e fornecedores, com máscaras de CPF/CNPJ, telefone e CEP e preenchimento automático do endereço via CEP;
 - Registrar **cotações** de compra e de venda, comparar preços entre fornecedores e aprovar a cotação gerando o pedido;
 - Cadastrar **formas de pagamento** com parcelas e taxas, que geram automaticamente as contas a pagar e a receber;
 - Controlar o **financeiro**: títulos a pagar e a receber, baixas parciais com estorno, lançamentos avulsos e recorrentes;
 - Cadastrar **receitas** e registrar **ordens de produção** que consomem insumos e dão entrada no produto fabricado, com custo calculado;
 - Acompanhar o **dashboard** com receita, margem, resultado, caixa, previsão, inadimplência e rankings;
-- Acompanhar os equipamentos alocados em cada cliente e o histórico de manutenção;
+- Acompanhar os equipamentos alocados em cada cliente e o histórico de manutenção, com o custo de cada manutenção lançado no contas a pagar;
 - Gerar **PDFs** de cotações e pedidos;
 - Controlar o acesso por **grupos de permissões** (por módulo) e permissões extras por usuário;
-- Fazer perguntas sobre os dados ao **Assistente de IA**, que só enxerga o que o usuário já poderia ver nas telas.
+- Fazer perguntas sobre os dados à **Nova IA**, o assistente de IA do sistema, que só enxerga o que o usuário já poderia ver nas telas.
 
 ---
 
@@ -59,8 +59,8 @@ O sistema entrega uma solução funcional para o controle da operação de uma f
 | **Produção** | Receitas (com simulação) e ordens de produção com consumo de insumos e custo congelado | ✅ Completo |
 | **Financeiro** | Contas a pagar e a receber, baixas parciais, estornos, categorias financeiras e lançamentos avulsos | ✅ Completo |
 | **Dashboard e relatórios** | Resumo por competência, série mensal, comparativo, caixa realizado e previsto, inadimplência e rankings | ✅ Completo |
-| **Geladeiras** | Equipamentos alocados em clientes e histórico de manutenção | ✅ Completo |
-| **Assistente de IA** | Perguntas em linguagem natural sobre os dados, com 4 camadas de defesa e auditoria | ✅ Completo |
+| **Geladeiras** | Equipamentos alocados em clientes e histórico de manutenção; o custo da manutenção vira conta a pagar | ✅ Completo |
+| **Assistente de IA (Nova IA)** | Perguntas em linguagem natural sobre os dados, com 4 camadas de defesa e auditoria | ✅ Completo |
 | **Documentos em PDF** | Cotação, pedido de venda e pedido de compra | ✅ Completo |
 | **Frontend** | Interface web, redesenhada tela a tela | ✅ Completo |
 | **Containerização** | Docker Compose: MySQL, API e Nginx | ✅ Completo |
@@ -82,7 +82,7 @@ O modelo relacional é composto por **32 tabelas**, distribuídas nos domínios 
 
 Além das tabelas, o banco tem **15 views `v_*`** (somente leitura), que expõem os dados já com as regras de negócio aplicadas e **sem dados pessoais**. Elas são a única coisa que o Assistente de IA consegue consultar.
 
-> O diagrama abaixo mostra as **32 tabelas** e os **57 relacionamentos** (chaves estrangeiras) do banco. Ele é gerado direto de `backend/models.py` pelo script `backend/scripts/gerar_der.py`, então reflete o schema real. A cor do cabeçalho indica o módulo; a notação é pé de galinha (`||` um, `o|` zero ou um, `o<` muitos).
+> O diagrama abaixo mostra as **32 tabelas** e os **58 relacionamentos** (chaves estrangeiras) do banco. Ele é gerado direto de `backend/models.py` pelo script `backend/scripts/gerar_der.py`, então reflete o schema real. A cor do cabeçalho indica o módulo; a notação é pé de galinha (`||` um, `o|` zero ou um, `o<` muitos).
 
 ![Diagrama Entidade-Relacionamento](frontend/assets/images/der_nova_sorvetes.png)
 
@@ -106,7 +106,7 @@ Além das tabelas, o banco tem **15 views `v_*`** (somente leitura), que expõem
 
 ### Cliente / Fornecedor
 
-Dados cadastrais (`nome`, `cpf_cnpj`, `telefone`, `email`...) com validação de CPF/CNPJ, CEP, UF e DDD. O endereço é preenchido via [API ViaCEP](https://viacep.com.br/). Um cliente pode ter **vários endereços** (`cliente_endereco`), usados na entrega dos pedidos e na alocação das geladeiras. `ativo` é o soft delete.
+Dados cadastrais (`nome`, `cpf_cnpj`, `telefone`, `email`...) com validação de CPF/CNPJ (inclusive o CNPJ alfanumérico), CEP, UF e DDD, e máscaras nos formulários. O endereço é preenchido via [API ViaCEP](https://viacep.com.br/). Um cliente pode ter **vários endereços** (`cliente_endereco`), usados na entrega dos pedidos e na alocação das geladeiras. `ativo` é o soft delete.
 
 ### Pedido de Venda / Pedido de Compra
 
@@ -139,7 +139,7 @@ A recusa é possível em qualquer etapa antes da aprovação. Ao aprovar, o sist
 
 ### Financeiro
 
-- **Título financeiro:** uma parcela a pagar (compra) ou a receber (venda), ou um lançamento avulso (aluguel, energia, outras receitas...). Status `aberto` → `parcial` → `pago` \| `cancelado`.
+- **Título financeiro:** uma parcela a pagar (compra) ou a receber (venda), a despesa de uma manutenção de geladeira (`historico_manutencao_id`) ou um lançamento avulso (aluguel, energia, outras receitas...). Status `aberto` → `parcial` → `pago` \| `cancelado`.
 - **Baixa:** pagamento ou recebimento, total ou parcial. O estorno não apaga: marca a baixa como estornada.
 
 ### Usuário e grupos de acesso
@@ -148,7 +148,7 @@ A recusa é possível em qualquer etapa antes da aprovação. Ao aprovar, o sist
 
 ### Geladeira / Histórico de Manutenção
 
-O endereço da geladeira vem de um dos endereços do cliente ao qual ela está alocada. O `status` é `em_campo` \| `manutencao` \| `desativada`. Cada manutenção (`historico_manutencao`) registra data, tipo, descrição e custo.
+O endereço da geladeira vem de um dos endereços do cliente ao qual ela está alocada. O `status` é `em_campo` \| `manutencao` \| `desativada`. Cada manutenção (`historico_manutencao`) registra data, tipo, descrição e custo. Manutenção com custo gera um título a pagar (veja [Financeiro](#financeiro-títulos-e-baixas)).
 
 ---
 
@@ -188,14 +188,15 @@ Cada item rastreia `quantidade` (pedida) separadamente de `quantidade_recebida` 
 
 ### Cotações
 
-A comparação de preços considera só cotações de **compra** já respondidas (`recebida` ou `aprovada`) e itens com preço. A aprovação gera o pedido (compra ou venda, reservando estoque) **em uma única transação**: se o pedido não puder ser criado, por exemplo uma venda sem estoque, nada é gravado.
+A comparação de preços considera só cotações de **compra** já respondidas (`recebida` ou `aprovada`) e itens com preço. Uma cotação de compra só pode ser aprovada depois que a resposta do fornecedor é registrada (status `recebida`, com todos os preços); a de venda, a partir de `enviada`. Nos dois casos a cotação precisa estar dentro da validade e ter forma de pagamento. A aprovação gera o pedido (compra ou venda, reservando estoque) **em uma única transação**: se o pedido não puder ser criado, por exemplo uma venda sem estoque, nada é gravado.
 
 ### Financeiro: títulos e baixas
 
 - As parcelas da forma de pagamento viram títulos: a pagar na criação da compra e a receber na confirmação da venda.
 - Uma baixa pode ser parcial; o título passa por `aberto → parcial → pago`. Estornar uma baixa a deixa registrada como estornada, sem apagá-la.
 - Títulos e baixas são alterados com a linha do título travada, então duas baixas simultâneas nunca passam do saldo e uma baixa nunca atravessa o cancelamento do pedido.
-- Títulos de pedido só são cancelados junto com o pedido; lançamentos avulsos podem ser editados e cancelados enquanto estiverem abertos e sem baixa. Lançamentos podem ser recorrentes (`1/N`, `2/N`...).
+- **Manutenção de geladeira com custo** gera, na mesma transação, 1 título a pagar na categoria do sistema "Manutenção" (fornecedor opcional, vencimento padrão = data da manutenção). Excluir a manutenção cancela o título; se ele já tiver pagamento, a exclusão é barrada até o estorno.
+- Títulos de pedido e de manutenção só são cancelados junto com a origem; lançamentos avulsos podem ser editados e cancelados enquanto estiverem abertos e sem baixa. Lançamentos podem ser recorrentes (`1/N`, `2/N`...).
 
 ### Produção
 
@@ -227,7 +228,7 @@ Também existem o **fluxo de caixa realizado** (regime de caixa, pelas baixas e 
 
 ### Soft delete e auditoria
 
-Cadastros (produtos, categorias, subcategorias, unidades de medida, clientes, fornecedores, formas de pagamento), receitas, categorias financeiras, usuários e grupos nunca são removidos: são marcados como `ativo = False`, preservando o histórico. Cada módulo expõe a consulta de inativos (`/inativos`) e a reativação, por `PATCH .../reativar` ou pela própria edição (`ativo: true`). Cotações e registros de manutenção, por não estarem ligados a transações efetivadas, permitem exclusão real. O Assistente de IA registra **toda** chamada em `assistente_log`, consultável pelos administradores na tela de auditoria do assistente.
+Cadastros (produtos, categorias, subcategorias, unidades de medida, clientes, fornecedores, formas de pagamento), receitas, categorias financeiras, usuários e grupos nunca são removidos: são marcados como `ativo = False`, preservando o histórico. Cada módulo expõe a consulta de inativos (`/inativos`) e a reativação, por `PATCH .../reativar` ou pela própria edição (`ativo: true`). Cotações e registros de manutenção, por não estarem ligados a transações efetivadas, permitem exclusão real. O Assistente de IA registra **toda** chamada em `assistente_log`, consultável pelos administradores na tela **Auditoria Nova IA**.
 
 ---
 
@@ -278,14 +279,16 @@ sist_gest_est_mon/
 │   ├── main.py                    # Inicialização da aplicação FastAPI
 │   └── requirements.txt           # Dependências do projeto
 ├── frontend/
-│   ├── assets/images/             # Logotipos, ilustração do login e o DER
+│   ├── assets/icons/              # Ícones da aba do navegador (favicon) e do atalho no celular
+│   ├── assets/images/             # Logotipos, ilustração do login, avatar da Nova IA e o DER
 │   ├── css/                       # Folhas de estilo (base, sidebar e uma por tela)
 │   ├── js/
 │   │   ├── core/                  # api.js, auth.js, config.js, formatadores.js, mascaras.js
 │   │   ├── components/            # sidebar, feedback, gráficos, modais e formulários compartilhados
 │   │   ├── pages/                 # Lógica específica de cada tela
 │   │   └── services/              # Comunicação com a API (um arquivo por módulo)
-│   └── pages/                     # HTML de cada tela
+│   ├── pages/                     # HTML de cada tela
+│   └── favicon.ico
 ├── docker/
 │   └── frontend/                  # Dockerfile e nginx.conf do frontend
 ├── backups/                       # Dumps do banco (não versionados)
@@ -593,14 +596,14 @@ alembic upgrade head
 
 ## Assistente de IA
 
-O assistente responde perguntas em linguagem natural ("quais clientes estão com títulos vencidos?") consultando o banco por meio de um modelo de linguagem (Google Gemini). Ele foi desenhado para ser seguro mesmo que o modelo erre:
+Na interface o assistente se chama **Nova IA**. Ele responde perguntas em linguagem natural ("quais clientes estão com títulos vencidos?", "quanto gastei com manutenção?") consultando o banco por meio de um modelo de linguagem (Google Gemini). Ele foi desenhado para ser seguro mesmo que o modelo erre:
 
 1. **Banco:** o usuário MySQL `sistema_ia` só tem `SELECT` nas 15 views, em sessão somente leitura, com limite de tempo e de linhas.
 2. **Views:** documentadas, com as regras de negócio embutidas e **sem dados pessoais** (sem CPF/CNPJ, telefone, e-mail, endereço completo, senhas ou observações livres).
 3. **Validador de SQL:** lista de permissões (*whitelist*). Só passa um único `SELECT` sobre as views; o SQL executado é **regerado a partir da árvore sintática**, nunca o texto original.
 4. **Escopo por permissão:** cada view pertence a um módulo e exige `<módulo>.ver`, então a IA só consulta o que o usuário já veria nas telas.
 
-Cada chamada é auditada em `assistente_log` (consulta pelo endpoint `GET /assistente/auditoria`, restrito a administradores) e há limite de perguntas por hora. O resultado das consultas é tratado como dado, nunca como instrução. O script `backend/scripts/avaliar_assistente.py` roda uma avaliação com 20 perguntas básicas e 11 avançadas, mais verificações determinísticas das camadas de defesa. O assistente fica desligado sem `GEMINI_API_KEY` ou com `IA_HABILITADO=false`.
+No chat, o usuário vê só a resposta (e a tabela com o resultado, quando houver): o SQL executado **não** aparece na conversa nem na resposta da API. Cada chamada é auditada em `assistente_log`, com o SQL, e só administradores a consultam, na tela **Auditoria Nova IA** (`GET /assistente/auditoria`). Há limite de perguntas por hora. O resultado das consultas é tratado como dado, nunca como instrução. O script `backend/scripts/avaliar_assistente.py` roda uma avaliação com 20 perguntas básicas e 11 avançadas, mais verificações determinísticas das camadas de defesa. O assistente fica desligado sem `GEMINI_API_KEY` ou com `IA_HABILITADO=false`.
 
 ---
 
@@ -627,17 +630,28 @@ Cada chamada é auditada em `assistente_log` (consulta pelo endpoint `GET /assis
 
 ### Concluído
 
-Backend completo com regras de negócio e controle de acesso por grupos; frontend redesenhado tela a tela (login, cadastros, pedidos, cotações, produção, formas de pagamento, financeiro, geladeiras, grupos de acesso, assistente de IA, usuários e dashboard); troca de senha pelo próprio usuário; tela de auditoria do assistente de IA; embalagem com fator de conversão nos produtos; assistente de IA com avaliação; empacotamento em Docker; diagrama ER atualizado e gerado a partir dos modelos.
+Backend completo com regras de negócio e controle de acesso por grupos; frontend redesenhado tela a tela (login, cadastros, pedidos, cotações, produção, formas de pagamento, financeiro, geladeiras, grupos de acesso, assistente de IA, usuários e dashboard); troca de senha pelo próprio usuário; Nova IA (assistente de IA) com tela de auditoria e avaliação; embalagem com fator de conversão nos produtos; máscaras de CPF/CNPJ, telefone e CEP; custo de manutenção das geladeiras lançado no contas a pagar; empacotamento em Docker; diagrama ER atualizado e gerado a partir dos modelos.
 
 ### Evoluções futuras
 
-Acesso via aplicativo móvel, monitoramento de temperatura das geladeiras por sensores IoT e restrição do CORS aos endereços do sistema.
+Acesso via aplicativo móvel, monitoramento de temperatura das geladeiras por sensores IoT, limite de tentativas de login e restrição do CORS aos endereços do sistema.
 
 ---
 
 ## Sobre o Projeto
 
 Este sistema foi desenvolvido como Trabalho de Conclusão de Curso (TCC) da [UniFAJ](https://unifaj.grupounieduk.com.br/), com o objetivo de aplicar em um caso real os conceitos estudados ao longo da graduação.
+
+### Autores
+
+| Nome | RA |
+|---|---|
+| Gabriel Melo | 12325896 |
+| Lais Lalla | 12325636 |
+| Matheus Franco | 12325375 |
+| Victor Xavier | 12326346 |
+
+**Orientador:** Prof. Danilo Mandolesi Rios
 
 ---
 

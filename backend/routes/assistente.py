@@ -122,7 +122,7 @@ def perguntar(dados: MensagemCreate, request: Request, db: Session = Depends(get
     conversa.updated_at = datetime.now()
     db.commit()
     return MensagemResponse(conversa_id=conversa.id, mensagem_id=msg.id, resposta=saida.texto, tabela=saida.tabela,
-                            consultas=saida.consultas, restantes_na_hora=max(0, limite - len(usadas) - 1))
+                            restantes_na_hora=max(0, limite - len(usadas) - 1))
 
 
 @router.get("/conversas", response_model=list[ConversaResponse])
@@ -137,7 +137,7 @@ def ver_conversa(conversa_id: int, db: Session = Depends(get_db), usuario: Usuar
     return ConversaDetalheResponse(
         id=c.id, titulo=c.titulo, created_at=c.created_at, updated_at=c.updated_at,
         mensagens=[MensagemHistorico(id=m.id, papel=m.papel, conteudo=m.conteudo, tabela=_tabela(m.tabela),
-                                     consultas=json.loads(m.consultas) if m.consultas else [], created_at=m.created_at) for m in c.mensagens])
+                                     created_at=m.created_at) for m in c.mensagens])
 
 
 @router.delete("/conversas/{conversa_id}")

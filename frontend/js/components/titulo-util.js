@@ -17,6 +17,7 @@ function estaPendenteTitulo(titulo) {
 function textoOrigemTitulo(titulo) {
   if (titulo.pedido_venda_id) return `Pedido de venda ${formatarNumeroPedido(titulo.pedido_venda_id)}`;
   if (titulo.pedido_compra_id) return `Pedido de compra ${formatarNumeroPedido(titulo.pedido_compra_id)}`;
+  if (titulo.historico_manutencao_id) return titulo.descricao || "Manutenção de geladeira";
   return titulo.descricao || "Lançamento avulso";
 }
 
@@ -24,6 +25,7 @@ function textoOrigemTitulo(titulo) {
 function linkOrigemTitulo(titulo) {
   if (titulo.pedido_venda_id && temPermissao("vendas.ver")) return `pedido-venda-detalhe.html?id=${titulo.pedido_venda_id}`;
   if (titulo.pedido_compra_id && temPermissao("compras.ver")) return `pedido-compra-detalhe.html?id=${titulo.pedido_compra_id}`;
+  if (titulo.manutencao_geladeira_id && temPermissao("geladeiras.ver")) return `geladeira-detalhe.html?id=${titulo.manutencao_geladeira_id}`;
   return null;
 }
 

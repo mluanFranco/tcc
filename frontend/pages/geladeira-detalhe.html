@@ -100,6 +100,7 @@
                   <th>Tipo</th>
                   <th>Descrição</th>
                   <th class="coluna-numero">Custo</th>
+                  <th>Despesa</th>
                   <th>Registrado por</th>
                   <th><span class="sr-only">Ações</span></th>
                 </tr>
@@ -158,6 +159,25 @@
             <span class="campo-erro-msg" id="manut-erro-custo"></span>
           </div>
 
+          <!-- Só com custo: vira um título a pagar no Financeiro (categoria Manutenção) -->
+          <div class="manut-despesa" id="manut-bloco-despesa" hidden>
+            <p class="manut-despesa__dica">O custo vira uma conta a pagar no Financeiro (categoria <strong>Manutenção</strong>).</p>
+            <div class="campo-form-linha">
+              <div class="campo-form" id="manut-grupo-fornecedor">
+                <label for="manut-fornecedor">Fornecedor</label>
+                <select id="manut-fornecedor">
+                  <option value="">Sem fornecedor</option>
+                </select>
+                <span class="campo-erro-msg" id="manut-erro-fornecedor"></span>
+              </div>
+              <div class="campo-form" id="manut-grupo-vencimento">
+                <label for="manut-vencimento">Vencimento *</label>
+                <input type="date" id="manut-vencimento" min="2000-01-01">
+                <span class="campo-erro-msg" id="manut-erro-vencimento"></span>
+              </div>
+            </div>
+          </div>
+
         </div>
         <div class="modal__rodape">
           <button type="button" class="botao-secundario" id="manut-cancelar">Cancelar</button>
@@ -176,6 +196,7 @@
   <script src="../js/components/feedback.js"></script>
   <script src="../js/services/geladeiraService.js"></script>
   <script src="../js/services/clienteService.js"></script>
+  <script src="../js/services/fornecedorService.js"></script>
   <script src="../js/services/historicoManutencaoService.js"></script>
   <script src="../js/components/geladeira-form.js"></script>
   <script src="../js/pages/geladeira-detalhe.js"></script>

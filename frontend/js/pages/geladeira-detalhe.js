@@ -1,6 +1,7 @@
 // Detalhe da geladeira: dados, endereço de instalação e histórico de manutenção.
 // Ações (com geladeiras.editar): editar, enviar para manutenção / voltar para campo, desativar / reativar,
 // registrar e excluir manutenção. A situação (status) vem sempre da API; a tela nunca a deduz sozinha.
+// Manutenção com custo vira um título a pagar (o backend cria junto); o histórico mostra a situação dessa despesa.
 
 document.addEventListener("DOMContentLoaded", async () => {
   if (!exigirPermissao("geladeiras.ver")) return;
@@ -19,8 +20,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     // modal de manutenção
     modal: $("modal-manutencao"), form: $("form-manutencao"), mFechar: $("manut-fechar"), mCancelar: $("manut-cancelar"), mSalvar: $("manut-salvar"),
     mTipo: $("manut-tipo"), mData: $("manut-data"), mDescricao: $("manut-descricao"), mCusto: $("manut-custo"), mContador: $("manut-contador"),
-    mGrupos: { tipo: $("manut-grupo-tipo"), data: $("manut-grupo-data"), descricao: $("manut-grupo-descricao"), custo: $("manut-grupo-custo") },
-    mErros: { tipo: $("manut-erro-tipo"), data: $("manut-erro-data"), descricao: $("manut-erro-descricao"), custo: $("manut-erro-custo") }
+    mDespesa: $("manut-bloco-despesa"), mFornecedor: $("manut-fornecedor"), mVencimento: $("manut-vencimento"),
+    mGrupos: { tipo: $("manut-grupo-tipo"), data: $("manut-grupo-data"), descricao: $("manut-grupo-descricao"), custo: $("manut-grupo-custo"),
+               fornecedor: $("manut-grupo-fornecedor"), vencimento: $("manut-grupo-vencimento") },
+    mErros: { tipo: $("manut-erro-tipo"), data: $("manut-erro-data"), descricao: $("manut-erro-descricao"), custo: $("manut-erro-custo"),
+              fornecedor: $("manut-erro-fornecedor"), vencimento: $("manut-erro-vencimento") }
   };
 
   const ROTULO_STATUS = { em_campo: "Em campo", manutencao: "Em manutenção", desativada: "Desativada" };
@@ -119,10 +123,30 @@ document.addEventListener("DOMContentLoaded", async () => {
           <td><span class="badge-tipo-manut badge-tipo-manut--${m.tipo === "preventiva" ? "preventiva" : "corretiva"}">${tipo}</span></td>
           <td class="celula-descricao">${m.descricao ? escaparHtml(m.descricao) : "—"}</td>
           <td class="celula-numero">${escaparHtml(formatarMoeda(m.custo || 0))}</td>
+          <td>${despesaHtml(m)}</td>
           <td>${escaparHtml(m.usuario_nome || "—")}</td>
           <td class="celula-acoes">${excluir}</td>
         </tr>`;
     }).join("");
+  }
+
+  // Situação do título a pagar gerado pelo custo; com financeiro.ver vira link para o título.
+  function despesaHtml(m) {
+    if (!m.titulo_id) return '<span class="despesa-manut despesa-manut--sem">—</span>';
+    const situacao = {
+      aberto: { classe: "aberto", texto: `A pagar · vence ${formatarData(m.titulo_vencimento)}` },
+      parcial: { classe: "parcial", texto: "Paga em parte" },
+      pago: { classe: "pago", texto: "Paga" },
+      cancelado: { classe: "cancelado", texto: "Cancelada" }
+    }[m.titulo_status] || { classe: "aberto", texto: m.titulo_status || "—" };
+    const vencida = m.titulo_status === "aberto" && m.titulo_vencimento && m.titulo_vencimento < hojeIso();
+    const texto = vencida ? `Vencida em ${formatarData(m.titulo_vencimento)}` : situacao.texto;
+    const badge = `<span class="despesa-manut despesa-manut--${vencida ? "vencida" : situacao.classe}">${escaparHtml(texto)}</span>`;
+    const fornecedor = m.fornecedor_nome ? `<span class="despesa-manut__fornecedor">${escaparHtml(m.fornecedor_nome)}</span>` : "";
+    const conteudo = badge + fornecedor;
+    return temPermissao("financeiro.ver")
+      ? `<a class="despesa-manut__link" href="titulo-detalhe.html?id=${m.titulo_id}" title="Abrir a conta a pagar">${conteudo}</a>`
+      : conteudo;
   }
 
   async function carregarManutencoes() {
@@ -144,9 +168,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (!botao || ocupado) return;
     const registro = manutencoes.find(m => m.id === Number(botao.dataset.id));
     if (!registro) return;
+    const temDespesa = registro.titulo_id && registro.titulo_status !== "cancelado";
     const confirmou = await confirmarAcao({
       titulo: "Excluir registro de manutenção?",
-      mensagem: `O registro de ${formatarData(registro.data)} (${formatarMoeda(registro.custo || 0)}) será apagado de vez. Não dá para desfazer.`,
+      mensagem: `O registro de ${formatarData(registro.data)} (${formatarMoeda(registro.custo || 0)}) será apagado de vez. Não dá para desfazer.` +
+        (temDespesa ? " A conta a pagar desta manutenção será cancelada no Financeiro (se já houver pagamento, estorne-o antes)." : ""),
       textoConfirmar: "Excluir",
       perigo: true
     });
@@ -217,7 +243,26 @@ document.addEventListener("DOMContentLoaded", async () => {
   // ---------- Modal: registrar manutenção ----------
   aplicarMascaraMoeda(el.mCusto);
 
-  const instantaneoDoModal = () => JSON.stringify([el.mTipo.value, el.mData.value, el.mDescricao.value, el.mCusto.value]);
+  const instantaneoDoModal = () => JSON.stringify([el.mTipo.value, el.mData.value, el.mDescricao.value, el.mCusto.value,
+                                                   el.mFornecedor.value, el.mVencimento.value]);
+  let vencimentoEditado = false;     // enquanto não mexerem nele, o vencimento acompanha a data da manutenção
+  let fornecedoresCarregados = false;
+
+  async function carregarFornecedores() {
+    if (fornecedoresCarregados) return;
+    try {
+      const lista = (await fornecedorService.listar()).sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
+      el.mFornecedor.innerHTML = '<option value="">Sem fornecedor</option>' +
+        lista.map(f => `<option value="${f.id}">${escaparHtml(f.nome)}</option>`).join("");
+      fornecedoresCarregados = true;
+    } catch (_) { /* sem a lista, a despesa vai sem fornecedor */ }
+  }
+
+  function atualizarBlocoDespesa() {
+    const custo = el.mCusto.value ? moedaParaNumero(el.mCusto.value) : 0;
+    el.mDespesa.hidden = !(custo > 0);
+    if (!vencimentoEditado) el.mVencimento.value = el.mData.value;
+  }
   const modalAlterado = () => instantaneoDoModal() !== instantaneoManut;
 
   function limparErroManut(campo) {
@@ -241,6 +286,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     el.mData.max = hojeIso();
     el.mData.value = hojeIso();
     el.mContador.textContent = "0/500";
+    vencimentoEditado = false;
+    atualizarBlocoDespesa();
+    carregarFornecedores();
     definirEnviandoManut(false);
     instantaneoManut = instantaneoDoModal();
     el.modal.classList.add("aberto");
@@ -276,6 +324,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (custo === null || custo < 0) falha("custo", "Informe um custo válido.", el.mCusto);
     else if (custo > LIMITE_CUSTO) falha("custo", "O custo máximo é R$ 9.999.999,99.", el.mCusto);
     if (el.mDescricao.value.trim().length > 500) falha("descricao", "A descrição pode ter no máximo 500 caracteres.", el.mDescricao);
+    if (custo > 0 && (!el.mVencimento.value || Number(el.mVencimento.value.slice(0, 4)) < 2000)) {
+      falha("vencimento", "Informe quando a despesa vence.", el.mVencimento);
+    }
     if (primeiro) primeiro.focus();
     return primeiro ? null : custo;
   }
@@ -292,11 +343,13 @@ document.addEventListener("DOMContentLoaded", async () => {
         tipo: el.mTipo.value,
         data: el.mData.value,
         descricao: el.mDescricao.value.trim() || null,
-        custo
+        custo,
+        fornecedor_id: custo > 0 && el.mFornecedor.value ? Number(el.mFornecedor.value) : null,
+        vencimento: custo > 0 ? el.mVencimento.value : null
       });
       fecharModalManut();
       definirEnviandoManut(false);
-      toast.sucesso("Manutenção registrada.");
+      toast.sucesso(custo > 0 ? "Manutenção registrada e conta a pagar lançada no Financeiro." : "Manutenção registrada.");
       await carregarManutencoes();
     } catch (erro) {
       definirEnviandoManut(false);
@@ -311,8 +364,10 @@ document.addEventListener("DOMContentLoaded", async () => {
   el.modal.addEventListener("mousedown", (e) => { if (e.target === el.modal) tentarFecharManut(); });
   el.form.addEventListener("submit", salvarManutencao);
   el.mDescricao.addEventListener("input", () => { el.mContador.textContent = `${el.mDescricao.value.length}/500`; limparErroManut("descricao"); });
-  el.mData.addEventListener("input", () => limparErroManut("data"));
-  el.mCusto.addEventListener("input", () => limparErroManut("custo"));
+  el.mData.addEventListener("input", () => { limparErroManut("data"); atualizarBlocoDespesa(); });
+  el.mCusto.addEventListener("input", () => { limparErroManut("custo"); atualizarBlocoDespesa(); });
+  el.mVencimento.addEventListener("input", () => { vencimentoEditado = true; limparErroManut("vencimento"); });
+  el.mFornecedor.addEventListener("change", () => limparErroManut("fornecedor"));
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape" && el.modal.classList.contains("aberto") && !document.querySelector(".confirmacao-overlay")) tentarFecharManut();
   });

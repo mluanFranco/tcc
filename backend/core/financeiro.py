@@ -4,6 +4,7 @@ Regras do financeiro (contas a pagar e a receber) em um único lugar.
 - gerar_titulos: aplica as parcelas da forma de pagamento ao valor do pedido.
 - cancelar_titulos_do_pedido: cancela os títulos junto com o pedido (bloqueia se já houve baixa).
 - registrar_baixa / estornar_baixa: pagamento e recebimento, total ou parcial.
+- criar_titulo_manutencao / cancelar_titulo_da_manutencao: despesa de manutenção de geladeira (1 título a pagar).
 
 Como em core/pedidos.py, as funções NÃO fazem commit: quem chama decide quando confirmar a transação.
 Títulos e baixas sempre são alterados com a linha do título TRAVADA (SELECT ... FOR UPDATE), então
@@ -31,17 +32,27 @@ def _decimal(valor) -> Decimal:
     return Decimal(str(valor)).quantize(_CENTAVO)
 
 
-def categoria_padrao(db: Session, tipo: str) -> CategoriaFinanceira:
-    """Categoria 'sistema' dos títulos que nascem de pedidos (Vendas para receber, Compra de insumos para pagar)."""
+CATEGORIA_VENDAS = "Vendas"
+CATEGORIA_COMPRAS = "Compra de insumos"
+CATEGORIA_MANUTENCAO = "Manutenção"
+
+
+def _categoria_do_sistema(db: Session, nome: str, tipo: str) -> CategoriaFinanceira:
+    """Busca pelo NOME: há mais de uma categoria 'sistema' de pagar (Compra de insumos e Manutenção).
+    Categorias do sistema não podem ser renomeadas nem desativadas, então o nome é estável."""
     categoria = db.query(CategoriaFinanceira).filter(
-        CategoriaFinanceira.sistema.is_(True), CategoriaFinanceira.tipo == tipo
+        CategoriaFinanceira.sistema.is_(True), CategoriaFinanceira.tipo == tipo, CategoriaFinanceira.nome == nome
     ).first()
     if not categoria:   # a migração cria; isto só protege um banco sem as categorias iniciais
-        categoria = CategoriaFinanceira(nome="Vendas" if tipo == "receber" else "Compra de insumos",
-                                        tipo=tipo, sistema=True, ativo=True)
+        categoria = CategoriaFinanceira(nome=nome, tipo=tipo, sistema=True, ativo=True)
         db.add(categoria)
         db.flush()
     return categoria
+
+
+def categoria_padrao(db: Session, tipo: str) -> CategoriaFinanceira:
+    """Categoria 'sistema' dos títulos que nascem de pedidos (Vendas para receber, Compra de insumos para pagar)."""
+    return _categoria_do_sistema(db, CATEGORIA_VENDAS if tipo == "receber" else CATEGORIA_COMPRAS, tipo)
 
 
 def gerar_titulos(db: Session, *, tipo: str, pedido, forma, data_base: date) -> List[TituloFinanceiro]:
@@ -255,7 +266,7 @@ def _travar_avulso(db: Session, titulo_id: int, acao: str) -> TituloFinanceiro:
     if not titulo.avulso:
         raise HTTPException(
             status_code=400,
-            detail=f"Título de pedido não pode ser {acao} isoladamente: ele acompanha o pedido de origem",
+            detail=f"Este título não pode ser {acao} isoladamente: ele acompanha a origem (pedido ou manutenção de geladeira)",
         )
     if titulo.status == "cancelado":
         raise HTTPException(status_code=400, detail="O título está cancelado")
@@ -294,3 +305,48 @@ def cancelar_titulo_avulso(db: Session, titulo_id: int) -> TituloFinanceiro:
     titulo.status = "cancelado"
     db.flush()
     return titulo
+
+
+# ───────────────────────── despesa de manutenção de geladeira
+
+def criar_titulo_manutencao(db: Session, manutencao, geladeira, *, vencimento: date, fornecedor_id=None) -> TituloFinanceiro:
+    """1 título a pagar com o custo da manutenção (categoria do sistema "Manutenção"). Quem chama garante custo > 0."""
+    _validar_parte(db, "pagar", None, fornecedor_id)
+    titulo = TituloFinanceiro(
+        tipo="pagar",
+        categoria_id=_categoria_do_sistema(db, CATEGORIA_MANUTENCAO, "pagar").id,
+        historico_manutencao_id=manutencao.id,
+        fornecedor_id=fornecedor_id,
+        descricao=f"Manutenção {manutencao.tipo} — geladeira {geladeira.numero_serie or f'#{geladeira.id}'}",
+        numero_parcela=1,
+        total_parcelas=1,
+        vencimento=vencimento,
+        valor=_decimal(manutencao.custo),
+        taxa_percentual=Decimal("0.00"),
+        valor_pago=Decimal("0.00"),
+        status="aberto",
+    )
+    db.add(titulo)
+    db.flush()
+    return titulo
+
+
+def cancelar_titulo_da_manutencao(db: Session, manutencao_id: int) -> None:
+    """Cancela o título junto com a manutenção excluída. Com pagamento lançado, barra: estorne no Financeiro antes."""
+    titulos = (
+        db.query(TituloFinanceiro)
+        .filter(TituloFinanceiro.historico_manutencao_id == manutencao_id)
+        .with_for_update()
+        .populate_existing()
+        .all()
+    )
+    pagos = [t for t in titulos if t.status != "cancelado" and t.valor_pago > 0]
+    if pagos:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Não é possível excluir: a despesa desta manutenção já tem pagamento registrado (R$ {pagos[0].valor_pago:.2f}). "
+                   "Estorne o pagamento no Financeiro antes de excluir.",
+        )
+    for titulo in titulos:
+        titulo.status = "cancelado"
+    db.flush()
