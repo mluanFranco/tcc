@@ -502,6 +502,17 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
   window.addEventListener("beforeunload", (e) => { if (categoriaAlterada()) { e.preventDefault(); e.returnValue = ""; } });
 
+  // =============================================================== exportar (só Excel: títulos do filtro + baixas)
+  exportador.montar({
+    modulo: "financeiro",
+    formatos: ["xlsx"],
+    baixar: () => {
+      if (abaAtual === "categorias") return Promise.reject(new Error("Abra a aba A receber ou A pagar para exportar os títulos."));
+      if (periodoInvalido()) return Promise.reject(new Error("Período de vencimento inválido: a data inicial é posterior à final."));
+      return exportacaoService.financeiro(filtrosLista());
+    }
+  });
+
   // =============================================================== início
   const abaInicial = new URLSearchParams(location.search).get("aba");
   const valida = ["receber", "pagar", "categorias"].includes(abaInicial) ? abaInicial : "receber";

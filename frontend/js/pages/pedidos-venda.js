@@ -155,6 +155,14 @@ document.addEventListener("DOMContentLoaded", async () => {
   elementos.campoDataInicio.addEventListener("change", renderizarTabela);
   elementos.campoDataFim.addEventListener("change", renderizarTabela);
 
+  // Exportar (PDF/Excel): exatamente as linhas da tabela, na mesma ordem
+  exportador.montar({
+    modulo: "pedidos-venda",
+    obterIds: () => (periodoInvalido() ? [] : pedidosFiltrados().sort((a, b) => b.id - a.id).map(p => p.id)),
+    obterFiltros: () => [["Situação", exportador.textoAbaAtiva(".aba-status[data-status]")], ["Busca", elementos.campoBusca.value],
+                         ["Período", exportador.periodo(elementos.campoDataInicio, elementos.campoDataFim)]]
+  });
+
   await carregarClientes();
   await carregarPedidos();
 });

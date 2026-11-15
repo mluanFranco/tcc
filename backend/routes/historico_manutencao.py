@@ -4,7 +4,8 @@ from database import get_db
 from models import HistoricoManutencao, Geladeira, Usuario
 from schemas.historico_manutencao import HistoricoManutencaoCreate, HistoricoManutencaoResponse
 from core.security import get_current_user
-from core.financeiro import criar_titulo_manutencao, cancelar_titulo_da_manutencao
+from core.financeiro import criar_titulos_manutencao, cancelar_titulo_da_manutencao
+from core.pedidos import _validar_forma_pagamento
 from typing import List
 from datetime import datetime
 
@@ -27,20 +28,24 @@ def criar_manutencao(
     if dados.tipo not in ("preventiva", "corretiva"):
         raise HTTPException(status_code=400, detail="Tipo deve ser 'preventiva' ou 'corretiva'")
 
+    # Custo é despesa: exige a forma de pagamento, cujas parcelas viram as contas a pagar (como nos pedidos)
+    tem_custo = bool(dados.custo and dados.custo > 0)
+    forma = _validar_forma_pagamento(db, dados.forma_pagamento_id) if tem_custo else None
+
     manutencao = HistoricoManutencao(
         geladeira_id=dados.geladeira_id,
         usuario_id=usuario.id,
         data=dados.data or datetime.now(),
         tipo=dados.tipo,
         descricao=dados.descricao,
-        custo=dados.custo
+        custo=dados.custo,
+        forma_pagamento_id=forma.id if forma else None,
     )
     db.add(manutencao)
     db.flush()
-    # Custo é despesa: vira 1 título a pagar na mesma transação (se o fornecedor for inválido, nada é gravado)
-    if manutencao.custo and manutencao.custo > 0:
-        criar_titulo_manutencao(db, manutencao, geladeira, vencimento=dados.vencimento or manutencao.data.date(),
-                                fornecedor_id=dados.fornecedor_id)
+    # Na mesma transação: se o fornecedor for inválido, nada é gravado
+    if tem_custo:
+        criar_titulos_manutencao(db, manutencao, geladeira, forma=forma, fornecedor_id=dados.fornecedor_id)
     db.commit()
     db.refresh(manutencao)
     return manutencao
@@ -52,7 +57,7 @@ def listar_manutencoes(
     db: Session = Depends(get_db),
     _=Depends(get_current_user)
 ):
-    query = db.query(HistoricoManutencao).options(joinedload(HistoricoManutencao.usuario), joinedload(HistoricoManutencao.titulo))
+    query = db.query(HistoricoManutencao).options(joinedload(HistoricoManutencao.usuario), joinedload(HistoricoManutencao.titulos))
     if geladeira_id:
         query = query.filter(HistoricoManutencao.geladeira_id == geladeira_id)
     return query.order_by(HistoricoManutencao.data.desc(), HistoricoManutencao.id.desc()).all()

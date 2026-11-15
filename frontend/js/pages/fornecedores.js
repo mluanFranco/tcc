@@ -4,6 +4,9 @@
 let fornecedoresCache = [];
 let abaAtivaFornecedores = "ativos";
 let fornecedorEmEdicaoId = null;
+let razaoSocialOriginal = "";   // para saber se um cadastro antigo já tinha razão social
+
+let fornecedoresVisiveis = [];   // o que a tabela está mostrando (base da exportação)
 
 document.addEventListener("DOMContentLoaded", async () => {
   if (!exigirAutenticacao()) return;
@@ -60,9 +63,11 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (!termoBusca) return true;
       return (
         fornecedor.nome.toLowerCase().includes(termoBusca) ||
+        (fornecedor.razao_social || "").toLowerCase().includes(termoBusca) ||
         fornecedor.cnpj.toLowerCase().includes(termoBusca.replace(/[^0-9a-z]/gi, ""))
       );
     });
+    fornecedoresVisiveis = fornecedoresFiltrados;
 
     if (fornecedoresFiltrados.length === 0) {
       elementos.tabelaCorpo.innerHTML = "";
@@ -86,7 +91,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       return `
         <tr>
-          <td class="celula-nome">${escaparHtml(fornecedor.nome)}</td>
+          <td class="celula-nome">${escaparHtml(fornecedor.nome)}${fornecedor.razao_social ? `<span class="celula-nome__razao">${escaparHtml(fornecedor.razao_social)}</span>` : ""}</td>
           <td>${escaparHtml(formatarDocumento(fornecedor.cnpj))}</td>
           <td>${escaparHtml(formatarTelefone(fornecedor.telefone))}</td>
           <td>${escaparHtml(cidadeUf)}</td>
@@ -107,6 +112,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   function abrirModalVisualizacao(fornecedor) {
     document.getElementById("vis-nome").textContent = fornecedor.nome;
+    document.getElementById("vis-razao-social").textContent = fornecedor.razao_social || "—";
     document.getElementById("vis-status").textContent = fornecedor.ativo ? "Ativo" : "Inativo";
     document.getElementById("vis-cnpj").textContent = formatarDocumento(fornecedor.cnpj);
     document.getElementById("vis-telefone").textContent = formatarTelefone(fornecedor.telefone);
@@ -174,6 +180,8 @@ document.addEventListener("DOMContentLoaded", async () => {
       fornecedorEmEdicaoId = fornecedor.id;
       elementos.modalTitulo.textContent = "Editar fornecedor";
       document.getElementById("campo-nome").value = fornecedor.nome;
+      document.getElementById("campo-razao-social").value = fornecedor.razao_social ?? "";
+      razaoSocialOriginal = fornecedor.razao_social || "";
       document.getElementById("campo-cnpj").value = mascararCnpj(fornecedor.cnpj);
       document.getElementById("campo-telefone").value = fornecedor.telefone ? mascararTelefone(fornecedor.telefone) : "";
       document.getElementById("campo-email").value = fornecedor.email ?? "";
@@ -187,6 +195,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       document.getElementById("campo-ddd").value = fornecedor.ddd ?? "";
     } else {
       fornecedorEmEdicaoId = null;
+      razaoSocialOriginal = "";
       elementos.modalTitulo.textContent = "Novo fornecedor";
     }
 
@@ -211,6 +220,12 @@ document.addEventListener("DOMContentLoaded", async () => {
       valido = false;
     }
 
+    // Razão social: obrigatória ao cadastrar e para quem já tinha; cadastros antigos sem ela continuam editáveis
+    if (!dados.razao_social && (!fornecedorEmEdicaoId || razaoSocialOriginal)) {
+      document.getElementById("campo-razao-social").closest(".campo-form").classList.add("invalido");
+      valido = false;
+    }
+
     if (!dados.cnpj.trim()) {
       document.getElementById("campo-cnpj").closest(".campo-form").classList.add("invalido");
       valido = false;
@@ -224,6 +239,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     const dados = {
       nome: document.getElementById("campo-nome").value,
+      razao_social: document.getElementById("campo-razao-social").value.trim() || null,   // null na edição = não mexer
       cnpj: document.getElementById("campo-cnpj").value,
       telefone: document.getElementById("campo-telefone").value || null,
       email: document.getElementById("campo-email").value || null,
@@ -341,6 +357,15 @@ document.addEventListener("DOMContentLoaded", async () => {
   elementos.modalVisualizarOverlay.addEventListener("click", (e) => {
     if (e.target === elementos.modalVisualizarOverlay) fecharModalVisualizacao();
   });
+
+  // Exportar (PDF/Excel): cadastros em massa só para quem pode editar cadastros
+  if (temPermissao("cadastros.editar")) {
+    exportador.montar({
+      modulo: "fornecedores",
+      obterIds: () => fornecedoresVisiveis.map(f => f.id),
+      obterFiltros: () => [["Situação", exportador.textoAbaAtiva(".aba-status")], ["Busca", elementos.campoBusca.value]]
+    });
+  }
 
   await carregarFornecedores();
 });

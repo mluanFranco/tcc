@@ -1,4 +1,4 @@
-// Service do Dashboard — única camada que conversa com os relatórios (/financeiro/relatorios) e com o estoque baixo.
+// Service do Dashboard — única camada que conversa com os relatórios (/financeiro/relatorios) e com o painel.
 // Os cálculos (receita, CMV, margem, atraso...) são todos do backend; aqui só se monta a consulta.
 // Datas sempre como objetos Date locais; vão para a API como AAAA-MM-DD.
 
@@ -46,12 +46,10 @@ const dashboardService = {
     return apiFetch(`/financeiro/relatorios/vendas/por-cliente${this._q({ data_inicio: inicio, data_fim: fim, limite })}`);
   },
 
-  formasDePagamentoVenda(inicio, fim) {
-    return apiFetch(`/financeiro/relatorios/por-forma-pagamento${this._q({ data_inicio: inicio, data_fim: fim, origem: "venda" })}`);
-  },
-
-  // Ativos com estoque_atual <= estoque_minimo.
-  estoqueBaixo() {
-    return apiFetch("/produtos/estoque-baixo");
+  // Vendas por dia (período e anterior), clientes atendidos, receita por categoria, estoque, produção,
+  // geladeiras e caixa por semana. Geladeiras e dinheiro vêm nulos para quem não tem a permissão do módulo.
+  // inicioAnterior/fimAnterior: com o que comparar (sem eles, o backend usa os mesmos dias logo antes).
+  painel(inicio, fim, inicioAnterior = null, fimAnterior = null) {
+    return apiFetch(`/financeiro/relatorios/painel${this._q({ data_inicio: inicio, data_fim: fim, inicio_anterior: inicioAnterior, fim_anterior: fimAnterior })}`);
   }
 };

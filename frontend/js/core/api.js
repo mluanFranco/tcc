@@ -56,14 +56,16 @@ async function apiFetch(endpoint, options = {}) {
   return body;
 }
 
-// Para respostas que não são JSON (ex.: PDF). Mantém o token JWT e o mesmo tratamento de erros;
-// devolve um Blob. Quem chama decide se abre numa aba ou baixa.
-async function apiFetchBlob(endpoint) {
+// Para respostas que não são JSON (ex.: PDF, Excel). Mantém o token JWT e o mesmo tratamento de erros;
+// devolve um Blob. Quem chama decide se abre numa aba ou baixa. `body` (objeto) vai como JSON (ex.: POST da exportação).
+async function apiFetchBlob(endpoint, { method = "GET", body = null } = {}) {
   const token = getToken();
+  const headers = token ? { "Authorization": `Bearer ${token}` } : {};
+  if (body !== null) headers["Content-Type"] = "application/json";
   let response;
   try {
     response = await fetch(`${CONFIG.API_BASE_URL}${endpoint}`, {
-      headers: token ? { "Authorization": `Bearer ${token}` } : {}
+      method, headers, body: body !== null ? JSON.stringify(body) : undefined
     });
   } catch (erro) {
     throw new ApiError("Não foi possível conectar ao servidor.", 0);

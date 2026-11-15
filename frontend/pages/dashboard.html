@@ -29,7 +29,7 @@
         </div>
         <div class="dash-filtro">
           <label class="sr-only" for="periodo-select">Período</label>
-          <select id="periodo-select">
+          <select id="periodo-select" class="filtro-select">
             <option value="mes">Este mês</option>
             <option value="mes-passado">Mês passado</option>
             <option value="90d">Últimos 90 dias</option>
@@ -54,46 +54,59 @@
         <ul id="destaques-lista"><li class="destaque destaque--info">Carregando...</li></ul>
       </section>
 
-      <section class="dash-kpis" id="bloco-kpis" aria-label="Indicadores do período"></section>
+      <section class="kpis dash-kpis" id="bloco-kpis" aria-label="Indicadores do período"></section>
+
+      <div class="dash-grade dash-grade--2-1">
+        <section class="dash-cartao" id="bloco-vendas">
+          <header class="dash-cartao__topo"><div><h2>Vendas acumuladas</h2><span class="dash-cartao__sub">Receita confirmada dia a dia, comparada com o período anterior</span></div></header>
+          <div class="dash-cartao__corpo" data-corpo></div>
+        </section>
+        <section class="dash-cartao" id="bloco-categorias">
+          <header class="dash-cartao__topo"><div><h2>Receita por categoria</h2><span class="dash-cartao__sub">Como as vendas do período se dividem</span></div></header>
+          <div class="dash-cartao__corpo" data-corpo></div>
+        </section>
+      </div>
 
       <div class="dash-grade">
-        <section class="dash-cartao dash-cartao--larga" id="bloco-serie">
-          <header class="dash-cartao__topo"><h2>Evolução dos últimos 6 meses</h2><span class="dash-cartao__sub">Receita, margem bruta e resultado</span></header>
-          <div class="dash-cartao__corpo" data-corpo></div>
-        </section>
-
-        <section class="dash-cartao" id="bloco-caixa">
-          <header class="dash-cartao__topo"><h2>Caixa do período</h2><span class="dash-cartao__sub">O que realmente entrou e saiu</span></header>
-          <div class="dash-cartao__corpo" data-corpo></div>
-        </section>
-
-        <section class="dash-cartao" id="bloco-previsto">
-          <header class="dash-cartao__topo"><h2>Previsão de caixa — 90 dias</h2><a class="dash-cartao__link" id="link-financeiro" href="financeiro.html" hidden>Ver financeiro</a></header>
-          <div class="dash-cartao__corpo" data-corpo></div>
-        </section>
-
-        <section class="dash-cartao" id="bloco-vencidos">
-          <header class="dash-cartao__topo"><h2>Inadimplência</h2><span class="dash-cartao__sub">Títulos a receber vencidos</span></header>
-          <div class="dash-cartao__corpo" data-corpo></div>
-        </section>
-
         <section class="dash-cartao" id="bloco-produtos">
-          <header class="dash-cartao__topo"><h2>Produtos mais vendidos</h2><span class="dash-cartao__sub">Por receita</span></header>
+          <header class="dash-cartao__topo"><div><h2>Produtos que mais venderam</h2><span class="dash-cartao__sub">Receita no período · quantidade e margem abaixo</span></div></header>
           <div class="dash-cartao__corpo" data-corpo></div>
         </section>
-
         <section class="dash-cartao" id="bloco-clientes">
-          <header class="dash-cartao__topo"><h2>Melhores clientes</h2><span class="dash-cartao__sub">Por receita</span></header>
+          <header class="dash-cartao__topo"><div><h2>Melhores clientes</h2><span class="dash-cartao__sub">Receita no período · pedidos e participação abaixo</span></div></header>
           <div class="dash-cartao__corpo" data-corpo></div>
         </section>
+      </div>
 
-        <section class="dash-cartao" id="bloco-formas">
-          <header class="dash-cartao__topo"><h2>Formas de pagamento nas vendas</h2><span class="dash-cartao__sub">Participação, prazo e taxa</span></header>
+      <div class="dash-grade" id="grade-financeiro" hidden>
+        <section class="dash-cartao" id="bloco-caixa">
+          <header class="dash-cartao__topo"><div><h2>Caixa realizado</h2><span class="dash-cartao__sub" id="caixa-sub">O que de fato entrou e saiu (pagamentos registrados)</span></div></header>
           <div class="dash-cartao__corpo" data-corpo></div>
         </section>
+        <section class="dash-cartao" id="bloco-previsto">
+          <header class="dash-cartao__topo"><div><h2>Previsão de caixa — 90 dias</h2><span class="dash-cartao__sub">Contas em aberto por mês de vencimento</span></div><a class="dash-cartao__link" href="financeiro.html">Ver financeiro</a></header>
+          <div class="dash-cartao__corpo" data-corpo></div>
+        </section>
+      </div>
 
+      <div class="dash-grade" id="grade-operacao">
         <section class="dash-cartao" id="bloco-estoque">
-          <header class="dash-cartao__topo"><h2>Estoque baixo</h2><a class="dash-cartao__link" href="produtos.html">Ver produtos</a></header>
+          <header class="dash-cartao__topo"><div><h2>Saúde do estoque</h2><span class="dash-cartao__sub">Produtos ativos pela situação</span></div><a class="dash-cartao__link" href="produtos.html">Ver produtos</a></header>
+          <div class="dash-cartao__corpo" data-corpo></div>
+        </section>
+        <section class="dash-cartao" id="bloco-geladeiras" hidden>
+          <header class="dash-cartao__topo"><div><h2>Geladeiras</h2><span class="dash-cartao__sub">Equipamentos pela situação e manutenções do período</span></div><a class="dash-cartao__link" href="geladeiras.html">Ver geladeiras</a></header>
+          <div class="dash-cartao__corpo" data-corpo></div>
+        </section>
+      </div>
+
+      <div class="dash-grade" id="grade-producao" hidden>
+        <section class="dash-cartao" id="bloco-producao">
+          <header class="dash-cartao__topo"><div><h2>Produção do período</h2><span class="dash-cartao__sub">Ordens confirmadas e o que mais foi produzido (por custo)</span></div><a class="dash-cartao__link" href="producao.html">Ver produção</a></header>
+          <div class="dash-cartao__corpo" data-corpo></div>
+        </section>
+        <section class="dash-cartao" id="bloco-receitas">
+          <header class="dash-cartao__topo"><div><h2>Receitas e insumos</h2><span class="dash-cartao__sub">Receitas prontas para produzir e insumos mais consumidos no período</span></div><a class="dash-cartao__link" href="producao.html?aba=receitas">Ver receitas</a></header>
           <div class="dash-cartao__corpo" data-corpo></div>
         </section>
       </div>

@@ -17,7 +17,7 @@ class _ValidacoesFornecedor(BaseModel):
     """Regras compartilhadas por criação e edição (o endereço do fornecedor continua nas colunas dele)."""
 
     @field_validator(
-        "nome", "telefone", "logradouro", "numero", "complemento", "bairro", "cidade",
+        "nome", "razao_social", "telefone", "logradouro", "numero", "complemento", "bairro", "cidade",
         mode="before", check_fields=False,
     )
     @classmethod
@@ -60,7 +60,8 @@ class _ValidacoesFornecedor(BaseModel):
 
 
 class FornecedorCreate(_ValidacoesFornecedor):
-    nome: str = Field(min_length=1, max_length=100)
+    nome: str = Field(min_length=1, max_length=100)              # nome fantasia
+    razao_social: str = Field(min_length=1, max_length=150)
     cnpj: str
     telefone: Optional[str] = Field(default=None, max_length=20)
     email: Optional[EmailStr] = None
@@ -76,6 +77,7 @@ class FornecedorCreate(_ValidacoesFornecedor):
 
 class FornecedorUpdate(_ValidacoesFornecedor):
     nome: Optional[str] = Field(default=None, min_length=1, max_length=100)
+    razao_social: Optional[str] = Field(default=None, min_length=1, max_length=150)   # null = não mexer
     cnpj: Optional[str] = None
     telefone: Optional[str] = Field(default=None, max_length=20)
     email: Optional[EmailStr] = None
@@ -93,6 +95,7 @@ class FornecedorUpdate(_ValidacoesFornecedor):
 class FornecedorResponse(BaseModel):
     id: int
     nome: str
+    razao_social: Optional[str] = None
     cnpj: str
     telefone: Optional[str]
     email: Optional[str]

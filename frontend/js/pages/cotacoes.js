@@ -247,6 +247,14 @@ document.addEventListener("DOMContentLoaded", async () => {
     history.replaceState(null, "", "cotacoes.html");
   }
 
+  // Exportar (PDF/Excel): exatamente as linhas da lista de cotações, na mesma ordem
+  exportador.montar({
+    modulo: "cotacoes",
+    obterIds: () => (periodoInvalido() ? [] : cotacoesFiltradas().sort((a, b) => b.id - a.id).map(c => c.id)),
+    obterFiltros: () => [["Tipo", exportador.textoSelect(el.filtroTipo)], ["Situação", exportador.textoAbaAtiva(".aba-status[data-status]")],
+                         ["Busca", el.campoBusca.value], ["Período", exportador.periodo(el.campoDataInicio, el.campoDataFim)]]
+  });
+
   await carregarNomes();
   await carregarCotacoes();
   await carregarProdutos();

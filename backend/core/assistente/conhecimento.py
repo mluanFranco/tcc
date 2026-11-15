@@ -49,7 +49,8 @@ EMBALAGEM. O estoque e as receitas ficam sempre na unidade base do produto (ex.:
     "geladeiras": ("geladeira geladeiras manutencao manutenção freezer expositora equipamento alocacao custo despesa", """\
 GELADEIRAS. Equipamentos do negócio alocados em clientes, com tipo, modelo, marca, número de série, data de alocação e status
 (em_campo, manutencao ou desativada). Cada geladeira tem histórico de manutenções (data, tipo e custo).
-Manutenção com custo gera um título a pagar na categoria Manutenção (v_titulos com origem 'manutencao'): é por ali que se vê
+Manutenção com custo gera contas a pagar na categoria Manutenção, uma por parcela da forma de pagamento (v_titulos com
+origem 'manutencao'): é por ali que se vê
 quanto foi gasto com manutenção e o que já foi pago."""),
     "cadastros": ("cadastro cadastros cliente fornecedor produto categoria subcategoria unidade forma pagamento", """\
 CADASTROS: produtos (com categoria, subcategoria e unidade de medida), clientes (vários endereços), fornecedores e formas de pagamento

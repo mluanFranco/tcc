@@ -16,8 +16,10 @@ const formaPagamentoService = {
   },
 
   // Somente leitura: como um valor seria dividido nas parcelas da forma de pagamento.
-  async simular(id, valor) {
-    return apiFetch(`/formas-pagamento/${id}/simulacao?valor=${Number(valor).toFixed(2)}`);
+  // `dataBase` (AAAA-MM-DD, opcional) é de onde os prazos contam; sem ela, hoje.
+  async simular(id, valor, dataBase = null) {
+    const base = dataBase ? `&data_base=${encodeURIComponent(dataBase)}` : "";
+    return apiFetch(`/formas-pagamento/${id}/simulacao?valor=${Number(valor).toFixed(2)}${base}`);
   },
 
   async criar(dados) {
@@ -44,4 +46,4 @@ const formaPagamentoService = {
   async reativar(id) {
     return apiFetch(`/formas-pagamento/${id}/reativar`, { method: "PATCH" });
   }
-};
+};

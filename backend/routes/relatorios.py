@@ -1,10 +1,12 @@
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy.orm import Session
 from database import get_db
 from schemas.relatorios import ResumoResponse, SerieResponse, ComparativoResponse
 from schemas.relatorios_financeiro import FluxoCaixaResponse, FluxoPrevistoResponse, VencidosResponse
 from core.security import get_current_user
-from core import relatorios, relatorios_financeiro, relatorios_rankings
+from core import relatorios, relatorios_financeiro, relatorios_painel, relatorios_rankings
+from core.permissoes import _efetivas_da_requisicao, tem_permissao
+from schemas.relatorios_painel import PainelResponse
 from schemas.relatorios_rankings import (
     ComprasPorFornecedorResponse, ComprasPorProdutoResponse, PorFormaPagamentoResponse,
     VendasPorClienteResponse, VendasPorProdutoResponse,
@@ -186,3 +188,33 @@ def por_forma_pagamento(
     """
     inicio, fim = relatorios.resolver_periodo(data_inicio, data_fim)
     return relatorios_rankings.por_forma_pagamento(db, inicio, fim, origem)
+
+
+@router.get("/painel", response_model=PainelResponse)
+def painel_do_dashboard(
+    request: Request,
+    data_inicio: Optional[date] = Query(default=None, description=_DESC_INICIO),
+    data_fim: Optional[date] = Query(default=None, description=_DESC_FIM),
+    inicio_anterior: Optional[date] = Query(default=None, description="Início do período de comparação (ex.: 1º do mês passado). Informe junto com fim_anterior."),
+    fim_anterior: Optional[date] = Query(default=None, description="Fim do período de comparação. Sem os dois: o mesmo número de dias logo antes do período."),
+    db: Session = Depends(get_db),
+    usuario=Depends(get_current_user),
+):
+    """
+    Números do Dashboard que os outros relatórios não trazem: vendas por dia (período e anterior), clientes atendidos,
+    receita por categoria, situação do estoque, produção, geladeiras e caixa. As partes de geladeiras, de dinheiro
+    (caixa e recebimento em dia) e de produção/receitas só vêm para quem tem geladeiras.ver, financeiro.ver e
+    producao.ver; sem elas, chegam nulas.
+    """
+    inicio, fim = relatorios.resolver_periodo(data_inicio, data_fim)
+    if (inicio_anterior is None) != (fim_anterior is None):
+        raise HTTPException(status_code=400, detail="Informe inicio_anterior e fim_anterior juntos")
+    anterior = relatorios.resolver_periodo(inicio_anterior, fim_anterior) if inicio_anterior else None
+    efetivas = _efetivas_da_requisicao(request, db, usuario)
+    return relatorios_painel.painel(
+        db, inicio, fim,
+        ver_financeiro=tem_permissao(efetivas, "financeiro.ver"),
+        ver_geladeiras=tem_permissao(efetivas, "geladeiras.ver"),
+        ver_producao=tem_permissao(efetivas, "producao.ver"),
+        anterior=anterior,
+    )

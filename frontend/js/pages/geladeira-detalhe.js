@@ -14,17 +14,17 @@ document.addEventListener("DOMContentLoaded", async () => {
     botaoEditar: $("botao-editar"), botaoManutencao: $("botao-manutencao"), botaoCampo: $("botao-campo"),
     botaoDesativar: $("botao-desativar"), botaoReativar: $("botao-reativar"), aviso: $("aviso-geladeira"),
     cliente: $("vis-cliente"), tipo: $("vis-tipo"), serie: $("vis-serie"), marca: $("vis-marca"), modelo: $("vis-modelo"),
-    alocacao: $("vis-alocacao"), endereco: $("vis-endereco"),
+    alocacao: $("vis-alocacao"), valor: $("vis-valor"), endereco: $("vis-endereco"),
     botaoNovaManut: $("botao-nova-manutencao"), resumo: $("resumo-manutencao"),
     manutCorpo: $("manutencoes-corpo"), manutCarregando: $("manutencoes-carregando"), manutVazio: $("manutencoes-vazio"),
     // modal de manutenção
     modal: $("modal-manutencao"), form: $("form-manutencao"), mFechar: $("manut-fechar"), mCancelar: $("manut-cancelar"), mSalvar: $("manut-salvar"),
     mTipo: $("manut-tipo"), mData: $("manut-data"), mDescricao: $("manut-descricao"), mCusto: $("manut-custo"), mContador: $("manut-contador"),
-    mDespesa: $("manut-bloco-despesa"), mFornecedor: $("manut-fornecedor"), mVencimento: $("manut-vencimento"),
+    mDespesa: $("manut-bloco-despesa"), mFornecedor: $("manut-fornecedor"), mForma: $("manut-forma"), mPrevia: $("manut-previa"),
     mGrupos: { tipo: $("manut-grupo-tipo"), data: $("manut-grupo-data"), descricao: $("manut-grupo-descricao"), custo: $("manut-grupo-custo"),
-               fornecedor: $("manut-grupo-fornecedor"), vencimento: $("manut-grupo-vencimento") },
+               fornecedor: $("manut-grupo-fornecedor"), forma: $("manut-grupo-forma") },
     mErros: { tipo: $("manut-erro-tipo"), data: $("manut-erro-data"), descricao: $("manut-erro-descricao"), custo: $("manut-erro-custo"),
-              fornecedor: $("manut-erro-fornecedor"), vencimento: $("manut-erro-vencimento") }
+              fornecedor: $("manut-erro-fornecedor"), forma: $("manut-erro-forma") }
   };
 
   const ROTULO_STATUS = { em_campo: "Em campo", manutencao: "Em manutenção", desativada: "Desativada" };
@@ -77,6 +77,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     el.marca.textContent = g.marca || "—";
     el.modelo.textContent = g.modelo || "—";
     el.alocacao.textContent = formatarData(g.data_alocacao);
+    el.valor.textContent = g.valor_aquisicao != null ? formatarMoeda(g.valor_aquisicao) : "Não informado";
     el.endereco.textContent = g.endereco ? formatarEndereco(g.endereco) : "Não informado";
 
     el.botaoEditar.hidden = !podeEditar || desativada;
@@ -130,19 +131,23 @@ document.addEventListener("DOMContentLoaded", async () => {
     }).join("");
   }
 
-  // Situação do título a pagar gerado pelo custo; com financeiro.ver vira link para o título.
+  // Resumo das contas a pagar geradas pelo custo (uma por parcela); com financeiro.ver vira link para a 1ª parcela.
   function despesaHtml(m) {
     if (!m.titulo_id) return '<span class="despesa-manut despesa-manut--sem">—</span>';
+    const n = m.titulo_parcelas || 1;
+    const proximo = formatarData(m.titulo_vencimento);
     const situacao = {
-      aberto: { classe: "aberto", texto: `A pagar · vence ${formatarData(m.titulo_vencimento)}` },
-      parcial: { classe: "parcial", texto: "Paga em parte" },
-      pago: { classe: "pago", texto: "Paga" },
+      aberto: { classe: "aberto", texto: n > 1 ? `A pagar · ${n} parcelas · próx. ${proximo}` : `A pagar · vence ${proximo}` },
+      parcial: { classe: "parcial", texto: `Paga em parte · ${m.titulo_parcelas_pagas} de ${n}` },
+      pago: { classe: "pago", texto: n > 1 ? `Paga · ${n} parcelas` : "Paga" },
       cancelado: { classe: "cancelado", texto: "Cancelada" }
     }[m.titulo_status] || { classe: "aberto", texto: m.titulo_status || "—" };
-    const vencida = m.titulo_status === "aberto" && m.titulo_vencimento && m.titulo_vencimento < hojeIso();
-    const texto = vencida ? `Vencida em ${formatarData(m.titulo_vencimento)}` : situacao.texto;
+    const emAberto = m.titulo_status === "aberto" || m.titulo_status === "parcial";
+    const vencida = emAberto && m.titulo_vencimento && m.titulo_vencimento < hojeIso();
+    const texto = vencida ? `Vencida em ${proximo}` : situacao.texto;
     const badge = `<span class="despesa-manut despesa-manut--${vencida ? "vencida" : situacao.classe}">${escaparHtml(texto)}</span>`;
-    const fornecedor = m.fornecedor_nome ? `<span class="despesa-manut__fornecedor">${escaparHtml(m.fornecedor_nome)}</span>` : "";
+    const detalhe = [m.fornecedor_nome, m.forma_pagamento_nome].filter(Boolean).join(" · ");
+    const fornecedor = detalhe ? `<span class="despesa-manut__fornecedor">${escaparHtml(detalhe)}</span>` : "";
     const conteudo = badge + fornecedor;
     return temPermissao("financeiro.ver")
       ? `<a class="despesa-manut__link" href="titulo-detalhe.html?id=${m.titulo_id}" title="Abrir a conta a pagar">${conteudo}</a>`
@@ -244,24 +249,51 @@ document.addEventListener("DOMContentLoaded", async () => {
   aplicarMascaraMoeda(el.mCusto);
 
   const instantaneoDoModal = () => JSON.stringify([el.mTipo.value, el.mData.value, el.mDescricao.value, el.mCusto.value,
-                                                   el.mFornecedor.value, el.mVencimento.value]);
-  let vencimentoEditado = false;     // enquanto não mexerem nele, o vencimento acompanha a data da manutenção
-  let fornecedoresCarregados = false;
+                                                   el.mFornecedor.value, el.mForma.value]);
+  let listasDespesaCarregadas = false;
+  let requisicaoPrevia = 0;
+  let temporizadorPrevia = null;
 
-  async function carregarFornecedores() {
-    if (fornecedoresCarregados) return;
+  async function carregarListasDespesa() {
+    if (listasDespesaCarregadas) return;
     try {
-      const lista = (await fornecedorService.listar()).sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
+      const [fornecedores, formas] = await Promise.all([fornecedorService.listar(), formaPagamentoService.listar()]);
+      fornecedores.sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
+      formas.sort((a, b) => a.descricao.localeCompare(b.descricao, "pt-BR"));
       el.mFornecedor.innerHTML = '<option value="">Sem fornecedor</option>' +
-        lista.map(f => `<option value="${f.id}">${escaparHtml(f.nome)}</option>`).join("");
-      fornecedoresCarregados = true;
-    } catch (_) { /* sem a lista, a despesa vai sem fornecedor */ }
+        fornecedores.map(f => `<option value="${f.id}">${escaparHtml(f.nome)}</option>`).join("");
+      el.mForma.innerHTML = '<option value="">Selecione...</option>' +
+        formas.map(f => `<option value="${f.id}">${escaparHtml(f.descricao)}</option>`).join("");
+      listasDespesaCarregadas = true;
+    } catch (erro) {
+      toast.erro("Não foi possível carregar fornecedores e formas de pagamento: " + erro.message);
+    }
+  }
+
+  // Prévia das parcelas (só leitura): mesmo cálculo do backend, contando da data da manutenção
+  async function atualizarPrevia() {
+    const minha = ++requisicaoPrevia;
+    const custo = el.mCusto.value ? moedaParaNumero(el.mCusto.value) : 0;
+    const formaId = Number(el.mForma.value);
+    if (!(custo > 0) || !formaId || !el.mData.value) { el.mPrevia.hidden = true; return; }
+    try {
+      const sim = await formaPagamentoService.simular(formaId, custo, el.mData.value);
+      if (minha !== requisicaoPrevia) return;
+      const total = sim.parcelas.length;
+      el.mPrevia.innerHTML = sim.parcelas.map(p =>
+        `<span><strong>${total === 1 ? "Parcela única" : `Parcela ${p.numero}/${total}`}</strong>: ${escaparHtml(formatarMoeda(p.valor))} — vence em ${escaparHtml(formatarData(p.vencimento))}</span>`
+      ).join("");
+      el.mPrevia.hidden = false;
+    } catch (_) {
+      if (minha === requisicaoPrevia) el.mPrevia.hidden = true;   // a prévia é só uma ajuda
+    }
   }
 
   function atualizarBlocoDespesa() {
     const custo = el.mCusto.value ? moedaParaNumero(el.mCusto.value) : 0;
     el.mDespesa.hidden = !(custo > 0);
-    if (!vencimentoEditado) el.mVencimento.value = el.mData.value;
+    clearTimeout(temporizadorPrevia);
+    temporizadorPrevia = setTimeout(atualizarPrevia, 300);
   }
   const modalAlterado = () => instantaneoDoModal() !== instantaneoManut;
 
@@ -286,9 +318,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     el.mData.max = hojeIso();
     el.mData.value = hojeIso();
     el.mContador.textContent = "0/500";
-    vencimentoEditado = false;
+    el.mPrevia.hidden = true;
     atualizarBlocoDespesa();
-    carregarFornecedores();
+    carregarListasDespesa();
     definirEnviandoManut(false);
     instantaneoManut = instantaneoDoModal();
     el.modal.classList.add("aberto");
@@ -324,8 +356,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (custo === null || custo < 0) falha("custo", "Informe um custo válido.", el.mCusto);
     else if (custo > LIMITE_CUSTO) falha("custo", "O custo máximo é R$ 9.999.999,99.", el.mCusto);
     if (el.mDescricao.value.trim().length > 500) falha("descricao", "A descrição pode ter no máximo 500 caracteres.", el.mDescricao);
-    if (custo > 0 && (!el.mVencimento.value || Number(el.mVencimento.value.slice(0, 4)) < 2000)) {
-      falha("vencimento", "Informe quando a despesa vence.", el.mVencimento);
+    if (custo > 0 && !el.mForma.value) {
+      falha("forma", "Escolha a forma de pagamento: é dela que saem as parcelas.", el.mForma);
     }
     if (primeiro) primeiro.focus();
     return primeiro ? null : custo;
@@ -345,11 +377,11 @@ document.addEventListener("DOMContentLoaded", async () => {
         descricao: el.mDescricao.value.trim() || null,
         custo,
         fornecedor_id: custo > 0 && el.mFornecedor.value ? Number(el.mFornecedor.value) : null,
-        vencimento: custo > 0 ? el.mVencimento.value : null
+        forma_pagamento_id: custo > 0 ? Number(el.mForma.value) : null
       });
       fecharModalManut();
       definirEnviandoManut(false);
-      toast.sucesso(custo > 0 ? "Manutenção registrada e conta a pagar lançada no Financeiro." : "Manutenção registrada.");
+      toast.sucesso(custo > 0 ? "Manutenção registrada e contas a pagar lançadas no Financeiro." : "Manutenção registrada.");
       await carregarManutencoes();
     } catch (erro) {
       definirEnviandoManut(false);
@@ -366,7 +398,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   el.mDescricao.addEventListener("input", () => { el.mContador.textContent = `${el.mDescricao.value.length}/500`; limparErroManut("descricao"); });
   el.mData.addEventListener("input", () => { limparErroManut("data"); atualizarBlocoDespesa(); });
   el.mCusto.addEventListener("input", () => { limparErroManut("custo"); atualizarBlocoDespesa(); });
-  el.mVencimento.addEventListener("input", () => { vencimentoEditado = true; limparErroManut("vencimento"); });
+  el.mForma.addEventListener("change", () => { limparErroManut("forma"); atualizarBlocoDespesa(); });
   el.mFornecedor.addEventListener("change", () => limparErroManut("fornecedor"));
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape" && el.modal.classList.contains("aberto") && !document.querySelector(".confirmacao-overlay")) tentarFecharManut();

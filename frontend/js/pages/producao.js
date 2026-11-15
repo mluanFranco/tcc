@@ -8,6 +8,7 @@ let ordensRequisicao = 0;   // descarta respostas antigas se o usuário trocar d
 let receitasCache = [];
 let filtroStatusOrdens = "todos";
 let filtroSituacaoReceitas = "ativas";
+let ordensVisiveis = [];   // ordens que a tabela está mostrando (base da exportação)
 
 document.addEventListener("DOMContentLoaded", async () => {
   if (!exigirPermissao("producao.ver")) return;
@@ -54,6 +55,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   function renderizarOrdens(lista) {
+    ordensVisiveis = lista;
     el.carregandoOrdens.hidden = true;
     if (lista.length === 0) {
       const filtrando = filtroStatusOrdens !== "todos" || el.buscaOrdens.value.trim() || el.dataInicio.value || el.dataFim.value;
@@ -75,6 +77,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   async function carregarOrdens() {
     if (periodoInvalido()) {
       ordensRequisicao++;
+      ordensVisiveis = [];
       mostrarVazioOrdens("Período inválido: a data inicial é posterior à data final.", true);
       el.carregandoOrdens.hidden = true;
       return;
@@ -204,6 +207,17 @@ document.addEventListener("DOMContentLoaded", async () => {
   el.abaReceitas.addEventListener("click", () => trocarAba("receitas"));
   el.botaoIncluir.addEventListener("click", () => {
     window.location.href = abaAtual === "ordens" ? "ordem-producao-nova.html" : "receita-nova.html";
+  });
+
+  // Exportar (PDF/Excel): a lista da aba aberta (ordens de produção ou receitas)
+  exportador.montar({
+    modulo: "producao",
+    obterAba: () => abaAtual,
+    obterIds: () => (abaAtual === "receitas" ? receitasFiltradas().map(r => r.id) : ordensVisiveis.map(o => o.id)),
+    obterFiltros: () => (abaAtual === "receitas"
+      ? [["Lista", "Receitas"], ["Situação", exportador.textoAbaAtiva(".aba-status[data-situacao]")], ["Busca", el.buscaReceitas.value]]
+      : [["Lista", "Ordens de produção"], ["Situação", exportador.textoAbaAtiva(".aba-status[data-status]")], ["Busca", el.buscaOrdens.value],
+         ["Período", exportador.periodo(el.dataInicio, el.dataFim)]])
   });
 
   // ---------- Carga ----------

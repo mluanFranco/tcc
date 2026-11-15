@@ -8,8 +8,11 @@
 let clientesCache = [];
 let abaAtivaClientes = "ativos";
 let clienteEmEdicaoId = null;
+let razaoSocialOriginal = "";   // para saber se um PJ antigo já tinha razão social
 let enderecoPrincipalEmEdicaoId = null;
 let enderecoEntregaEmEdicaoId = null;
+
+let clientesVisiveis = [];   // o que a tabela está mostrando (base da exportação)
 
 document.addEventListener("DOMContentLoaded", async () => {
   if (!exigirAutenticacao()) return;
@@ -95,9 +98,11 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (!termoBusca) return true;
       return (
         cliente.nome.toLowerCase().includes(termoBusca) ||
+        (cliente.razao_social || "").toLowerCase().includes(termoBusca) ||
         (termoDocumento && cliente.cpf_cnpj.toLowerCase().includes(termoDocumento))
       );
     });
+    clientesVisiveis = clientesFiltrados;
 
     if (clientesFiltrados.length === 0) {
       elementos.tabelaCorpo.innerHTML = "";
@@ -130,9 +135,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       return `
         <tr>
-          <td class="celula-nome">${nome}</td>
-          <td>${rotuloDocumento}: ${escaparHtml(formatarDocumento(cliente.cpf_cnpj))}</td>
-          <td>${escaparHtml(formatarTelefone(cliente.telefone))}</td>
+          <td class="celula-nome">${nome}${cliente.razao_social ? `<span class="celula-nome__razao">${escaparHtml(cliente.razao_social)}</span>` : ""}</td>
+          <td style="white-space:nowrap">${rotuloDocumento}: ${escaparHtml(formatarDocumento(cliente.cpf_cnpj))}</td>
+          <td style="white-space:nowrap">${escaparHtml(formatarTelefone(cliente.telefone))}</td>
           <td>${escaparHtml(cidadeUf(enderecoPrincipal(cliente)))}</td>
           <td><span class="badge-status ${badgeStatusClasse}">${cliente.ativo ? "Ativo" : "Inativo"}</span></td>
           <td class="celula-acoes">
@@ -150,6 +155,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   function abrirModalVisualizacao(cliente) {
     const principal = enderecoPrincipal(cliente) || {};
     campo("vis-nome").textContent = cliente.nome;
+    campo("vis-nome-rotulo").textContent = cliente.tipo === "PJ" ? "Nome fantasia" : "Nome completo";
+    campo("vis-razao-item").hidden = cliente.tipo !== "PJ";
+    campo("vis-razao-social").textContent = cliente.razao_social || "—";
     campo("vis-status").textContent = cliente.ativo ? "Ativo" : "Inativo";
     campo("vis-tipo").textContent = cliente.tipo === "PJ" ? "Pessoa Jurídica" : "Pessoa Física";
     campo("vis-documento").textContent = formatarDocumento(cliente.cpf_cnpj);
@@ -184,6 +192,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   function atualizarLabelDocumento() {
     const tipo = elementos.campoTipo.value;
+    // PJ: o nome é o nome fantasia e a razão social aparece; PF: só o nome completo
+    campo("label-nome").textContent = tipo === "PJ" ? "Nome fantasia *" : "Nome completo *";
+    campo("grupo-razao-social").hidden = tipo !== "PJ";
     elementos.labelDocumento.textContent = tipo === "PJ" ? "CNPJ *" : "CPF *";
     elementos.campoDocumento.placeholder = tipo === "PJ" ? "00.000.000/0000-00" : "000.000.000-00";
     elementos.campoDocumento.value = mascararDocumento(elementos.campoDocumento.value);   // reencaixa ao trocar PF/PJ
@@ -259,6 +270,8 @@ document.addEventListener("DOMContentLoaded", async () => {
       enderecoPrincipalEmEdicaoId = principal.id ?? null;
       elementos.modalTitulo.textContent = "Editar cliente";
       campo("campo-nome").value = cliente.nome;
+      campo("campo-razao-social").value = cliente.razao_social ?? "";
+      razaoSocialOriginal = cliente.razao_social || "";
       elementos.campoTipo.value = cliente.tipo ?? "PF";
       elementos.campoDocumento.value = formatarDocumento(cliente.cpf_cnpj);
       campo("campo-telefone").value = cliente.telefone ? mascararTelefone(cliente.telefone) : "";
@@ -273,6 +286,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       campo("campo-ddd").value = principal.ddd ?? "";
     } else {
       clienteEmEdicaoId = null;
+      razaoSocialOriginal = "";
       elementos.modalTitulo.textContent = "Novo cliente";
       elementos.campoTipo.value = "PF";
     }
@@ -449,6 +463,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     const problemas = [];
 
     if (!dados.nome.trim()) { marcarInvalido("campo-nome"); problemas.push("Informe o nome."); }
+    // Razão social: obrigatória ao cadastrar PJ e para quem já tinha; cadastros antigos sem ela continuam editáveis
+    if (dados.tipo === "PJ" && !dados.razao_social && (!clienteEmEdicaoId || razaoSocialOriginal)) {
+      marcarInvalido("campo-razao-social"); problemas.push("Informe a razão social.");
+    }
 
     const documento = dados.cpf_cnpj.replace(/[^0-9a-zA-Z]/g, "");
     if (dados.tipo === "PF" && !/^\d{11}$/.test(documento)) {
@@ -471,6 +489,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   function lerFormulario() {
     return {
       nome: campo("campo-nome").value,
+      razao_social: campo("campo-razao-social").value.trim(),
       tipo: elementos.campoTipo.value,
       cpf_cnpj: elementos.campoDocumento.value,
       telefone: campo("campo-telefone").value.trim() || null,
@@ -499,6 +518,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     botaoSalvar.textContent = "Salvando...";
 
     const dadosCliente = { nome: dados.nome, tipo: dados.tipo, cpf_cnpj: dados.cpf_cnpj, telefone: dados.telefone, email: dados.email };
+    if (dados.tipo === "PF") dadosCliente.razao_social = null;              // pessoa física não tem razão social
+    else if (dados.razao_social) dadosCliente.razao_social = dados.razao_social;   // PJ antigo sem ela: nada é enviado
 
     try {
       if (clienteEmEdicaoId) {
@@ -632,6 +653,15 @@ document.addEventListener("DOMContentLoaded", async () => {
   elementos.modalVisualizarOverlay.addEventListener("click", (e) => {
     if (e.target === elementos.modalVisualizarOverlay) fecharModalVisualizacao();
   });
+
+  // Exportar (PDF/Excel): dados pessoais em massa só para quem pode editar cadastros
+  if (temPermissao("cadastros.editar")) {
+    exportador.montar({
+      modulo: "clientes",
+      obterIds: () => clientesVisiveis.map(c => c.id),
+      obterFiltros: () => [["Situação", exportador.textoAbaAtiva(".aba-status")], ["Busca", elementos.campoBusca.value]]
+    });
+  }
 
   await carregarClientes();
 });

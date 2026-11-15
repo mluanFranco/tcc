@@ -4,7 +4,7 @@ from routes import (
     auth, usuario, produto, cliente, fornecedor,
     forma_pagamento, pedido_venda, pedido_compra,
     cotacao, geladeira, historico_manutencao,
-    categoria, subcategoria, unidade_medida, receita, ordem_producao, financeiro, categoria_financeira, relatorios, pdf, grupo_acesso, assistente
+    categoria, subcategoria, unidade_medida, receita, ordem_producao, financeiro, categoria_financeira, relatorios, pdf, exportacao, grupo_acesso, assistente
 )
 from core.permissoes import exigir_modulo
 
@@ -45,3 +45,4 @@ app.include_router(categoria_financeira.router, dependencies=[Depends(exigir_mod
 app.include_router(relatorios.router,          dependencies=[Depends(exigir_modulo("relatorios"))])
 app.include_router(assistente.router)   # exige assistente.ver; a auditoria é só do admin
 app.include_router(pdf.router)   # cada rota de PDF declara a permissão do seu documento
+app.include_router(exportacao.router)   # PDF/Excel das listagens: cada rota declara a sua permissão

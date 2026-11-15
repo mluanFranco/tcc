@@ -91,7 +91,7 @@ def atualizar_geladeira(geladeira_id: int, dados: GeladeiraUpdate, db: Session =
 
     # Só o que foi enviado muda. modelo/marca/numero_serie/data_alocacao aceitam null (apagar o valor);
     # nos demais campos null é o mesmo que não enviar.
-    anulaveis = {"modelo", "marca", "numero_serie", "data_alocacao"}
+    anulaveis = {"modelo", "marca", "numero_serie", "data_alocacao", "valor_aquisicao"}
     atualizacoes = {
         campo: getattr(dados, campo)
         for campo in dados.model_fields_set
@@ -144,4 +144,4 @@ def desativar_geladeira(geladeira_id: int, db: Session = Depends(get_db), _=Depe
 
     geladeira.status = "desativada"
     db.commit()
-    return {"message": f"Geladeira {geladeira.numero_serie or geladeira.id} desativada com sucesso"}
+    return {"message": f"Geladeira {geladeira.numero_serie or geladeira.id} desativada com sucesso"}

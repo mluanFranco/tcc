@@ -44,6 +44,21 @@ const geladeiraService = {
     });
   },
 
+  // Relatório de patrimônio em PDF (Blob). status: "" (todas) | em_campo | manutencao | desativada;
+  // dataInicio/dataFim (AAAA-MM-DD, opcionais) limitam o período das manutenções somadas.
+  async baixarRelatorioPdf({ status = "", dataInicio = "", dataFim = "" } = {}) {
+    const params = Object.entries({ status, data_inicio: dataInicio, data_fim: dataFim })
+      .filter(([, v]) => v).map(([k, v]) => `${k}=${encodeURIComponent(v)}`).join("&");
+    return apiFetchBlob(`/geladeiras/relatorio/pdf${params ? `?${params}` : ""}`);
+  },
+
+  // Mesmo relatório em Excel (.xlsx): aba das geladeiras + aba das manutenções do período.
+  async baixarRelatorioExcel({ status = "", dataInicio = "", dataFim = "" } = {}) {
+    const params = Object.entries({ status, data_inicio: dataInicio, data_fim: dataFim })
+      .filter(([, v]) => v).map(([k, v]) => `${k}=${encodeURIComponent(v)}`).join("&");
+    return apiFetchBlob(`/geladeiras/relatorio/xlsx${params ? `?${params}` : ""}`);
+  },
+
   async reativar(id) {
     return apiFetch(`/geladeiras/${id}`, {
       method: "PUT",

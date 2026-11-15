@@ -2,12 +2,15 @@
 // tipo de produto (insumo/vendável) e cálculo somente-leitura de preço de venda.
 // Embalagem (opcional): ex.: base Litro + embalagem Pote com 5. Preços são da embalagem; estoque e mínimo, da unidade base.
 
-let produtosCache = [];
+let produtosCache = [];          // ativos + inativos (para achar o produto clicado)
+let produtosAtivos = [];
+let produtosInativos = [];
 let categoriasCache = [];
 let subcategoriasCacheGlobal = [];
 let unidadesCache = [];          // ativas: opções dos selects
 let siglasPorUnidade = {};       // todas (inclusive inativas): { id: "L" }
 let abaAtiva = "ativos";
+let produtosVisiveis = [];       // o que a tabela está mostrando (base da exportação)
 let produtoEmEdicaoId = null;
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -26,7 +29,17 @@ document.addEventListener("DOMContentLoaded", async () => {
     abaAtivos: document.getElementById("aba-ativos"),
     abaInativos: document.getElementById("aba-inativos"),
     abaEstoqueBaixo: document.getElementById("aba-estoque-baixo"),
+    abaSemEstoque: document.getElementById("aba-sem-estoque"),
     contadorEstoqueBaixo: document.getElementById("contador-estoque-baixo"),
+    contadorAtivos: document.getElementById("contador-ativos"),
+    contadorSemEstoque: document.getElementById("contador-sem-estoque"),
+    contadorInativos: document.getElementById("contador-inativos"),
+    filtroCategoria: document.getElementById("filtro-categoria"),
+    filtroTipo: document.getElementById("filtro-tipo"),
+    kpis: document.getElementById("kpis-produtos"),
+    subtitulo: document.getElementById("subtitulo-produtos"),
+    rodape: document.getElementById("rodape-produtos"),
+    contagem: document.getElementById("contagem-produtos"),
     botaoIncluir: document.getElementById("botao-incluir"),
     campoCategoria: document.getElementById("campo-categoria"),
     campoSubcategoria: document.getElementById("campo-subcategoria"),
@@ -98,6 +111,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       elementos.campoCategoria.innerHTML =
         `<option value="">Selecione...</option>` +
+        categoriasCache.map(c => `<option value="${c.id}">${escaparHtml(c.nome)}</option>`).join("");
+      elementos.filtroCategoria.innerHTML =
+        `<option value="">Todas as categorias</option>` +
         categoriasCache.map(c => `<option value="${c.id}">${escaparHtml(c.nome)}</option>`).join("");
 
       const opcoesUnidade = unidadesCache.map(u => `<option value="${u.id}">${escaparHtml(u.nome)} (${escaparHtml(u.sigla)})</option>`).join("");
@@ -192,34 +208,38 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // ---------- Tabela ----------
 
-  function atualizarContadorEstoqueBaixo(quantidade) {
-    elementos.contadorEstoqueBaixo.textContent = quantidade;
-    elementos.contadorEstoqueBaixo.hidden = quantidade === 0;
+  // Situação do estoque (mesma regra do alerta do backend: estoque baixo = atual <= mínimo)
+  function situacaoEstoque(produto) {
+    if (Number(produto.estoque_disponivel ?? 0) <= 0) return { chave: "zero", texto: "Sem estoque" };
+    if (Number(produto.estoque_atual) <= Number(produto.estoque_minimo)) return { chave: "baixo", texto: "Baixo" };
+    return { chave: "ok", texto: "Em dia" };
   }
 
   const MENSAGENS_VAZIO = {
     "ativos": "Nenhum produto encontrado.",
     "inativos": "Nenhum produto inativo.",
-    "estoque-baixo": "Nenhum produto com estoque baixo. Tudo acima do mínimo!"
+    "estoque-baixo": "Nenhum produto com estoque baixo. Tudo acima do mínimo!",
+    "sem-estoque": "Nenhum produto zerado. Todos têm saldo disponível."
   };
+  const CORES_CATEGORIA = [["#EEF3FF", "#0F59FD"], ["#F3EEFF", "#6D28D9"], ["#E9F8EF", "#12A150"],
+                           ["#FFF6E5", "#B7791F"], ["#FEF2F2", "#DC2626"], ["#E8F7FB", "#0E7490"]];
 
   let requisicaoAtual = 0;
 
+  // Carrega ativos e inativos juntos: os indicadores e os contadores das abas usam as duas listas.
   async function carregarProdutos() {
     const minha = ++requisicaoAtual;
     elementos.estadoCarregando.style.display = "block";
     elementos.estadoVazio.style.display = "none";
     elementos.tabelaCorpo.innerHTML = "";
     try {
-      const lista = abaAtiva === "ativos" ? await produtoService.listar()
-        : abaAtiva === "estoque-baixo" ? await produtoService.listarEstoqueBaixo()
-        : await produtoService.listarInativos();
-      if (minha !== requisicaoAtual) return;   // o usuário já trocou de aba
-      produtosCache = lista;
-      // O contador acompanha a lista carregada; na aba de inativos mantém o último valor conhecido.
-      if (abaAtiva === "estoque-baixo") atualizarContadorEstoqueBaixo(lista.length);
-      else if (abaAtiva === "ativos") atualizarContadorEstoqueBaixo(lista.filter(p => p.estoque_atual <= p.estoque_minimo).length);
+      const [ativos, inativos] = await Promise.all([produtoService.listar(), produtoService.listarInativos()]);
+      if (minha !== requisicaoAtual) return;
+      produtosAtivos = ativos;
+      produtosInativos = inativos;
+      produtosCache = [...ativos, ...inativos];
       elementos.estadoCarregando.style.display = "none";
+      renderizarResumo();
       renderizarTabela();
     } catch (erro) {
       if (minha !== requisicaoAtual) return;
@@ -228,10 +248,80 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   }
 
+  function renderizarResumo() {
+    const baixos = produtosAtivos.filter(p => situacaoEstoque(p).chave !== "ok").length;
+    const zerados = produtosAtivos.filter(p => situacaoEstoque(p).chave === "zero").length;
+    const valor = produtosAtivos.reduce((soma, p) => soma + Number(p.estoque_atual || 0) * Number(p.custo_unidade_base || 0), 0);
+    const vendaveis = produtosAtivos.filter(p => p.e_vendavel).length;
+    const insumos = produtosAtivos.filter(p => p.e_insumo).length;
+
+    elementos.subtitulo.textContent = `${produtosAtivos.length} produtos ativos · ${categoriasCache.length} categorias`;
+    elementos.contadorAtivos.textContent = produtosAtivos.length;
+    elementos.contadorEstoqueBaixo.textContent = baixos;
+    elementos.contadorSemEstoque.textContent = zerados;
+    elementos.contadorInativos.textContent = produtosInativos.length;
+
+    const kpi = (aba, cor, rotulo, valorTxt, nota) => {
+      const tag = aba ? "button" : "div";
+      const sel = aba && aba === abaAtiva ? " kpi--selecionado" : "";
+      return `<${tag} class="kpi${sel}" ${aba ? `type="button" data-aba="${aba}"` : ""}>
+          <span class="kpi__rotulo"><span class="kpi__ponto" style="background:${cor}"></span>${rotulo}</span>
+          <span class="kpi__valor" style="display:block">${valorTxt}</span>
+          <span class="kpi__nota" style="display:block">${nota}</span>
+        </${tag}>`;
+    };
+    elementos.kpis.innerHTML =
+      kpi("ativos", "var(--azul-acao)", "Produtos ativos", produtosAtivos.length, `${vendaveis} vendáveis · ${insumos} insumos`) +
+      kpi("estoque-baixo", "var(--ambar)", "Estoque baixo", baixos, "no mínimo ou abaixo dele") +
+      kpi("sem-estoque", "var(--erro)", "Sem estoque", zerados, "nada disponível para venda ou uso") +
+      kpi(null, "var(--verde)", "Valor em estoque", escaparHtml(formatarMoeda(valor)), "pelo custo da unidade base");
+  }
+
+  function produtosDaAba() {
+    if (abaAtiva === "inativos") return produtosInativos;
+    if (abaAtiva === "estoque-baixo") return produtosAtivos.filter(p => situacaoEstoque(p).chave !== "ok");
+    if (abaAtiva === "sem-estoque") return produtosAtivos.filter(p => situacaoEstoque(p).chave === "zero");
+    return produtosAtivos;
+  }
+
+  function iniciais(nome) {
+    const partes = nome.split(" ").filter(p => p.length > 2);
+    return (partes.length ? partes : [nome]).slice(0, 2).map(p => p[0]).join("").toUpperCase();
+  }
+
+  function celulaEstoque(produto) {
+    const sit = situacaoEstoque(produto);
+    const base = siglasPorUnidade[produto.unidade_medida_id] || "";
+    const disponivel = Number(produto.estoque_disponivel ?? 0);
+    const minimo = Number(produto.estoque_minimo || 0);
+    const reservado = Number(produto.estoque_reservado || 0);
+    // A barra enche ao chegar a 2x o mínimo: dá para ver de longe o que está perto de acabar
+    const pct = minimo > 0 ? Math.max(0, Math.min(100, disponivel / (minimo * 2) * 100)) : (disponivel > 0 ? 100 : 0);
+    const cor = { ok: "var(--verde)", baixo: "#E0A030", zero: "var(--erro)" }[sit.chave];
+    const fator = fatorEmbalagem(produto);
+    const detalhes = [];
+    if (reservado > 0) detalhes.push(`${formatarNumero(reservado)} ${base} reservado`);
+    if (fator !== 1 && produto.embalagem_unidade_id) {
+      detalhes.push(`${formatarNumero(Math.round(disponivel / fator * 1000) / 1000)} ${siglasPorUnidade[produto.embalagem_unidade_id] || "emb."}`);
+    }
+    return `<div class="nivel">
+        <div class="nivel__linha"><span class="nivel__qtd">${escaparHtml(formatarNumero(disponivel))} ${escaparHtml(base)}</span>
+          <span class="nivel__situacao nivel__situacao--${sit.chave}">${sit.texto}</span></div>
+        <div class="nivel__barra"><span style="width:${pct}%;background:${cor}"></span></div>
+        ${detalhes.length ? `<div class="nivel__detalhe">${escaparHtml(detalhes.join(" · "))}</div>` : ""}
+      </div>`;
+  }
+
   function renderizarTabela() {
     const termoBusca = elementos.campoBusca.value.trim().toLowerCase();
+    const categoria = elementos.filtroCategoria.value;
+    const tipo = elementos.filtroTipo.value;
+    const daAba = produtosDaAba();
 
-    const produtosFiltrados = produtosCache.filter(produto => {
+    const produtosFiltrados = daAba.filter(produto => {
+      if (categoria && String(produto.categoria_id) !== categoria) return false;
+      if (tipo === "insumo" && !produto.e_insumo) return false;
+      if (tipo === "vendavel" && !produto.e_vendavel) return false;
       if (!termoBusca) return true;
       return (
         produto.nome.toLowerCase().includes(termoBusca) ||
@@ -239,10 +329,21 @@ document.addEventListener("DOMContentLoaded", async () => {
         nomeSubcategoria(produto.subcategoria_id).toLowerCase().includes(termoBusca)
       );
     });
+    produtosVisiveis = produtosFiltrados;
+
+    elementos.abaAtivos.classList.toggle("aba-status--ativa", abaAtiva === "ativos");
+    elementos.abaEstoqueBaixo.classList.toggle("aba-status--ativa", abaAtiva === "estoque-baixo");
+    elementos.abaSemEstoque.classList.toggle("aba-status--ativa", abaAtiva === "sem-estoque");
+    elementos.abaInativos.classList.toggle("aba-status--ativa", abaAtiva === "inativos");
+    elementos.kpis.querySelectorAll("[data-aba]").forEach(k => k.classList.toggle("kpi--selecionado", k.dataset.aba === abaAtiva));
+
+    elementos.rodape.hidden = false;
+    elementos.contagem.textContent = `Mostrando ${produtosFiltrados.length} de ${daAba.length} produtos`;
 
     if (produtosFiltrados.length === 0) {
       elementos.tabelaCorpo.innerHTML = "";
-      elementos.estadoVazio.textContent = produtosCache.length === 0 || !termoBusca ? MENSAGENS_VAZIO[abaAtiva] : "Nenhum produto encontrado para essa busca.";
+      const filtrando = termoBusca || categoria || tipo;
+      elementos.estadoVazio.textContent = daAba.length === 0 || !filtrando ? MENSAGENS_VAZIO[abaAtiva] : "Nenhum produto encontrado com esses filtros.";
       elementos.estadoVazio.style.display = "block";
       return;
     }
@@ -250,10 +351,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     elementos.estadoVazio.style.display = "none";
 
     elementos.tabelaCorpo.innerHTML = produtosFiltrados.map(produto => {
-      const estoqueBaixo = produto.estoque_atual <= produto.estoque_minimo;
-      const badgeEstoqueClasse = estoqueBaixo ? "badge-estoque--baixo" : "badge-estoque--ok";
-      const badgeStatusClasse = produto.ativo ? "badge-status--ativo" : "badge-status--inativo";
       const nome = escaparHtml(produto.nome);
+      const [fundo, cor] = CORES_CATEGORIA[(produto.categoria_id || 0) % CORES_CATEGORIA.length];
+      const emEmbalagem = fatorEmbalagem(produto) !== 1 && produto.embalagem_unidade_id;
 
       let botoesEdicao = "";
       if (podeEditar) {
@@ -266,23 +366,33 @@ document.addEventListener("DOMContentLoaded", async () => {
              </button>`;
         botoesEdicao = `
             <button class="botao-icone" data-acao="editar" data-id="${produto.id}" title="Editar" aria-label="Editar ${nome}">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"></path></svg>
             </button>
             ${botaoAtivacao}`;
       }
 
+      const chips = (produto.ativo ? "" : '<span class="chip chip--cinza">Inativo</span>') +
+        (produto.e_insumo ? '<span class="chip chip--roxo">Insumo</span>' : "") +
+        (produto.e_vendavel ? '<span class="chip chip--azul">Vendável</span>' : "");
+      const preco = produto.e_vendavel
+        ? `<span style="font-weight:600">${escaparHtml(formatarMoeda(produto.preco_venda))}</span>${emEmbalagem ? `<small class="celula-embalagem">por ${escaparHtml(siglaNegociacao(produto, siglasPorUnidade))}</small>` : ""}`
+        : '<span style="color:var(--texto-suave)">—</span>';
+
       return `
         <tr>
-          <td class="celula-nome">${nome}</td>
-          <td>${escaparHtml(nomeCategoria(produto.categoria_id))}</td>
-          <td>${escaparHtml(nomeSubcategoria(produto.subcategoria_id))}</td>
-          <td>${rotuloTipo(produto)}</td>
-          <td>${formatarMoeda(produto.preco_venda)}${fatorEmbalagem(produto) !== 1 ? `<small class="celula-embalagem">por ${escaparHtml(siglaNegociacao(produto, siglasPorUnidade))}</small>` : ""}</td>
-          <td><span class="badge-estoque ${badgeEstoqueClasse}">${escaparHtml(textoEstoque(produto.estoque_atual, produto, siglasPorUnidade))}</span></td>
-          <td>${escaparHtml(textoEstoque(produto.estoque_reservado ?? 0, produto, siglasPorUnidade))}</td>
-          <td>${escaparHtml(textoEstoque(produto.estoque_disponivel ?? (produto.estoque_atual - (produto.estoque_reservado ?? 0)), produto, siglasPorUnidade))}</td>
-          <td>${escaparHtml(textoEstoque(produto.estoque_minimo, produto, siglasPorUnidade))}</td>
-          <td><span class="badge-status ${badgeStatusClasse}">${produto.ativo ? "Ativo" : "Inativo"}</span></td>
+          <td>
+            <div class="celula-titulo">
+              <div class="celula-titulo__icone" style="background:${fundo};color:${cor}">${escaparHtml(iniciais(produto.nome))}</div>
+              <div style="min-width:0">
+                <div class="celula-titulo__nome">${nome}</div>
+                <div class="celula-titulo__sub">${escaparHtml(nomeCategoria(produto.categoria_id))} · ${escaparHtml(nomeSubcategoria(produto.subcategoria_id))}</div>
+              </div>
+            </div>
+          </td>
+          <td>${chips}</td>
+          <td class="num">${preco}</td>
+          <td>${celulaEstoque(produto)}</td>
+          <td class="num" style="color:#4B5563">${escaparHtml(textoEstoque(produto.estoque_minimo, produto, siglasPorUnidade).split(" (")[0])}</td>
           <td class="celula-acoes">
             <button class="botao-icone" data-acao="visualizar" data-id="${produto.id}" title="Visualizar" aria-label="Visualizar ${nome}">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
@@ -524,12 +634,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   }
 
+  // As abas só filtram o que já foi carregado (ativos e inativos vêm juntos)
   function trocarAba(novaAba) {
     abaAtiva = novaAba;
-    elementos.abaAtivos.classList.toggle("aba-status--ativa", novaAba === "ativos");
-    elementos.abaInativos.classList.toggle("aba-status--ativa", novaAba === "inativos");
-    elementos.abaEstoqueBaixo.classList.toggle("aba-status--ativa", novaAba === "estoque-baixo");
-    carregarProdutos();
+    renderizarTabela();
   }
 
   // ---------- Listeners ----------
@@ -551,6 +659,13 @@ document.addEventListener("DOMContentLoaded", async () => {
   elementos.abaAtivos.addEventListener("click", () => trocarAba("ativos"));
   elementos.abaInativos.addEventListener("click", () => trocarAba("inativos"));
   elementos.abaEstoqueBaixo.addEventListener("click", () => trocarAba("estoque-baixo"));
+  elementos.abaSemEstoque.addEventListener("click", () => trocarAba("sem-estoque"));
+  elementos.filtroCategoria.addEventListener("change", renderizarTabela);
+  elementos.filtroTipo.addEventListener("change", renderizarTabela);
+  elementos.kpis.addEventListener("click", (e) => {
+    const kpi = e.target.closest("[data-aba]");
+    if (kpi) trocarAba(kpi.dataset.aba);
+  });
   elementos.tabelaCorpo.addEventListener("click", tratarAcaoTabela);
   elementos.modalVisualizarFechar.addEventListener("click", fecharModalVisualizacao);
   elementos.modalVisualizarFecharRodape.addEventListener("click", fecharModalVisualizacao);
@@ -569,6 +684,16 @@ document.addEventListener("DOMContentLoaded", async () => {
   elementos.campoPrecoCusto.addEventListener("input", atualizarEmbalagem);
   elementos.campoEstoqueMinimo.addEventListener("input", atualizarEmbalagem);
   elementos.campoPorcentagem.addEventListener("input", atualizarPreviewPrecoVenda);
+
+  // Exportar (PDF/Excel): cadastros em massa só para quem pode editar cadastros
+  if (temPermissao("cadastros.editar")) {
+    exportador.montar({
+      modulo: "produtos",
+      obterIds: () => produtosVisiveis.map(p => p.id),
+      obterFiltros: () => [["Aba", exportador.textoAbaAtiva(".aba-status")], ["Busca", elementos.campoBusca.value],
+                           ["Categoria", exportador.textoSelect(elementos.filtroCategoria)], ["Tipo", exportador.textoSelect(elementos.filtroTipo)]]
+    });
+  }
 
   await carregarListasDeApoio();
   await carregarProdutos();

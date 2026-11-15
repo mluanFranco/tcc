@@ -44,29 +44,23 @@
 .cards-resumo--carregando .card-resumo__valor { color: var(--neutro-placeholder); }
 
 /* ---------- Filtros ---------- */
+/* Filtros + abas + tabela formam um cartão só, como a barra de busca das outras telas */
 .filtros-titulos {
   display: flex;
   align-items: center;
   gap: 12px;
   flex-wrap: wrap;
-  margin-bottom: 14px;
+  padding: 12px 16px;
+  background: var(--neutro-fundo);
+  border: 1px solid var(--neutro-borda);
+  border-bottom: 0;
+  border-radius: 14px 14px 0 0;
 }
 
 .filtros-titulos .campo-busca { flex: 1 1 240px; max-width: 320px; }
 
-.filtro-select {
-  height: 40px;
-  padding: 0 34px 0 12px;
-  font-size: 13.5px;
-  color: var(--neutro-texto);
-  border: 1.5px solid var(--neutro-borda);
-  border-radius: var(--raio-input);
-  font-family: inherit;
-  background-color: #FFFFFF;
-  max-width: 220px;
-}
-
-.filtro-select:focus { border-color: var(--azul-acao); }
+/* O estilo do .filtro-select vem do listagem-crud.css (padrão de todas as telas); aqui só a largura */
+.filtros-titulos .filtro-select { max-width: 220px; }
 
 .barra-abas-titulos {
   display: flex;
@@ -74,7 +68,23 @@
   justify-content: space-between;
   gap: 12px;
   flex-wrap: wrap;
-  margin-bottom: 14px;
+  padding: 12px 16px;
+  background: var(--neutro-fundo);
+  border: 1px solid var(--neutro-borda);
+  border-bottom-color: var(--borda-suave);
+  border-radius: 14px 14px 0 0;
+}
+
+.filtros-titulos + .barra-abas-titulos {
+  padding-top: 0;
+  border-top: 0;
+  border-radius: 0;
+}
+
+.barra-abas-titulos + .tabela-container {
+  border-top: 0;
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
 }
 
 .abas-status { flex-wrap: wrap; }

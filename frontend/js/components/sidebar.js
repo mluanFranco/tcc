@@ -57,7 +57,6 @@ const ICONES_SVG = {
 const ICONE_TOGGLE = _svg('<rect x="3" y="3" width="18" height="18" rx="2"></rect><line x1="9" y1="3" x2="9" y2="21"></line>');
 const ICONE_LOGOUT = _svg('<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line>');
 const ICONE_CHAVE = _svg('<path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"></path>');
-const ICONE_GRUPO_SETA = _svg('<polyline points="6 9 12 15 18 9"></polyline>');
 
 function isSidebarColapsado() {
   try { return localStorage.getItem(SIDEBAR_COLAPSADO_KEY) === "true"; } catch { return false; }
@@ -125,7 +124,7 @@ function renderizarSidebar() {
           <button type="button" class="sidebar__grupo-cabecalho ${contemAtivo ? "sidebar__grupo-cabecalho--ativo" : ""}" data-grupo="${_esc(item.label)}" title="${_esc(item.label)}" aria-expanded="${aberto}">
             <span class="sidebar__item-icone">${ICONES_SVG[item.icone]}</span>
             <span class="sidebar__item-label">${_esc(item.label)}</span>
-            <span class="sidebar__grupo-seta">${ICONE_GRUPO_SETA}</span>
+            <span class="sidebar__grupo-contador" aria-label="${visiveis.length} itens">${visiveis.length}</span>
           </button>
           <div class="sidebar__subitens">${subitensHtml}</div>
         </div>

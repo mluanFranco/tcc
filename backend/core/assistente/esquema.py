@@ -58,6 +58,7 @@ VIEWS: Dict[str, ViewInfo] = {v.nome: v for v in (
         _c("id", "inteiro"), _c("tipo", "texto"), _c("modelo", "texto"), _c("marca", "texto"), _c("numero_serie", "texto"),
         _c("data_alocacao", "data_hora"), _c("status", "texto", "em_campo, manutencao ou desativada"),
         _c("cliente_id", "inteiro"), _c("cliente", "texto"), _c("cidade", "texto", "do endereço da geladeira"), _c("uf", "texto"),
+        _c("valor_aquisicao", "decimal", "valor de compra (patrimônio); pode ser nulo"),
     )),
     ViewInfo("v_manutencoes", "geladeiras", "Histórico de manutenção das geladeiras.", (
         _c("id", "inteiro"), _c("geladeira_id", "inteiro"), _c("geladeira", "texto", "tipo + modelo"), _c("cliente", "texto"),

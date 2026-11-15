@@ -13,6 +13,7 @@
   <link rel="stylesheet" href="../css/sidebar.css">
   <link rel="stylesheet" href="../css/listagem-crud.css">
   <link rel="stylesheet" href="../css/feedback.css">
+  <link rel="stylesheet" href="../css/exportar.css">
   <link rel="stylesheet" href="../css/clientes.css">
 </head>
 <body>
@@ -33,7 +34,7 @@
       <div class="barra-filtros">
         <div class="campo-busca">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-          <input type="text" id="campo-busca" placeholder="Buscar por nome ou CPF/CNPJ...">
+          <input type="text" id="campo-busca" placeholder="Buscar por nome, razão social ou CPF/CNPJ...">
         </div>
         <div class="abas-status">
           <button class="aba-status aba-status--ativa" id="aba-ativos">Ativos</button>
@@ -77,15 +78,10 @@
       <form id="form-cliente">
         <div class="modal__corpo">
 
-          <div class="campo-form">
-            <label for="campo-nome">Nome *</label>
-            <input type="text" id="campo-nome" required>
-            <span class="campo-erro-msg">Informe o nome do cliente.</span>
-          </div>
-
+          <!-- O tipo vem primeiro: ele define quais campos de nome aparecem logo abaixo -->
           <div class="campo-form-linha">
             <div class="campo-form">
-              <label for="campo-tipo">Tipo</label>
+              <label for="campo-tipo">Tipo *</label>
               <select id="campo-tipo">
                 <option value="PF">Pessoa Física</option>
                 <option value="PJ">Pessoa Jurídica</option>
@@ -96,6 +92,19 @@
               <input type="text" id="campo-documento" placeholder="000.000.000-00" maxlength="18" autocomplete="off" required>
               <span class="campo-erro-msg">Informe o documento.</span>
             </div>
+          </div>
+
+          <!-- Só pessoa jurídica: razão social e, abaixo, o nome fantasia -->
+          <div class="campo-form" id="grupo-razao-social" hidden>
+            <label for="campo-razao-social">Razão social *</label>
+            <input type="text" id="campo-razao-social" maxlength="150" placeholder="Ex.: Gelato da Praça Comércio de Sorvetes Ltda.">
+            <span class="campo-erro-msg">Informe a razão social.</span>
+          </div>
+
+          <div class="campo-form">
+            <label for="campo-nome" id="label-nome">Nome completo *</label>
+            <input type="text" id="campo-nome" maxlength="100" required>
+            <span class="campo-erro-msg">Informe o nome do cliente.</span>
           </div>
 
           <div class="campo-form-linha">
@@ -256,8 +265,12 @@
         <p class="secao-titulo">Dados cadastrais</p>
         <div class="visualizacao-grid">
           <div class="visualizacao-item">
-            <span class="visualizacao-label">Nome</span>
+            <span class="visualizacao-label" id="vis-nome-rotulo">Nome</span>
             <span class="visualizacao-valor" id="vis-nome">—</span>
+          </div>
+          <div class="visualizacao-item" id="vis-razao-item">
+            <span class="visualizacao-label">Razão social</span>
+            <span class="visualizacao-valor" id="vis-razao-social">—</span>
           </div>
           <div class="visualizacao-item">
             <span class="visualizacao-label">Status</span>
@@ -335,6 +348,8 @@
   <script src="../js/components/sidebar.js"></script>
   <script src="../js/services/clienteService.js"></script>
   <script src="../js/services/viaCepService.js"></script>
+  <script src="../js/services/exportacaoService.js"></script>
+  <script src="../js/components/exportar.js"></script>
   <script src="../js/pages/clientes.js"></script>
 </body>
 </html>

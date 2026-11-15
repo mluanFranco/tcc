@@ -1,0 +1,39 @@
+/* ============================================
+   EXPORTAR.CSS — botão "Exportar" (PDF / Excel) do topo das listagens (autossuficiente)
+   ============================================ */
+
+.pagina-topo__acoes { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+.exportar { position: relative; }
+.exportar__botao { display: inline-flex; align-items: center; gap: 8px; }
+.exportar__botao:disabled { opacity: .7; cursor: progress; }
+
+.exportar__menu {
+  position: absolute; right: 0; top: calc(100% + 6px); z-index: 40;
+  min-width: 250px; padding: 6px;
+  background: #fff; border: 1px solid var(--neutro-borda, #E5E7EB); border-radius: 12px;
+  box-shadow: 0 12px 32px -8px rgba(16, 24, 40, .18), 0 2px 6px rgba(16, 24, 40, .06);
+}
+.exportar__menu[hidden] { display: none; }
+
+.exportar__opcao {
+  display: flex; align-items: center; gap: 12px; width: 100%;
+  padding: 10px; border: 0; border-radius: 8px; background: transparent;
+  font: inherit; text-align: left; color: var(--texto-forte, #111827); cursor: pointer;
+}
+.exportar__opcao:hover, .exportar__opcao:focus-visible { background: var(--azul-suave, #EEF3FF); outline: none; }
+.exportar__opcao strong { display: block; font-size: 14px; font-weight: 600; }
+.exportar__opcao small { display: block; font-size: 12px; color: var(--texto-suave, #8A94A6); }
+
+.exportar__tag {
+  flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center;
+  width: 34px; height: 34px; border-radius: 8px; font-size: 10.5px; font-weight: 700; letter-spacing: .02em;
+}
+.exportar__tag--pdf { background: #FEF2F2; color: #B91C1C; }
+.exportar__tag--xlsx { background: #E9F8EF; color: #12803E; }
+
+.exportar__nota { margin: 4px 10px 6px; padding-top: 8px; border-top: 1px solid var(--borda-suave, #F0F2F5); font-size: 11.5px; color: var(--texto-suave, #8A94A6); line-height: 1.4; }
+
+@media (max-width: 600px) {
+  .exportar__menu { right: auto; left: 0; }
+}

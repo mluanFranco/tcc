@@ -1,8 +1,12 @@
-from fastapi import APIRouter, Depends
+from datetime import date
+from typing import Optional
+
+from fastapi import APIRouter, Depends, Query
 from fastapi.responses import Response
 from sqlalchemy.orm import Session
 
 from core import pdf
+from core.relatorios import resolver_periodo
 from core.permissoes import exigir
 from core.security import get_current_user
 from database import get_db
@@ -34,3 +38,18 @@ def pdf_do_pedido_venda(pedido_id: int, db: Session = Depends(get_db), usuario=D
 def pdf_do_pedido_compra(pedido_id: int, db: Session = Depends(get_db), usuario=Depends(get_current_user)):
     """Pedido de compra em PDF, com o que já foi recebido por item. Pedido cancelado sai com a faixa CANCELADO. Não altera nada."""
     return _resposta(*pdf.pdf_pedido_compra(db, pedido_id, usuario.nome))
+
+
+@router.get("/geladeiras/relatorio/pdf", dependencies=[Depends(exigir("geladeiras.ver"))], response_class=Response, responses={200: {"content": {"application/pdf": {}}}})
+def pdf_relatorio_geladeiras(
+    status: Optional[str] = Query(default=None, pattern="^(em_campo|manutencao|desativada)$", description="Só uma situação. Sem ele: todas."),
+    data_inicio: Optional[date] = Query(default=None, description="Início do período das manutenções. Padrão: 1º de janeiro do ano corrente."),
+    data_fim: Optional[date] = Query(default=None, description="Fim do período das manutenções. Padrão: hoje."),
+    db: Session = Depends(get_db), usuario=Depends(get_current_user),
+):
+    """
+    Relatório de patrimônio das geladeiras (posição atual): cliente, endereço de instalação, situação, valor de
+    aquisição e gasto com manutenção no período, com resumo por situação. Base para a declaração de bens. Não altera nada.
+    """
+    inicio, fim = resolver_periodo(data_inicio, data_fim)
+    return _resposta(*pdf.pdf_relatorio_geladeiras(db, usuario.nome, status=status, inicio=inicio, fim=fim))

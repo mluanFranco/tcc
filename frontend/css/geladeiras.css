@@ -101,3 +101,5 @@
 .despesa-manut__link { text-decoration: none; }
 .despesa-manut__link:hover .despesa-manut { text-decoration: underline; }
 
+/* Modal do relatório de patrimônio (aberto pelo botão Exportar; o CSS do botão está em exportar.css) */
+.rel-dica { margin: 0 0 14px; font-size: 13px; color: var(--neutro-secundario); line-height: 1.45; }

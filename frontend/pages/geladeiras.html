@@ -15,6 +15,7 @@
   <link rel="stylesheet" href="../css/pedido-compra.css">
   <link rel="stylesheet" href="../css/geladeiras.css">
   <link rel="stylesheet" href="../css/feedback.css">
+  <link rel="stylesheet" href="../css/exportar.css">
 </head>
 <body>
 
@@ -65,15 +66,60 @@
     </main>
   </div>
 
+  <!-- Relatório de patrimônio (PDF) -->
+  <div class="modal-overlay" id="modal-relatorio">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="rel-titulo">
+      <div class="modal__topo">
+        <span class="modal__titulo" id="rel-titulo">Relatório de geladeiras</span>
+        <button type="button" class="modal__fechar" id="rel-fechar" aria-label="Fechar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+      <form id="rel-form" novalidate>
+        <div class="modal__corpo">
+          <p class="rel-dica">Lista todas as geladeiras com cliente, endereço de instalação, situação, valor de aquisição e gasto com manutenção, com o resumo por situação. Serve de base para a declaração de bens.</p>
+          <div class="campo-form">
+            <label for="rel-status">Situação</label>
+            <select id="rel-status">
+              <option value="">Todas (inclusive desativadas)</option>
+              <option value="em_campo">Em campo</option>
+              <option value="manutencao">Em manutenção</option>
+              <option value="desativada">Desativadas</option>
+            </select>
+          </div>
+          <div class="campo-form-linha">
+            <div class="campo-form" id="rel-grupo-inicio">
+              <label for="rel-inicio">Manutenções de</label>
+              <input type="date" id="rel-inicio" min="2000-01-01" max="2100-12-31">
+            </div>
+            <div class="campo-form" id="rel-grupo-fim">
+              <label for="rel-fim">até</label>
+              <input type="date" id="rel-fim" min="2000-01-01" max="2100-12-31">
+              <span class="campo-erro-msg" id="rel-erro-periodo"></span>
+            </div>
+          </div>
+        </div>
+        <div class="modal__rodape">
+          <button type="button" class="botao-secundario" id="rel-cancelar">Cancelar</button>
+          <button type="button" class="botao-secundario" id="rel-gerar-excel">Gerar Excel</button>
+          <button type="submit" class="botao-primario" id="rel-gerar">Gerar PDF</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <script src="../js/core/config.js"></script>
   <script src="../js/core/api.js"></script>
   <script src="../js/core/auth.js"></script>
   <script src="../js/core/formatadores.js"></script>
+  <script src="../js/core/mascaras.js"></script>
   <script src="../js/components/sidebar.js"></script>
   <script src="../js/components/feedback.js"></script>
   <script src="../js/services/geladeiraService.js"></script>
   <script src="../js/services/clienteService.js"></script>
   <script src="../js/components/geladeira-form.js"></script>
+  <script src="../js/services/exportacaoService.js"></script>
+  <script src="../js/components/exportar.js"></script>
   <script src="../js/pages/geladeiras.js"></script>
 </body>
 </html>

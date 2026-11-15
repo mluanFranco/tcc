@@ -38,9 +38,10 @@ O sistema entrega uma solução funcional para o controle da operação de uma f
 - Cadastrar **formas de pagamento** com parcelas e taxas, que geram automaticamente as contas a pagar e a receber;
 - Controlar o **financeiro**: títulos a pagar e a receber, baixas parciais com estorno, lançamentos avulsos e recorrentes;
 - Cadastrar **receitas** e registrar **ordens de produção** que consomem insumos e dão entrada no produto fabricado, com custo calculado;
-- Acompanhar o **dashboard** com receita, margem, resultado, caixa, previsão, inadimplência e rankings;
+- Acompanhar o **dashboard** com receita, margem, ticket médio, recebimento em dia, vendas acumuladas, receita por categoria, caixa, previsão, estoque, geladeiras, produção, receitas e rankings;
 - Acompanhar os equipamentos alocados em cada cliente e o histórico de manutenção, com o custo de cada manutenção lançado no contas a pagar;
-- Gerar **PDFs** de cotações e pedidos;
+- Gerar **PDFs** de cotações e pedidos, e o **relatório de patrimônio das geladeiras**;
+- **Exportar as listagens em PDF ou Excel** (produtos, clientes, fornecedores, pedidos, cotações, produção e geladeiras; o financeiro em Excel);
 - Controlar o acesso por **grupos de permissões** (por módulo) e permissões extras por usuário;
 - Fazer perguntas sobre os dados à **Nova IA**, o assistente de IA do sistema, que só enxerga o que o usuário já poderia ver nas telas.
 
@@ -59,9 +60,10 @@ O sistema entrega uma solução funcional para o controle da operação de uma f
 | **Produção** | Receitas (com simulação) e ordens de produção com consumo de insumos e custo congelado | ✅ Completo |
 | **Financeiro** | Contas a pagar e a receber, baixas parciais, estornos, categorias financeiras e lançamentos avulsos | ✅ Completo |
 | **Dashboard e relatórios** | Resumo por competência, série mensal, comparativo, caixa realizado e previsto, inadimplência e rankings | ✅ Completo |
-| **Geladeiras** | Equipamentos alocados em clientes e histórico de manutenção; o custo da manutenção vira conta a pagar | ✅ Completo |
+| **Geladeiras** | Equipamentos alocados em clientes, valor de aquisição, histórico de manutenção (o custo vira conta a pagar) e relatório de patrimônio em PDF | ✅ Completo |
 | **Assistente de IA (Nova IA)** | Perguntas em linguagem natural sobre os dados, com 4 camadas de defesa e auditoria | ✅ Completo |
-| **Documentos em PDF** | Cotação, pedido de venda e pedido de compra | ✅ Completo |
+| **Documentos em PDF** | Cotação, pedido de venda, pedido de compra e relatório de geladeiras (patrimônio) | ✅ Completo |
+| **Exportação PDF / Excel** | Botão "Exportar" nas listagens: sai exatamente o que está na tela, com os filtros aplicados | ✅ Completo |
 | **Frontend** | Interface web, redesenhada tela a tela | ✅ Completo |
 | **Containerização** | Docker Compose: MySQL, API e Nginx | ✅ Completo |
 
@@ -82,7 +84,7 @@ O modelo relacional é composto por **32 tabelas**, distribuídas nos domínios 
 
 Além das tabelas, o banco tem **15 views `v_*`** (somente leitura), que expõem os dados já com as regras de negócio aplicadas e **sem dados pessoais**. Elas são a única coisa que o Assistente de IA consegue consultar.
 
-> O diagrama abaixo mostra as **32 tabelas** e os **58 relacionamentos** (chaves estrangeiras) do banco. Ele é gerado direto de `backend/models.py` pelo script `backend/scripts/gerar_der.py`, então reflete o schema real. A cor do cabeçalho indica o módulo; a notação é pé de galinha (`||` um, `o|` zero ou um, `o<` muitos).
+> O diagrama abaixo mostra as **32 tabelas** e os **59 relacionamentos** (chaves estrangeiras) do banco. Ele é gerado direto de `backend/models.py` pelo script `backend/scripts/gerar_der.py`, então reflete o schema real. A cor do cabeçalho indica o módulo; a notação é pé de galinha (`||` um, `o|` zero ou um, `o<` muitos).
 
 ![Diagrama Entidade-Relacionamento](frontend/assets/images/der_nova_sorvetes.png)
 
@@ -106,7 +108,7 @@ Além das tabelas, o banco tem **15 views `v_*`** (somente leitura), que expõem
 
 ### Cliente / Fornecedor
 
-Dados cadastrais (`nome`, `cpf_cnpj`, `telefone`, `email`...) com validação de CPF/CNPJ (inclusive o CNPJ alfanumérico), CEP, UF e DDD, e máscaras nos formulários. O endereço é preenchido via [API ViaCEP](https://viacep.com.br/). Um cliente pode ter **vários endereços** (`cliente_endereco`), usados na entrega dos pedidos e na alocação das geladeiras. `ativo` é o soft delete.
+Dados cadastrais (`nome`, `razao_social`, `cpf_cnpj`, `telefone`, `email`...). O `nome` é o nome fantasia (pessoa jurídica) ou o nome completo (pessoa física); a **razão social** é obrigatória ao cadastrar cliente PJ e fornecedor e aparece nos PDFs. Os dados passam por validação de CPF/CNPJ (inclusive o CNPJ alfanumérico), CEP, UF e DDD, e máscaras nos formulários. O endereço é preenchido via [API ViaCEP](https://viacep.com.br/). Um cliente pode ter **vários endereços** (`cliente_endereco`), usados na entrega dos pedidos e na alocação das geladeiras. `ativo` é o soft delete.
 
 ### Pedido de Venda / Pedido de Compra
 
@@ -148,7 +150,7 @@ A recusa é possível em qualquer etapa antes da aprovação. Ao aprovar, o sist
 
 ### Geladeira / Histórico de Manutenção
 
-O endereço da geladeira vem de um dos endereços do cliente ao qual ela está alocada. O `status` é `em_campo` \| `manutencao` \| `desativada`. Cada manutenção (`historico_manutencao`) registra data, tipo, descrição e custo. Manutenção com custo gera um título a pagar (veja [Financeiro](#financeiro-títulos-e-baixas)).
+O endereço da geladeira vem de um dos endereços do cliente ao qual ela está alocada. O `status` é `em_campo` \| `manutencao` \| `desativada`. Cada manutenção (`historico_manutencao`) registra data, tipo, descrição e custo. Manutenção com custo gera contas a pagar pela forma de pagamento escolhida (veja [Financeiro](#financeiro-títulos-e-baixas)). O `valor_aquisicao` (opcional) guarda o valor de compra do equipamento. O **relatório de patrimônio** (`GET /geladeiras/relatorio/pdf`, botão "Relatório PDF" na tela de Geladeiras, permissão `geladeiras.ver`) lista cada geladeira com cliente, CPF/CNPJ, endereço de instalação, situação, valor de aquisição e gasto com manutenção no período, com o resumo por situação: é a base para a declaração de bens. Filtros: situação e período das manutenções (padrão: ano corrente).
 
 ---
 
@@ -195,7 +197,7 @@ A comparação de preços considera só cotações de **compra** já respondidas
 - As parcelas da forma de pagamento viram títulos: a pagar na criação da compra e a receber na confirmação da venda.
 - Uma baixa pode ser parcial; o título passa por `aberto → parcial → pago`. Estornar uma baixa a deixa registrada como estornada, sem apagá-la.
 - Títulos e baixas são alterados com a linha do título travada, então duas baixas simultâneas nunca passam do saldo e uma baixa nunca atravessa o cancelamento do pedido.
-- **Manutenção de geladeira com custo** gera, na mesma transação, 1 título a pagar na categoria do sistema "Manutenção" (fornecedor opcional, vencimento padrão = data da manutenção). Excluir a manutenção cancela o título; se ele já tiver pagamento, a exclusão é barrada até o estorno.
+- **Manutenção de geladeira com custo** exige uma forma de pagamento e gera, na mesma transação, um título a pagar por parcela, na categoria do sistema "Manutenção", com os prazos contados a partir da data da manutenção (fornecedor opcional). Excluir a manutenção cancela todas as parcelas; se alguma já tiver pagamento, a exclusão é barrada até o estorno.
 - Títulos de pedido e de manutenção só são cancelados junto com a origem; lançamentos avulsos podem ser editados e cancelados enquanto estiverem abertos e sem baixa. Lançamentos podem ser recorrentes (`1/N`, `2/N`...).
 
 ### Produção
@@ -203,6 +205,10 @@ A comparação de preços considera só cotações de **compra** já respondidas
 O consumo de cada insumo é `quantidade_do_item × (quantidade_a_produzir ÷ rendimento)`, **arredondado para cima** na 3ª casa decimal: na dúvida, consome-se um milésimo a mais, nunca a menos. A mesma função alimenta a simulação da receita e a ordem de produção, então os dois sempre dão o mesmo número.
 
 Ao **confirmar** a ordem, o sistema valida insumos e produto (ativos, e insumo marcado como tal), confere o saldo disponível de cada insumo, debita os insumos, dá entrada no produto fabricado e **congela** o consumo e o custo (`custo_total` e `custo_unitario`). Ordem aberta mostra apenas uma prévia. Cancelar uma ordem confirmada devolve os insumos e retira o produto fabricado (só se ele ainda tiver saldo para isso).
+
+### Exportação (PDF e Excel)
+
+As listagens de produtos, clientes, fornecedores, pedidos de venda e de compra, cotações e produção (ordens ou receitas, conforme a aba) têm o botão **Exportar** com PDF e Excel; o financeiro exporta só em Excel (títulos do filtro e as baixas deles) e o relatório de geladeiras ganhou o botão **Gerar Excel**. Como as telas filtram no navegador, a tela envia os ids das linhas visíveis, na ordem em que aparecem, e a descrição dos filtros (`POST /exportacao/{modulo}?formato=pdf|xlsx`); o financeiro usa os mesmos filtros da listagem (`GET /exportacao/financeiro`). Cada módulo declara as colunas uma vez (`core/exportacao_modulos.py`) e o mesmo molde gera os dois formatos (`core/exportacao.py`, com ReportLab e openpyxl). O Excel traz número e data como valores de verdade, filtro automático, cabeçalho congelado, linha de total com `SUBTOTAL` e uma aba extra com os itens (pedidos, cotações, ordens, receitas) ou as baixas (financeiro). Exportar cadastros em massa (produtos, clientes, fornecedores) exige `cadastros.editar`, por envolver dados pessoais; os demais módulos exigem o `.ver` do próprio módulo. O limite é de 10.000 linhas por arquivo.
 
 ### Relatórios e dashboard
 
@@ -214,7 +220,7 @@ Os relatórios do financeiro seguem o **regime de competência**, a partir de um
 - Despesas e outras receitas = lançamentos avulsos não cancelados;
 - **Resultado** = margem bruta + outras receitas − despesas.
 
-Também existem o **fluxo de caixa realizado** (regime de caixa, pelas baixas e com a taxa estimada da forma de pagamento), o **fluxo previsto** (títulos em aberto por vencimento, com o que já venceu à parte), a **inadimplência por faixa de atraso** e os **rankings** de produtos, clientes e fornecedores. O Dashboard consome esses endpoints e mostra os destaques gerados a partir dos próprios números.
+Também existem o **fluxo de caixa realizado** (regime de caixa, pelas baixas e com a taxa estimada da forma de pagamento), o **fluxo previsto** (títulos em aberto por vencimento, com o que já venceu à parte), a **inadimplência por faixa de atraso** e os **rankings** de produtos, clientes e fornecedores. O Dashboard consome esses endpoints e mais o **painel** (`GET /financeiro/relatorios/painel`): vendas por dia comparadas com o período anterior, clientes atendidos, receita por categoria, situação do estoque, produção, geladeiras, caixa por semana e recebimento em dia, além da **produção do período** (ordens confirmadas e abertas, o que mais foi produzido e os insumos mais consumidos, por custo) e das **receitas** (prontas para produzir com o estoque disponível para 1 rendimento × travadas por falta de insumo, com o insumo que falta, e produtos vendáveis sem receita, fora os de revenda). As partes de geladeiras, de dinheiro e de produção só vêm para quem tem `geladeiras.ver`, `financeiro.ver` e `producao.ver`. Cada filtro compara com o período equivalente: **este mês** com os mesmos dias do mês passado, **mês passado** com o mês retrasado, **este ano** com o mesmo período do ano anterior, **últimos 90 dias** com os 90 dias logo antes, e o **personalizado** com as mesmas datas do mês anterior (até 31 dias), do ano anterior (até 1 ano) ou com o mesmo número de dias logo antes (períodos maiores). Os gráficos (linha acumulada, rosca, colunas, barras ordenadas e segmentadas, com mini-linhas de tendência nos indicadores) são SVG próprio, sem biblioteca externa, e os destaques são gerados a partir dos próprios números.
 
 ### Controle de acesso
 

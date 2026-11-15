@@ -24,14 +24,15 @@ def _limitar_email(v):
 
 
 class ClienteCreate(BaseModel):
-    nome: str = Field(min_length=1, max_length=100)
+    nome: str = Field(min_length=1, max_length=100)              # nome fantasia (PJ) ou nome completo (PF)
+    razao_social: Optional[str] = Field(default=None, max_length=150)   # obrigatória para PJ; ignorada para PF
     cpf_cnpj: str
     tipo: Optional[Literal["PF", "PJ"]] = None   # se vier, precisa bater com o documento
     telefone: Optional[str] = Field(default=None, max_length=20)
     email: Optional[EmailStr] = None
     endereco_principal: EnderecoDados
 
-    @field_validator("nome", "telefone", mode="before")
+    @field_validator("nome", "razao_social", "telefone", mode="before")
     @classmethod
     def _limpar(cls, v):
         return limpar_texto(v)
@@ -59,18 +60,23 @@ class ClienteCreate(BaseModel):
                 f"O tipo informado ({self.tipo}) não corresponde ao documento informado ({tipo_documento})."
             )
         self.tipo = tipo_documento
+        if self.tipo == "PF":
+            self.razao_social = None            # pessoa física não tem razão social
+        elif not self.razao_social:
+            raise ValueError("Informe a razão social: ela é obrigatória para cliente pessoa jurídica.")
         return self
 
 
 class ClienteUpdate(BaseModel):
     nome: Optional[str] = Field(default=None, min_length=1, max_length=100)
+    razao_social: Optional[str] = Field(default=None, max_length=150)
     cpf_cnpj: Optional[str] = None
     tipo: Optional[Literal["PF", "PJ"]] = None   # só é aceito se bater com o documento
     telefone: Optional[str] = Field(default=None, max_length=20)
     email: Optional[EmailStr] = None
     ativo: Optional[bool] = None
 
-    @field_validator("nome", "telefone", mode="before")
+    @field_validator("nome", "razao_social", "telefone", mode="before")
     @classmethod
     def _limpar(cls, v):
         return limpar_texto(v)
@@ -94,6 +100,7 @@ class ClienteUpdate(BaseModel):
 class ClienteResponse(BaseModel):
     id: int
     nome: str
+    razao_social: Optional[str] = None
     cpf_cnpj: str
     tipo: Optional[str]
     telefone: Optional[str]

@@ -174,7 +174,8 @@ class Cliente(Base):
     __tablename__ = "cliente"
 
     id          = Column(Integer, primary_key=True, autoincrement=True)
-    nome        = Column(String(100), nullable=False)
+    nome        = Column(String(100), nullable=False)    # nome fantasia (PJ) ou nome completo (PF): o nome usado nas telas
+    razao_social = Column(String(150))                   # só PJ (obrigatória ao cadastrar); PF fica sem
     cpf_cnpj    = Column(String(20), nullable=False, unique=True)
     tipo        = Column(String(2))        # PF ou PJ (definido a partir do documento)
     telefone    = Column(String(20))
@@ -222,7 +223,8 @@ class Fornecedor(Base):
     __tablename__ = "fornecedor"
 
     id          = Column(Integer, primary_key=True, autoincrement=True)
-    nome        = Column(String(100), nullable=False)
+    nome        = Column(String(100), nullable=False)    # nome fantasia: o nome usado nas telas
+    razao_social = Column(String(150))                   # obrigatória ao cadastrar; registros antigos podem estar sem
     cnpj        = Column(String(20), nullable=False, unique=True)
     telefone    = Column(String(20))
     email       = Column(String(100))
@@ -415,6 +417,7 @@ class Geladeira(Base):
     numero_serie  = Column(String(100), unique=True)
     data_alocacao = Column(DateTime)
     status        = Column(String(20), default="em_campo")  # em_campo | manutencao | desativada
+    valor_aquisicao = Column(Float)   # valor de compra (patrimônio); opcional, nulo nas antigas
 
     cliente              = relationship("Cliente", back_populates="geladeiras")
     endereco             = relationship("ClienteEndereco")
@@ -435,31 +438,68 @@ class HistoricoManutencao(Base):
     tipo         = Column(String(50), nullable=False)  # preventiva | corretiva
     descricao    = Column(Text)
     custo        = Column(Float, default=0.0)
+    # Com custo: as parcelas da forma viram as contas a pagar (prazos contados da data da manutenção).
+    # Nulo em manutenção sem custo e nas antigas, que têm 1 conta com vencimento informado à mão.
+    forma_pagamento_id = Column(Integer, ForeignKey("forma_pagamento.id", name="fk_manutencao_forma_pagamento"))
 
     geladeira = relationship("Geladeira", back_populates="historico_manutencao")
     usuario   = relationship("Usuario")
-    # Manutenção com custo gera 1 título a pagar (categoria "Manutenção"); sem custo, não há título.
-    titulo    = relationship("TituloFinanceiro", back_populates="manutencao", uselist=False)
+    forma_pagamento = relationship("FormaPagamento")
+    # Manutenção com custo gera os títulos a pagar (categoria "Manutenção"), um por parcela; sem custo, não há título.
+    titulos   = relationship("TituloFinanceiro", back_populates="manutencao", order_by="TituloFinanceiro.numero_parcela")
 
     @property
     def usuario_nome(self):
         return self.usuario.nome if self.usuario else None
 
     @property
+    def forma_pagamento_nome(self):
+        return self.forma_pagamento.descricao if self.forma_pagamento else None
+
+    # ---- resumo da despesa (para o histórico da geladeira)
+    def _titulos_validos(self):
+        return [t for t in self.titulos if t.status != "cancelado"]
+
+    @property
     def titulo_id(self):
-        return self.titulo.id if self.titulo else None
+        """Primeira parcela: é para ela que o histórico aponta o link do Financeiro."""
+        return self.titulos[0].id if self.titulos else None
 
     @property
     def titulo_status(self):
-        return self.titulo.status if self.titulo else None
+        """aberto | parcial (alguma parcela paga) | pago | cancelado (todas canceladas) | None (sem custo)."""
+        if not self.titulos:
+            return None
+        validos = self._titulos_validos()
+        if not validos:
+            return "cancelado"
+        if all(t.status == "pago" for t in validos):
+            return "pago"
+        if any(t.status in ("pago", "parcial") for t in validos):
+            return "parcial"
+        return "aberto"
 
     @property
     def titulo_vencimento(self):
-        return self.titulo.vencimento if self.titulo else None
+        """Próximo vencimento ainda em aberto (ou o último, se já estiver tudo pago)."""
+        validos = self._titulos_validos()
+        abertos = [t.vencimento for t in validos if t.status in ("aberto", "parcial")]
+        if abertos:
+            return min(abertos)
+        return max((t.vencimento for t in validos), default=None)
+
+    @property
+    def titulo_parcelas(self):
+        return len(self._titulos_validos())
+
+    @property
+    def titulo_parcelas_pagas(self):
+        return sum(1 for t in self._titulos_validos() if t.status == "pago")
 
     @property
     def fornecedor_nome(self):
-        return self.titulo.fornecedor.nome if self.titulo and self.titulo.fornecedor else None
+        primeiro = self.titulos[0] if self.titulos else None
+        return primeiro.fornecedor.nome if primeiro and primeiro.fornecedor else None
 
 
 # ─────────────────────────────────────────
@@ -558,7 +598,7 @@ class TituloFinanceiro(Base):
             name="ck_titulo_avulso_descricao",
         ),
         Index("ix_titulo_tipo_status_vencimento", "tipo", "status", "vencimento"),
-        UniqueConstraint("historico_manutencao_id", name="uq_titulo_manutencao"),
+        UniqueConstraint("historico_manutencao_id", "numero_parcela", name="uq_titulo_manutencao_parcela"),
     )
     id               = Column(Integer, primary_key=True, autoincrement=True)
     tipo             = Column(String(10), nullable=False)    # pagar | receber
@@ -583,7 +623,7 @@ class TituloFinanceiro(Base):
     fornecedor = relationship("Fornecedor")
     categoria  = relationship("CategoriaFinanceira")
     baixas     = relationship("BaixaTitulo", back_populates="titulo", order_by="BaixaTitulo.id")
-    manutencao = relationship("HistoricoManutencao", back_populates="titulo")
+    manutencao = relationship("HistoricoManutencao", back_populates="titulos")
 
     @property
     def cliente_nome(self):

@@ -183,39 +183,44 @@
   border-radius: 24px;
 }
 
-/* No desenho o texto é mais recuado que a ilustração, que ocupa quase toda a largura do cartão */
-.login-painel__titulo,
-.login-painel__texto {
-  padding-left: 8%;
+/* Texto e ilustração centralizados no cartão, como um bloco só (a ilustração já tem fundo transparente) */
+.login-painel {
+  align-items: center;
+  text-align: center;
+  gap: clamp(24px, 4vh, 44px);
+}
+
+.login-painel__cabecalho {
+  max-width: 560px;
 }
 
 .login-painel__titulo {
   font-size: clamp(26px, 2.6vw, 38px);
   font-weight: 700;
   line-height: 1.18;
+  letter-spacing: -0.01em;
   color: #0B0B0F;
-  margin-bottom: 16px;
+  margin-bottom: 14px;
 }
 
 .login-painel__texto {
-  font-size: clamp(14px, 1.2vw, 16px);
+  font-size: clamp(14px, 1.2vw, 17px);
   line-height: 1.5;
-  color: #1F2937;
-  max-width: 455px;
-  margin-bottom: 28px;
+  color: #4B5563;
+  max-width: 420px;
+  margin: 0 auto;
 }
 
 .login-painel__ilustracao {
-  background: #FAFBFC;
-  border-radius: 8px;
-  overflow: hidden;
+  width: 100%;
+  max-width: 620px;
 }
 
 .login-painel__ilustracao img {
   display: block;
   width: 100%;
   height: auto;
-  max-height: 46vh;
+  max-height: 50vh;
   object-fit: contain;
 }
 

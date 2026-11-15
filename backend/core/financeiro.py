@@ -4,7 +4,8 @@ Regras do financeiro (contas a pagar e a receber) em um único lugar.
 - gerar_titulos: aplica as parcelas da forma de pagamento ao valor do pedido.
 - cancelar_titulos_do_pedido: cancela os títulos junto com o pedido (bloqueia se já houve baixa).
 - registrar_baixa / estornar_baixa: pagamento e recebimento, total ou parcial.
-- criar_titulo_manutencao / cancelar_titulo_da_manutencao: despesa de manutenção de geladeira (1 título a pagar).
+- criar_titulos_manutencao / cancelar_titulo_da_manutencao: despesa de manutenção de geladeira (títulos a pagar,
+  um por parcela da forma de pagamento).
 
 Como em core/pedidos.py, as funções NÃO fazem commit: quem chama decide quando confirmar a transação.
 Títulos e baixas sempre são alterados com a linha do título TRAVADA (SELECT ... FOR UPDATE), então
@@ -309,30 +310,39 @@ def cancelar_titulo_avulso(db: Session, titulo_id: int) -> TituloFinanceiro:
 
 # ───────────────────────── despesa de manutenção de geladeira
 
-def criar_titulo_manutencao(db: Session, manutencao, geladeira, *, vencimento: date, fornecedor_id=None) -> TituloFinanceiro:
-    """1 título a pagar com o custo da manutenção (categoria do sistema "Manutenção"). Quem chama garante custo > 0."""
+def criar_titulos_manutencao(db: Session, manutencao, geladeira, *, forma, fornecedor_id=None) -> List[TituloFinanceiro]:
+    """Títulos a pagar com o custo da manutenção (categoria do sistema "Manutenção"), um por parcela da forma de
+    pagamento, como nos pedidos. Os prazos contam a partir da data da manutenção. Quem chama garante custo > 0."""
     _validar_parte(db, "pagar", None, fornecedor_id)
-    titulo = TituloFinanceiro(
-        tipo="pagar",
-        categoria_id=_categoria_do_sistema(db, CATEGORIA_MANUTENCAO, "pagar").id,
-        historico_manutencao_id=manutencao.id,
-        fornecedor_id=fornecedor_id,
-        descricao=f"Manutenção {manutencao.tipo} — geladeira {geladeira.numero_serie or f'#{geladeira.id}'}",
-        numero_parcela=1,
-        total_parcelas=1,
-        vencimento=vencimento,
-        valor=_decimal(manutencao.custo),
-        taxa_percentual=Decimal("0.00"),
-        valor_pago=Decimal("0.00"),
-        status="aberto",
-    )
-    db.add(titulo)
+    categoria = _categoria_do_sistema(db, CATEGORIA_MANUTENCAO, "pagar")
+    moldes = list(forma.parcelas) if forma.parcelas else [_A_VISTA]
+    parcelas = gerar_parcelas(moldes, _decimal(manutencao.custo), manutencao.data.date())
+    descricao = f"Manutenção {manutencao.tipo} — geladeira {geladeira.numero_serie or f'#{geladeira.id}'}"
+    titulos = []
+    for parcela in parcelas:
+        titulo = TituloFinanceiro(
+            tipo="pagar",
+            categoria_id=categoria.id,
+            historico_manutencao_id=manutencao.id,
+            fornecedor_id=fornecedor_id,
+            descricao=descricao,
+            numero_parcela=parcela["numero"],
+            total_parcelas=len(parcelas),
+            vencimento=parcela["vencimento"],
+            valor=parcela["valor"],
+            taxa_percentual=Decimal("0.00"),
+            valor_pago=Decimal("0.00"),
+            status="aberto",
+        )
+        db.add(titulo)
+        titulos.append(titulo)
     db.flush()
-    return titulo
+    return titulos
 
 
 def cancelar_titulo_da_manutencao(db: Session, manutencao_id: int) -> None:
-    """Cancela o título junto com a manutenção excluída. Com pagamento lançado, barra: estorne no Financeiro antes."""
+    """Cancela os títulos (todas as parcelas) junto com a manutenção excluída. Com pagamento lançado em qualquer
+    parcela, barra: estorne no Financeiro antes."""
     titulos = (
         db.query(TituloFinanceiro)
         .filter(TituloFinanceiro.historico_manutencao_id == manutencao_id)
@@ -344,7 +354,8 @@ def cancelar_titulo_da_manutencao(db: Session, manutencao_id: int) -> None:
     if pagos:
         raise HTTPException(
             status_code=400,
-            detail=f"Não é possível excluir: a despesa desta manutenção já tem pagamento registrado (R$ {pagos[0].valor_pago:.2f}). "
+            detail=f"Não é possível excluir: a despesa desta manutenção já tem pagamento registrado "
+                   f"(R$ {sum((t.valor_pago for t in pagos), Decimal('0.00')):.2f}). "
                    "Estorne o pagamento no Financeiro antes de excluir.",
         )
     for titulo in titulos:

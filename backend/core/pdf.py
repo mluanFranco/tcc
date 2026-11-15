@@ -1,5 +1,5 @@
 """
-Documentos em PDF (ReportLab): cotação, pedido de venda e pedido de compra.
+Documentos em PDF (ReportLab): cotação, pedido de venda, pedido de compra e relatório de geladeiras (patrimônio).
 
 - Os dados da empresa vêm de variáveis de ambiente (EMPRESA_NOME, EMPRESA_CNPJ, EMPRESA_ENDERECO,
   EMPRESA_TELEFONE, EMPRESA_EMAIL), lidas a cada geração. Só o nome é obrigatório (padrão: Nova Sorvetes).
@@ -19,16 +19,18 @@ from xml.sax.saxutils import escape
 from fastapi import HTTPException
 from reportlab.lib import colors
 from reportlab.lib.enums import TA_LEFT, TA_RIGHT
-from reportlab.lib.pagesizes import A4
+from reportlab.lib.pagesizes import A4, landscape
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import mm
 from reportlab.pdfgen import canvas
 from reportlab.platypus import KeepTogether, Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
+from sqlalchemy import func
 from sqlalchemy.orm import Session, joinedload
 
 from core.pagamento import gerar_parcelas
 from models import (
-    Cotacao, ItemCotacao, ItemPedidoCompra, ItemPedidoVenda, PedidoCompra, PedidoVenda, TituloFinanceiro,
+    Cotacao, Geladeira, HistoricoManutencao, ItemCotacao, ItemPedidoCompra, ItemPedidoVenda, PedidoCompra, PedidoVenda,
+    TituloFinanceiro,
 )
 
 MARGEM = 18 * mm
@@ -70,6 +72,23 @@ def _txt(valor) -> str:
     return escape(str(valor)) if valor not in (None, "") else "—"
 
 
+def documento_br(valor) -> Optional[str]:
+    """CPF (11 dígitos) ou CNPJ (14) com máscara; outro formato volta como veio."""
+    if not valor:
+        return valor
+    d = "".join(c for c in str(valor) if c.isdigit())
+    if len(d) == 11:
+        return f"{d[:3]}.{d[3:6]}.{d[6:9]}-{d[9:]}"
+    if len(d) == 14:
+        return f"{d[:2]}.{d[2:5]}.{d[5:8]}/{d[8:12]}-{d[12:]}"
+    return str(valor)
+
+
+def cep_br(valor) -> Optional[str]:
+    d = "".join(c for c in str(valor or "") if c.isdigit())
+    return f"{d[:5]}-{d[5:]}" if len(d) == 8 else valor
+
+
 # ---------------------------------------------------------------- estilos
 
 _base = getSampleStyleSheet()
@@ -100,7 +119,7 @@ def _empresa() -> dict:
     }
 
 
-def _canvas_numerado(emitido_por: str, empresa: dict, faixa: Optional[str]):
+def _canvas_numerado(emitido_por: str, empresa: dict, faixa: Optional[str], pagina=A4):
     class CanvasNumerado(canvas.Canvas):
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
@@ -119,7 +138,7 @@ def _canvas_numerado(emitido_por: str, empresa: dict, faixa: Optional[str]):
             super().save()
 
         def _moldura(self, total):
-            largura, altura = A4
+            largura, altura = pagina
             # cabeçalho
             self.setFillColor(COR_TITULO)
             self.setFont("Helvetica-Bold", 13)
@@ -152,13 +171,13 @@ def _canvas_numerado(emitido_por: str, empresa: dict, faixa: Optional[str]):
 
 # ---------------------------------------------------------------- blocos
 
-def _bloco_titulo(titulo: str, status: str) -> Table:
-    t = Table([[_p(titulo, ST_TITULO), _p(f"Status: {status}", ST_STATUS)]], colWidths=[LARGURA_UTIL * 0.68, LARGURA_UTIL * 0.32])
+def _bloco_titulo(titulo: str, status: str, largura: float = LARGURA_UTIL, prefixo: str = "Status: ") -> Table:
+    t = Table([[_p(titulo, ST_TITULO), _p(f"{prefixo}{status}", ST_STATUS)]], colWidths=[largura * 0.68, largura * 0.32])
     t.setStyle(TableStyle([("VALIGN", (0, 0), (-1, -1), "MIDDLE"), ("LEFTPADDING", (0, 0), (-1, -1), 0), ("RIGHTPADDING", (0, 0), (-1, -1), 0)]))
     return t
 
 
-def _bloco_dados(pares: List[Tuple[str, str]]) -> Table:
+def _bloco_dados(pares: List[Tuple[str, str]], largura: float = LARGURA_UTIL) -> Table:
     """Pares rótulo/valor em duas colunas de pares."""
     linhas = []
     for i in range(0, len(pares), 2):
@@ -168,7 +187,7 @@ def _bloco_dados(pares: List[Tuple[str, str]]) -> Table:
         while len(linha) < 4:
             linha += [_p(""), _p("")]
         linhas.append(linha)
-    t = Table(linhas, colWidths=[LARGURA_UTIL * 0.14, LARGURA_UTIL * 0.36, LARGURA_UTIL * 0.14, LARGURA_UTIL * 0.36])
+    t = Table(linhas, colWidths=[largura * 0.14, largura * 0.36, largura * 0.14, largura * 0.36])
     t.setStyle(TableStyle([
         ("VALIGN", (0, 0), (-1, -1), "TOP"), ("TOPPADDING", (0, 0), (-1, -1), 2), ("BOTTOMPADDING", (0, 0), (-1, -1), 2),
         ("LEFTPADDING", (0, 0), (-1, -1), 4), ("RIGHTPADDING", (0, 0), (-1, -1), 4),
@@ -177,12 +196,13 @@ def _bloco_dados(pares: List[Tuple[str, str]]) -> Table:
     return t
 
 
-def _tabela(cabecalho: List[str], linhas: List[List[str]], larguras: List[float], colunas_direita: set) -> Table:
+def _tabela(cabecalho: List[str], linhas: List[List[str]], larguras: List[float], colunas_direita: set,
+            largura: float = LARGURA_UTIL) -> Table:
     dados = [[_p(c, ST_CABECALHO_D if i in colunas_direita else ST_CABECALHO) for i, c in enumerate(cabecalho)]]
     for linha in linhas:
         dados.append([_p(c, ST_CELULA_D if i in colunas_direita else ST_CELULA) for i, c in enumerate(linha)])
     soma = sum(larguras)
-    t = Table(dados, colWidths=[LARGURA_UTIL * l / soma for l in larguras], repeatRows=1)
+    t = Table(dados, colWidths=[largura * l / soma for l in larguras], repeatRows=1)
     t.setStyle(TableStyle([
         ("BACKGROUND", (0, 0), (-1, 0), COR_CABECALHO_TABELA), ("LINEBELOW", (0, 0), (-1, 0), 0.8, COR_TITULO),
         ("LINEBELOW", (0, 1), (-1, -1), 0.3, COR_LINHA), ("VALIGN", (0, 0), (-1, -1), "TOP"),
@@ -192,13 +212,13 @@ def _tabela(cabecalho: List[str], linhas: List[List[str]], larguras: List[float]
     return t
 
 
-def _bloco_totais(linhas: List[Tuple[str, str]]) -> Table:
+def _bloco_totais(linhas: List[Tuple[str, str]], largura: float = LARGURA_UTIL) -> Table:
     destaque = ParagraphStyle("destaque", parent=ST_DIREITA, fontName="Helvetica-Bold", fontSize=10, leading=13)
     dados = []
     for n, (rotulo, valor) in enumerate(linhas):
         estilo = destaque if n == len(linhas) - 1 else ST_DIREITA
         dados.append([_p(rotulo, estilo), _p(valor, estilo)])
-    t = Table(dados, colWidths=[LARGURA_UTIL * 0.55, LARGURA_UTIL * 0.27], hAlign="RIGHT")
+    t = Table(dados, colWidths=[largura * 0.55, largura * 0.27], hAlign="RIGHT")
     t.setStyle(TableStyle([
         ("TOPPADDING", (0, 0), (-1, -1), 2), ("BOTTOMPADDING", (0, 0), (-1, -1), 2),
         ("LINEABOVE", (0, -1), (-1, -1), 0.8, COR_TITULO),
@@ -258,19 +278,22 @@ def _endereco_cliente(cliente) -> str:
 
 def _formatar_endereco(e) -> str:
     partes = [", ".join(x for x in (e.logradouro, e.numero) if x), e.complemento, e.bairro,
-              "/".join(x for x in (e.cidade, e.uf) if x), f"CEP {e.cep}" if e.cep else None]
+              "/".join(x for x in (e.cidade, e.uf) if x), f"CEP {cep_br(e.cep)}" if e.cep else None]
     return _txt(" - ".join(x for x in partes if x))
 
 
 def _endereco_fornecedor(f) -> str:
     partes = [", ".join(x for x in (f.logradouro, f.numero) if x), f.complemento, f.bairro,
-              "/".join(x for x in (f.cidade, f.uf) if x), f"CEP {f.cep}" if f.cep else None]
+              "/".join(x for x in (f.cidade, f.uf) if x), f"CEP {cep_br(f.cep)}" if f.cep else None]
     texto = " - ".join(x for x in partes if x)
     return _txt(texto) if texto else "—"
 
 
-def _pares_parte(rotulo: str, nome, documento, telefone, email, endereco: str) -> List[Tuple[str, str]]:
-    return [(rotulo, _txt(nome)), ("CPF/CNPJ", _txt(documento)), ("Telefone", _txt(telefone)), ("E-mail", _txt(email)), ("Endereço", endereco)]
+def _pares_parte(rotulo: str, nome, documento, telefone, email, endereco: str, razao_social=None) -> List[Tuple[str, str]]:
+    pares = [(rotulo, _txt(nome))]
+    if razao_social:
+        pares.append(("Razão social", _txt(razao_social)))
+    return pares + [("CPF/CNPJ", _txt(documento_br(documento))), ("Telefone", _txt(telefone)), ("E-mail", _txt(email)), ("Endereço", endereco)]
 
 
 def _unidade_item(item) -> str:
@@ -299,10 +322,10 @@ def pdf_cotacao(db: Session, cotacao_id: int, emitido_por: str) -> Tuple[bytes, 
 
     if venda:
         c = cot.cliente
-        pares = _pares_parte("Cliente", c.nome, c.cpf_cnpj, c.telefone, c.email, _endereco_cliente(c))
+        pares = _pares_parte("Cliente", c.nome, c.cpf_cnpj, c.telefone, c.email, _endereco_cliente(c), c.razao_social)
     else:
         f = cot.fornecedor
-        pares = _pares_parte("Fornecedor", f.nome, f.cnpj, f.telefone, f.email, _endereco_fornecedor(f))
+        pares = _pares_parte("Fornecedor", f.nome, f.cnpj, f.telefone, f.email, _endereco_fornecedor(f), f.razao_social)
     if venda:
         pares.append(("Entrega", _formatar_endereco(cot.endereco_entrega) if cot.endereco_entrega else "Retirada (sem entrega)"))
     elif cot.data_entrega_prevista:
@@ -361,7 +384,7 @@ def pdf_pedido_venda(db: Session, pedido_id: int, emitido_por: str) -> Tuple[byt
     if not ped:
         raise HTTPException(status_code=404, detail="Pedido de venda não encontrado")
     c, forma = ped.cliente, ped.forma_pagamento
-    pares = _pares_parte("Cliente", c.nome, c.cpf_cnpj, c.telefone, c.email, _endereco_cliente(c))
+    pares = _pares_parte("Cliente", c.nome, c.cpf_cnpj, c.telefone, c.email, _endereco_cliente(c), c.razao_social)
     entrega = _formatar_endereco(ped.endereco_entrega) if ped.endereco_entrega else "Retirada (sem entrega)"
     pares += [("Entrega", entrega), ("Data do pedido", data_br(ped.data_pedido)), ("Confirmado em", data_br(ped.confirmado_em)),
               ("Forma de pgto.", _txt(forma.descricao if forma else None))]
@@ -394,7 +417,7 @@ def pdf_pedido_compra(db: Session, pedido_id: int, emitido_por: str) -> Tuple[by
     if not ped:
         raise HTTPException(status_code=404, detail="Pedido de compra não encontrado")
     f, forma = ped.fornecedor, ped.forma_pagamento
-    pares = _pares_parte("Fornecedor", f.nome, f.cnpj, f.telefone, f.email, _endereco_fornecedor(f))
+    pares = _pares_parte("Fornecedor", f.nome, f.cnpj, f.telefone, f.email, _endereco_fornecedor(f), f.razao_social)
     pares += [("Data do pedido", data_br(ped.data_pedido)), ("Entrega prevista", data_br(ped.data_entrega_prevista)),
               ("Forma de pgto.", _txt(forma.descricao if forma else None))]
 
@@ -411,3 +434,101 @@ def pdf_pedido_compra(db: Session, pedido_id: int, emitido_por: str) -> Tuple[by
     pdf = _montar(f"PEDIDO DE COMPRA Nº {ped.id}", STATUS_COMPRA.get(ped.status, ped.status.upper()), pares, tabela,
                   [("Total", brl(ped.valor_total))], parcelas, rotulo, ped.observacao, FAIXA.get(ped.status), emitido_por)
     return pdf, f"pedido-compra-{ped.id}.pdf"
+
+
+# ---------------------------------------------------------------- relatório de geladeiras (patrimônio)
+
+SITUACAO_GELADEIRA = {"em_campo": "Em campo", "manutencao": "Em manutenção", "desativada": "Desativada"}
+PAGINA_PAISAGEM = landscape(A4)
+LARGURA_PAISAGEM = PAGINA_PAISAGEM[0] - 2 * MARGEM
+
+
+def pdf_relatorio_geladeiras(db: Session, emitido_por: str, *, status: Optional[str], inicio: date, fim: date) -> Tuple[bytes, str]:
+    """Uma linha por geladeira com cliente, endereço de instalação, situação, valor de aquisição e gasto com
+    manutenção no período; resumo por situação no topo. É a posição ATUAL (o sistema não guarda histórico de situação)."""
+    consulta = db.query(Geladeira).options(joinedload(Geladeira.cliente), joinedload(Geladeira.endereco))
+    if status:
+        consulta = consulta.filter(Geladeira.status == status)
+    geladeiras = sorted(consulta.all(), key=lambda g: ((g.cliente.nome if g.cliente else "").lower(), g.numero_serie or "", g.id))
+
+    ini_dt, fim_dt = datetime.combine(inicio, datetime.min.time()), datetime.combine(fim, datetime.max.time())
+    manut = {
+        gid: (int(n), Decimal(str(custo or 0)))
+        for gid, n, custo in (
+            db.query(HistoricoManutencao.geladeira_id, func.count(HistoricoManutencao.id), func.sum(HistoricoManutencao.custo))
+            .filter(HistoricoManutencao.data >= ini_dt, HistoricoManutencao.data <= fim_dt)
+            .group_by(HistoricoManutencao.geladeira_id)
+        )
+    }
+
+    vazio = lambda: {"n": 0, "valor": Decimal("0"), "manut": Decimal("0")}  # noqa: E731
+    resumo = {chave: vazio() for chave in SITUACAO_GELADEIRA}
+    linhas, sem_valor = [], 0
+    for g in geladeiras:
+        n_manut, custo_manut = manut.get(g.id, (0, Decimal("0")))
+        valor = Decimal(str(g.valor_aquisicao)) if g.valor_aquisicao is not None else None
+        r = resumo.setdefault(g.status, vazio())
+        r["n"] += 1
+        r["manut"] += custo_manut
+        if valor is None:
+            sem_valor += 1
+        else:
+            r["valor"] += valor
+        c = g.cliente
+        cliente = _txt(c.nome if c else None)
+        detalhe = " · ".join(_txt(x) for x in ((c.razao_social if c else None), documento_br(c.cpf_cnpj if c else None)) if x)
+        if detalhe:
+            cliente += f"<br/><font size=7 color='#5b6675'>{detalhe}</font>"
+        equipamento = _txt(g.tipo)
+        marca_modelo = " ".join(x for x in (g.marca, g.modelo) if x)
+        if marca_modelo:
+            equipamento += f"<br/><font size=7 color='#5b6675'>{escape(marca_modelo)}</font>"
+        linhas.append([
+            str(g.id), _txt(g.numero_serie), equipamento, cliente,
+            _formatar_endereco(g.endereco) if g.endereco else "—",
+            data_br(g.data_alocacao), SITUACAO_GELADEIRA.get(g.status, _txt(g.status)),
+            brl(valor) if valor is not None else "—",
+            f"{n_manut} · {brl(custo_manut)}" if n_manut else "—",
+        ])
+
+    total_valor = sum((r["valor"] for r in resumo.values()), Decimal("0"))
+    total_manut = sum((r["manut"] for r in resumo.values()), Decimal("0"))
+    pares = [
+        ("Situação", SITUACAO_GELADEIRA.get(status, "Todas") if status else "Todas"), ("Geladeiras", str(len(geladeiras))),
+        ("Manutenções", f"de {data_br(inicio)} a {data_br(fim)}"), ("Valor total", brl(total_valor)),
+        ("Sem valor", f"{sem_valor} sem valor de aquisição informado" if sem_valor else "todas com valor informado"),
+        ("Gasto manut.", brl(total_manut)),
+    ]
+    L = LARGURA_PAISAGEM
+    tabela_resumo = _tabela(
+        ["Situação", "Quantidade", "Valor de aquisição", "Gasto com manutenção no período"],
+        [[SITUACAO_GELADEIRA.get(k, k), str(r["n"]), brl(r["valor"]), brl(r["manut"])] for k, r in resumo.items() if r["n"] or not status],
+        [3, 2, 3, 3], {1, 2, 3}, largura=L * 0.6,
+    )
+    tabela_resumo.hAlign = "LEFT"
+    if linhas:
+        tabela = _tabela(
+            ["Nº", "Nº de série", "Equipamento", "Cliente", "Endereço de instalação", "Alocação", "Situação",
+             "Valor de aquisição", "Manutenções no período"],
+            linhas, [0.5, 2.1, 2.1, 3.4, 3.9, 1.4, 1.5, 1.6, 1.9], {7, 8}, largura=L,
+        )
+    else:
+        tabela = _p("Nenhuma geladeira encontrada com esse filtro.", ST_SUAVE)
+
+    historia = [
+        _bloco_titulo("RELATÓRIO DE GELADEIRAS (PATRIMÔNIO)", data_br(date.today()), largura=L, prefixo="Posição em "),
+        Spacer(1, 3 * mm), _bloco_dados(pares, largura=L), Spacer(1, 2 * mm),
+        _secao("Resumo por situação", tabela_resumo), Spacer(1, 2 * mm),
+        _p("Geladeiras", ST_SECAO), tabela, Spacer(1, 2 * mm),
+        _bloco_totais([("Gasto com manutenção no período", brl(total_manut)), ("Valor total de aquisição", brl(total_valor))], largura=L),
+        Spacer(1, 2 * mm),
+        _p("Posição atual dos equipamentos. O valor de aquisição é o informado no cadastro de cada geladeira; "
+           "o gasto com manutenção soma os registros do período.", ST_SUAVE),
+    ]
+    buffer = io.BytesIO()
+    documento = SimpleDocTemplate(
+        buffer, pagesize=PAGINA_PAISAGEM, leftMargin=MARGEM, rightMargin=MARGEM, topMargin=33 * mm, bottomMargin=20 * mm,
+        title="Relatório de geladeiras", author=_empresa()["nome"],
+    )
+    documento.build(historia, canvasmaker=_canvas_numerado(emitido_por, _empresa(), None, PAGINA_PAISAGEM))
+    return buffer.getvalue(), f"relatorio-geladeiras-{date.today().isoformat()}.pdf"

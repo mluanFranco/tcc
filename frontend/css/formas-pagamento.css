@@ -75,8 +75,8 @@
   font-family: inherit;
   color: var(--neutro-texto);
   background: var(--neutro-fundo);
-  border: 1.5px solid var(--neutro-borda);
-  border-radius: 8px;
+  border: 1px solid #DDE2EA;
+  border-radius: 10px;
   box-sizing: border-box;
 }
 .tabela-parcelas input:focus { border-color: var(--azul-acao); outline: none; }

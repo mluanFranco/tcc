@@ -1,6 +1,6 @@
 // Geladeiras: lista com abas por situação (Todas / Em campo / Em manutenção / Desativadas), busca e ações rápidas.
 // O cadastro/edição usa o modal compartilhado (geladeira-form.js); o histórico de manutenção fica no detalhe.
-// Permissões: geladeiras.ver abre a tela; geladeiras.editar mostra Incluir, Editar, Desativar e Reativar.
+// Permissões: geladeiras.ver abre a tela e o relatório PDF; geladeiras.editar mostra Incluir, Editar, Desativar e Reativar.
 
 const ROTULO_STATUS_GELADEIRA = { em_campo: "Em campo", manutencao: "Em manutenção", desativada: "Desativada" };
 
@@ -158,6 +158,105 @@ document.addEventListener("DOMContentLoaded", async () => {
       ocupado = false;
     }
   });
+
+  // ---------- Relatório de patrimônio (PDF) ----------
+  const rel = {
+    overlay: $("modal-relatorio"), form: $("rel-form"), status: $("rel-status"), inicio: $("rel-inicio"), fim: $("rel-fim"),
+    erro: $("rel-erro-periodo"), grupoFim: $("rel-grupo-fim"), gerar: $("rel-gerar"), gerarExcel: $("rel-gerar-excel")
+  };
+  const isoHoje = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; };
+
+  function abrirRelatorio(formato = "pdf") {
+    const excel = formato === "xlsx";
+    $("rel-titulo").textContent = excel ? "Relatório de geladeiras — Excel" : "Relatório de geladeiras — PDF";
+    rel.gerar.hidden = excel;
+    rel.gerarExcel.hidden = !excel;
+    rel.gerarExcel.classList.toggle("botao-primario", excel);
+    rel.gerarExcel.classList.toggle("botao-secundario", !excel);
+    // começa com a situação da aba atual e o ano corrente
+    rel.status.value = { em_campo: "em_campo", manutencao: "manutencao", desativadas: "desativada" }[abaAtual] || "";
+    rel.fim.value = isoHoje();
+    rel.inicio.value = `${rel.fim.value.slice(0, 4)}-01-01`;
+    rel.erro.textContent = "";
+    rel.grupoFim.classList.remove("invalido");
+    rel.gerar.disabled = false;
+    rel.gerar.textContent = "Gerar PDF";
+    rel.gerarExcel.disabled = false;
+    rel.gerarExcel.textContent = "Gerar Excel";
+    rel.overlay.classList.add("aberto");
+    rel.status.focus();
+    rel.formatoAtual = formato;
+  }
+  const fecharRelatorio = () => rel.overlay.classList.remove("aberto");
+
+  function periodoDoRelatorioValido() {
+    if (rel.inicio.value && rel.fim.value && rel.inicio.value > rel.fim.value) {
+      rel.grupoFim.classList.add("invalido");
+      rel.erro.textContent = "A data final não pode ser antes da inicial.";
+      rel.fim.focus();
+      return false;
+    }
+    return true;
+  }
+
+  // Excel: baixa a planilha (geladeiras + manutenções do período)
+  rel.gerarExcel.addEventListener("click", async () => {
+    if (!periodoDoRelatorioValido()) return;
+    rel.gerarExcel.disabled = true;
+    rel.gerarExcel.textContent = "Gerando...";
+    try {
+      const blob = await geladeiraService.baixarRelatorioExcel({ status: rel.status.value, dataInicio: rel.inicio.value, dataFim: rel.fim.value });
+      const url = URL.createObjectURL(blob);
+      const link = Object.assign(document.createElement("a"), { href: url, download: `relatorio-geladeiras-${isoHoje()}.xlsx` });
+      document.body.appendChild(link); link.click(); link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 5 * 60 * 1000);
+      toast.sucesso("Planilha gerada. Confira a pasta de downloads.");
+      fecharRelatorio();
+    } catch (erro) {
+      toast.erro(erro.message);
+    } finally {
+      rel.gerarExcel.disabled = false;
+      rel.gerarExcel.textContent = "Gerar Excel";
+    }
+  });
+
+  rel.form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    if (rel.formatoAtual === "xlsx") { rel.gerarExcel.click(); return; }
+    if (!periodoDoRelatorioValido()) return;
+    // A aba é aberta já no clique (antes da espera pela API), senão o navegador a trata como pop-up.
+    const aba = window.open("", "_blank");
+    rel.gerar.disabled = true;
+    rel.gerar.textContent = "Gerando...";
+    try {
+      const blob = await geladeiraService.baixarRelatorioPdf({ status: rel.status.value, dataInicio: rel.inicio.value, dataFim: rel.fim.value });
+      const url = URL.createObjectURL(blob);
+      if (aba) aba.location.href = url;
+      else {
+        const link = Object.assign(document.createElement("a"), { href: url, download: `relatorio-geladeiras-${isoHoje()}.pdf` });
+        document.body.appendChild(link); link.click(); link.remove();
+      }
+      setTimeout(() => URL.revokeObjectURL(url), 5 * 60 * 1000);
+      fecharRelatorio();
+    } catch (erro) {
+      if (aba) aba.close();
+      toast.erro(erro.message);
+    } finally {
+      rel.gerar.disabled = false;
+      rel.gerar.textContent = "Gerar PDF";
+    }
+  });
+  [rel.inicio, rel.fim].forEach(c => c.addEventListener("input", () => { rel.grupoFim.classList.remove("invalido"); rel.erro.textContent = ""; }));
+  // Mesmo botão "Exportar" das outras telas; aqui ele abre o modal de filtros do relatório de patrimônio
+  exportador.montar({
+    modulo: "geladeiras",
+    aoEscolher: abrirRelatorio,
+    nota: "Escolha a situação e o período das manutenções na próxima tela."
+  });
+  $("rel-fechar").addEventListener("click", fecharRelatorio);
+  $("rel-cancelar").addEventListener("click", fecharRelatorio);
+  rel.overlay.addEventListener("mousedown", (e) => { if (e.target === rel.overlay) fecharRelatorio(); });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && rel.overlay.classList.contains("aberto")) fecharRelatorio(); });
 
   carregar(true);
 });

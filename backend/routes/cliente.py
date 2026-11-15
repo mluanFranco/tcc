@@ -106,8 +106,8 @@ def buscar_cliente(cliente_id: int, db: Session = Depends(get_db), _=Depends(get
 def atualizar_cliente(cliente_id: int, dados: ClienteUpdate, db: Session = Depends(get_db), _=Depends(get_current_user)):
     cliente = _buscar_cliente_ou_404(db, cliente_id)
 
-    # Só o que foi enviado muda. Telefone e e-mail aceitam null (apagar o valor); nos demais, null = não mexer.
-    anulaveis = {"telefone", "email"}
+    # Só o que foi enviado muda. Telefone, e-mail e razão social aceitam null (apagar o valor); nos demais, null = não mexer.
+    anulaveis = {"telefone", "email", "razao_social"}
     atualizacoes = {c: v for c, v in dados.model_dump(exclude_unset=True).items() if v is not None or c in anulaveis}
 
     if "cpf_cnpj" in atualizacoes and _documento_duplicado(db, atualizacoes["cpf_cnpj"], ignorar_id=cliente_id):
@@ -124,6 +124,13 @@ def atualizar_cliente(cliente_id: int, dados: ClienteUpdate, db: Session = Depen
         atualizacoes["tipo"] = tipo_final
     else:
         atualizacoes.pop("tipo", None)
+
+    # Razão social: PF não tem (some se o documento virar CPF); PJ não pode ficar sem quando alguém tenta apagá-la.
+    # Cadastros antigos de PJ sem razão social continuam editáveis sem precisar preenchê-la.
+    if tipo_final == "PF":
+        atualizacoes["razao_social"] = None
+    elif "razao_social" in atualizacoes and not atualizacoes["razao_social"]:
+        raise HTTPException(status_code=400, detail="A razão social é obrigatória para cliente pessoa jurídica: não é possível apagá-la.")
 
     for campo, valor in atualizacoes.items():
         setattr(cliente, campo, valor)

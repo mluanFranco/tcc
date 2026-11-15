@@ -2,7 +2,7 @@
 //   geladeiraForm.abrir({ geladeira: null, aoSalvar })       -> nova geladeira
 //   geladeiraForm.abrir({ geladeira: {...}, aoSalvar })      -> edita a geladeira recebida da API
 // aoSalvar(geladeiraSalva) é chamado depois que a API confirmou.
-// Depende de: geladeiraService, clienteService, formatadores.js e feedback.js. O HTML é criado aqui, uma vez por página.
+// Depende de: geladeiraService, clienteService, formatadores.js, mascaras.js e feedback.js. O HTML é criado aqui, uma vez por página.
 
 const geladeiraForm = (() => {
   const TIPOS = ["Freezer Horizontal", "Freezer Vertical", "Conservador", "Expositor"];
@@ -64,10 +64,18 @@ const geladeiraForm = (() => {
               </div>
             </div>
 
-            <div class="campo-form gel-campo-data" id="gel-grupo-data">
-              <label for="gel-data">Data de alocação</label>
-              <input type="date" id="gel-data" min="2000-01-01" max="2100-12-31">
-              <span class="campo-erro-msg" id="gel-erro-data"></span>
+            <div class="campo-form-linha">
+              <div class="campo-form" id="gel-grupo-data">
+                <label for="gel-data">Data de alocação</label>
+                <input type="date" id="gel-data" min="2000-01-01" max="2100-12-31">
+                <span class="campo-erro-msg" id="gel-erro-data"></span>
+              </div>
+              <div class="campo-form" id="gel-grupo-valor">
+                <label for="gel-valor">Valor de aquisição (R$)</label>
+                <input type="text" id="gel-valor" inputmode="numeric" placeholder="0,00" autocomplete="off">
+                <span class="campo-erro-msg" id="gel-erro-valor"></span>
+                <span class="gel-dica-modal">Usado no relatório de patrimônio (declaração de bens).</span>
+              </div>
             </div>
 
           </div>
@@ -83,10 +91,11 @@ const geladeiraForm = (() => {
     el = {
       overlay, titulo: q("gel-titulo-modal"), fechar: q("gel-fechar"), cancelar: q("gel-cancelar"), salvar: q("gel-salvar"), form: q("gel-form"),
       cliente: q("gel-cliente"), endereco: q("gel-endereco"), tipo: q("gel-tipo"), serie: q("gel-serie"),
-      marca: q("gel-marca"), modelo: q("gel-modelo"), data: q("gel-data"), dicaEndereco: q("gel-dica-endereco"),
-      grupos: { cliente: q("gel-grupo-cliente"), endereco: q("gel-grupo-endereco"), tipo: q("gel-grupo-tipo"), serie: q("gel-grupo-serie"), data: q("gel-grupo-data") },
-      erros: { cliente: q("gel-erro-cliente"), endereco: q("gel-erro-endereco"), tipo: q("gel-erro-tipo"), serie: q("gel-erro-serie"), data: q("gel-erro-data") }
+      marca: q("gel-marca"), modelo: q("gel-modelo"), data: q("gel-data"), valor: q("gel-valor"), dicaEndereco: q("gel-dica-endereco"),
+      grupos: { cliente: q("gel-grupo-cliente"), endereco: q("gel-grupo-endereco"), tipo: q("gel-grupo-tipo"), serie: q("gel-grupo-serie"), data: q("gel-grupo-data"), valor: q("gel-grupo-valor") },
+      erros: { cliente: q("gel-erro-cliente"), endereco: q("gel-erro-endereco"), tipo: q("gel-erro-tipo"), serie: q("gel-erro-serie"), data: q("gel-erro-data"), valor: q("gel-erro-valor") }
     };
+    aplicarMascaraMoeda(el.valor);
 
     el.form.addEventListener("submit", enviar);
     el.fechar.addEventListener("click", tentarFechar);
@@ -97,6 +106,7 @@ const geladeiraForm = (() => {
     el.tipo.addEventListener("change", () => limparErro("tipo"));
     el.serie.addEventListener("input", () => limparErro("serie"));
     el.data.addEventListener("input", () => limparErro("data"));
+    el.valor.addEventListener("input", () => limparErro("valor"));
     document.addEventListener("keydown", (e) => {
       if (e.key === "Escape" && el.overlay.classList.contains("aberto") && !document.querySelector(".confirmacao-overlay")) tentarFechar();
     });
@@ -121,7 +131,7 @@ const geladeiraForm = (() => {
   }
 
   function instantaneo() {
-    return JSON.stringify([el.cliente.value, el.endereco.value, el.tipo.value, el.serie.value.trim(), el.marca.value.trim(), el.modelo.value.trim(), el.data.value]);
+    return JSON.stringify([el.cliente.value, el.endereco.value, el.tipo.value, el.serie.value.trim(), el.marca.value.trim(), el.modelo.value.trim(), el.data.value, el.valor.value]);
   }
   const estaAlterado = () => !!estado && instantaneo() !== estado.instantaneoInicial;
 
@@ -240,6 +250,7 @@ const geladeiraForm = (() => {
       const ano = Number(el.data.value.slice(0, 4));
       if (!/^\d{4}-\d{2}-\d{2}$/.test(el.data.value) || ano < 2000 || ano > 2100) falha("data", "Informe uma data válida.", el.data);
     }
+    if (el.valor.value && moedaParaNumero(el.valor.value) > 10000000) falha("valor", "O valor não pode passar de R$ 10.000.000,00.", el.valor);
     if (primeiro) primeiro.focus();
     return !primeiro;
   }
@@ -255,7 +266,8 @@ const geladeiraForm = (() => {
       marca: el.marca.value.trim() || null,
       modelo: el.modelo.value.trim() || null,
       numero_serie: el.serie.value.trim() || null,
-      data_alocacao: el.data.value || null
+      data_alocacao: el.data.value || null,
+      valor_aquisicao: el.valor.value ? moedaParaNumero(el.valor.value) : null
     };
     definirEnviando(true);
     try {
@@ -311,6 +323,7 @@ const geladeiraForm = (() => {
       el.marca.value = geladeira.marca || "";
       el.modelo.value = geladeira.modelo || "";
       el.data.value = geladeira.data_alocacao ? String(geladeira.data_alocacao).slice(0, 10) : "";
+      el.valor.value = geladeira.valor_aquisicao != null ? formatarMoedaDigitada(Number(geladeira.valor_aquisicao).toFixed(2)) : "";
       await carregarEnderecos(geladeira.cliente_id, geladeira.endereco || null);
       if (!estado) return;
       if (!geladeira.endereco_id) {

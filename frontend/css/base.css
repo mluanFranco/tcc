@@ -26,6 +26,21 @@
   --erro: #DC2626;
   --erro-fundo: #FEF2F2;
 
+  /* Novo visual (2026-11): fundo cinza claro com cartões brancos e cores de situação */
+  --fundo-pagina: #F5F7FA;
+  --texto-forte: #111827;
+  --texto-suave: #8A94A6;
+  --borda-suave: #F0F2F5;
+  --sombra-suave: 0 1px 2px rgba(16, 24, 40, 0.04), 0 1px 3px rgba(16, 24, 40, 0.06);
+  --anel-foco: 0 0 0 3px rgba(15, 89, 253, 0.12);
+  --azul-suave: #EEF3FF;
+  --verde: #12A150;
+  --verde-suave: #E9F8EF;
+  --ambar: #B7791F;
+  --ambar-suave: #FFF6E5;
+  --roxo: #6D28D9;
+  --roxo-suave: #F3EEFF;
+
   /* Raios */
   --raio-painel: 28px;
   --raio-card: 12px;

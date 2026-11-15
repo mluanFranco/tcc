@@ -13,6 +13,7 @@
   <link rel="stylesheet" href="../css/sidebar.css">
   <link rel="stylesheet" href="../css/listagem-crud.css">
   <link rel="stylesheet" href="../css/feedback.css">
+  <link rel="stylesheet" href="../css/exportar.css">
 </head>
 <body>
 
@@ -24,47 +25,63 @@
       <div class="breadcrumb"><span>Cadastros</span> / <span>Produtos</span></div>
 
       <div class="pagina-topo">
-        <h1>Produtos</h1>
+        <div>
+          <h1>Produtos</h1>
+          <p class="pagina-subtitulo" id="subtitulo-produtos">&nbsp;</p>
+        </div>
         <button class="botao-primario" id="botao-incluir" hidden>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-          Incluir
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+          Novo produto
         </button>
       </div>
+
+      <!-- Indicadores: os três primeiros filtram a tabela -->
+      <section class="kpis" id="kpis-produtos" aria-label="Resumo dos produtos"></section>
 
       <div class="barra-filtros">
         <div class="campo-busca">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-          <input type="text" id="campo-busca" placeholder="Buscar por nome, categoria ou subcategoria...">
+          <input type="text" id="campo-busca" placeholder="Buscar produto, categoria ou subcategoria">
         </div>
-        <div class="abas-status">
-          <button class="aba-status aba-status--ativa" id="aba-ativos">Ativos</button>
-          <button class="aba-status" id="aba-estoque-baixo">Estoque baixo <span class="aba-contador" id="contador-estoque-baixo" hidden></span></button>
-          <button class="aba-status" id="aba-inativos">Inativos</button>
+        <select class="filtro-select" id="filtro-categoria" aria-label="Filtrar por categoria">
+          <option value="">Todas as categorias</option>
+        </select>
+        <select class="filtro-select" id="filtro-tipo" aria-label="Filtrar por tipo">
+          <option value="">Todos os tipos</option>
+          <option value="insumo">Insumos</option>
+          <option value="vendavel">Vendáveis</option>
+        </select>
+        <div class="abas-status" style="margin-left: auto;">
+          <button class="aba-status aba-status--ativa" id="aba-ativos">Ativos <span class="aba-contador aba-contador--neutro" id="contador-ativos"></span></button>
+          <button class="aba-status" id="aba-estoque-baixo">Estoque baixo <span class="aba-contador" id="contador-estoque-baixo"></span></button>
+          <button class="aba-status" id="aba-sem-estoque">Sem estoque <span class="aba-contador" id="contador-sem-estoque"></span></button>
+          <button class="aba-status" id="aba-inativos">Inativos <span class="aba-contador aba-contador--neutro" id="contador-inativos"></span></button>
         </div>
       </div>
 
       <div class="tabela-container">
-        <table class="tabela">
-          <thead>
-            <tr>
-              <th>Nome</th>
-              <th>Categoria</th>
-              <th>Subcategoria</th>
-              <th>Tipo</th>
-              <th>Preço de venda</th>
-              <th>Estoque atual</th>
-              <th>Estoque reservado</th>
-              <th>Estoque disponível</th>
-              <th>Estoque mínimo</th>
-              <th>Status</th>
-              <th><span class="sr-only">Ações</span></th>
-            </tr>
-          </thead>
-          <tbody id="tabela-produtos-corpo"></tbody>
-        </table>
+        <div style="overflow-x: auto;">
+          <table class="tabela">
+            <thead>
+              <tr>
+                <th>Produto</th>
+                <th>Tipo</th>
+                <th class="num">Preço de venda</th>
+                <th>Estoque disponível</th>
+                <th class="num">Mínimo</th>
+                <th><span class="sr-only">Ações</span></th>
+              </tr>
+            </thead>
+            <tbody id="tabela-produtos-corpo"></tbody>
+          </table>
+        </div>
         <div class="estado-carregando" id="estado-carregando">Carregando produtos...</div>
         <div class="estado-vazio" id="estado-vazio" style="display: none;">
           Nenhum produto encontrado.
+        </div>
+        <div class="tabela-rodape" id="rodape-produtos" hidden>
+          <span id="contagem-produtos"></span>
+          <span>Clique em um indicador para filtrar</span>
         </div>
       </div>
 
@@ -291,6 +308,8 @@
   <script src="../js/services/subcategoriaService.js"></script>
   <script src="../js/services/unidadeMedidaService.js"></script>
   <script src="../js/services/produtoService.js"></script>
+  <script src="../js/services/exportacaoService.js"></script>
+  <script src="../js/components/exportar.js"></script>
   <script src="../js/pages/produtos.js"></script>
 </body>
 </html>

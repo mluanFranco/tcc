@@ -34,10 +34,11 @@ class GeladeiraCreate(_LimpezaGeladeira):
     marca: Optional[str] = Field(default=None, max_length=50)
     numero_serie: Optional[str] = Field(default=None, max_length=100)
     data_alocacao: Optional[datetime] = None
+    valor_aquisicao: Optional[float] = Field(default=None, ge=0, le=10_000_000)   # valor de compra (patrimônio)
 
 
 class GeladeiraUpdate(_LimpezaGeladeira):
-    """Atualização parcial: só o que for enviado muda. modelo, marca, numero_serie e data_alocacao aceitam null para apagar."""
+    """Atualização parcial: só o que for enviado muda. modelo, marca, numero_serie, data_alocacao e valor_aquisicao aceitam null para apagar."""
     cliente_id: Optional[int] = Field(default=None, gt=0)
     endereco_id: Optional[int] = Field(default=None, gt=0)
     tipo: Optional[str] = Field(default=None, min_length=1, max_length=50)
@@ -45,6 +46,7 @@ class GeladeiraUpdate(_LimpezaGeladeira):
     marca: Optional[str] = Field(default=None, max_length=50)
     numero_serie: Optional[str] = Field(default=None, max_length=100)
     data_alocacao: Optional[datetime] = None
+    valor_aquisicao: Optional[float] = Field(default=None, ge=0, le=10_000_000)   # valor de compra (patrimônio)
     status: Optional[Literal["em_campo", "manutencao", "desativada"]] = None
 
 
@@ -60,5 +62,6 @@ class GeladeiraResponse(BaseModel):
     numero_serie: Optional[str]
     data_alocacao: Optional[datetime]
     status: str
+    valor_aquisicao: Optional[float] = None
 
     model_config = {"from_attributes": True}
