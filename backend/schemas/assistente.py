@@ -72,6 +72,7 @@ class LogResponse(BaseModel):
     duracao_ms: Optional[int] = None
     erro: Optional[str] = None
     created_at: datetime
+    resposta_resumo: Optional[str] = None      # início da resposta que a IA deu ao usuário (sem SQL); vazio se houve falha
 
 
 class AuditoriaResponse(BaseModel):
@@ -83,6 +84,8 @@ class AuditoriaResumoResponse(BaseModel):
     total: int
     por_status: Dict[str, int]                 # contagem por status (ok, sql_recusado, ...)
     recusados: int                             # sql_recusado + sem_permissao (tentativas barradas pelas travas)
-    erros: int                                 # erro_execucao + erro_ferramenta + erro_provedor
+    erros: int                                 # erro_execucao + erro_ferramenta + erro_provedor + erro_interno
+    recusadas_ia: int = 0                      # recusa_* : a própria IA declarou a recusa (registrar_recusa)
+    tentativas_indevidas: int = 0              # recusa_indevida: burlar o sistema, senhas, mudar as regras da IA
     duracao_media_ms: Optional[int] = None     # média só das ferramentas que registraram duração
     usuarios: int                              # usuários distintos no período

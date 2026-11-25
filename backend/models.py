@@ -698,17 +698,18 @@ class AssistenteMensagem(Base):
 
 
 class AssistenteLog(Base):
-    """Auditoria: uma linha por ferramenta que a IA acionou (SQL, relatório, ajuda) ou por falha do provedor."""
+    """Auditoria: uma linha por ferramenta que a IA acionou (SQL, relatório, ajuda), uma 'resposta_direta' quando ela
+    respondeu sem ferramenta, ou uma linha de falha (provedor/sistema). Toda pergunta gera pelo menos uma linha."""
     __tablename__ = "assistente_log"
     id = Column(Integer, primary_key=True, autoincrement=True)
     usuario_id = Column(Integer, ForeignKey("usuario.id"), nullable=False, index=True)
     conversa_id = Column(Integer, ForeignKey("assistente_conversa.id"))
     mensagem_id = Column(Integer, ForeignKey("assistente_mensagem.id"))
     pergunta = Column(String(500))
-    ferramenta = Column(String(40), nullable=False)      # consultar_banco | relatorio_financeiro | como_usar | provedor
+    ferramenta = Column(String(40), nullable=False)      # consultar_banco | relatorio_financeiro | como_usar | registrar_recusa | resposta_direta | provedor | sistema
     entrada = Column(Text)                               # o SQL ou os argumentos
     views = Column(String(255))
-    status = Column(String(20), nullable=False)          # ok | sql_recusado | sem_permissao | erro_execucao | erro_ferramenta | erro_provedor
+    status = Column(String(20), nullable=False)          # ok | sql_recusado | sem_permissao | erro_execucao | erro_ferramenta | erro_provedor | erro_interno | sem_consulta | recusa_permissao | recusa_acao | recusa_indevida | recusa_escopo
     linhas = Column(Integer)
     duracao_ms = Column(Integer)
     erro = Column(String(255))

@@ -7,6 +7,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from core.assistente import config, orquestrador
+from core.assistente.ferramentas import STATUS_RECUSA
 from core.assistente.provedor import ErroProvedor, Provedor
 from core.permissoes import _efetivas_da_requisicao, exigir, exigir_admin
 from core.security import get_current_user
@@ -110,6 +111,13 @@ def perguntar(dados: MensagemCreate, request: Request, db: Session = Depends(get
                              status="erro_provedor", erro=e.mensagem[:255]))
         db.commit()
         raise HTTPException(status_code=503 if e.temporario else 502, detail=e.mensagem)
+    except Exception as e:
+        # falha inesperada (bug, banco): a pergunta também precisa aparecer na auditoria; só o tipo do erro, sem dados
+        db.rollback()
+        db.add(AssistenteLog(usuario_id=usuario.id, conversa_id=conversa.id, pergunta=dados.texto[:500], ferramenta="sistema",
+                             status="erro_interno", erro=f"Erro inesperado: {type(e).__name__}"[:255]))
+        db.commit()
+        raise HTTPException(status_code=500, detail="Erro inesperado ao processar a pergunta. Tente novamente.")
 
     msg = AssistenteMensagem(
         conversa_id=conversa.id, papel="assistente", conteudo=saida.texto,
@@ -119,6 +127,9 @@ def perguntar(dados: MensagemCreate, request: Request, db: Session = Depends(get
     db.add(msg)
     db.flush()
     gravar_logs(saida.logs, msg.id)
+    if not saida.logs:   # respondeu sem acionar ferramenta (recusa, explicação, conversa): a pergunta também vai para a auditoria
+        db.add(AssistenteLog(usuario_id=usuario.id, conversa_id=conversa.id, mensagem_id=msg.id, pergunta=dados.texto[:500],
+                             ferramenta="resposta_direta", status="sem_consulta", duracao_ms=saida.duracao_ms))
     conversa.updated_at = datetime.now()
     db.commit()
     return MensagemResponse(conversa_id=conversa.id, mensagem_id=msg.id, resposta=saida.texto, tabela=saida.tabela,
@@ -150,7 +161,16 @@ def excluir_conversa(conversa_id: int, db: Session = Depends(get_db), usuario: U
 
 
 STATUS_RECUSADOS = ("sql_recusado", "sem_permissao")
-STATUS_ERROS = ("erro_execucao", "erro_ferramenta", "erro_provedor")
+STATUS_ERROS = ("erro_execucao", "erro_ferramenta", "erro_provedor", "erro_interno")
+STATUS_RECUSAS_IA = tuple(STATUS_RECUSA.values())   # a própria IA declarou a recusa (registrar_recusa): sinal, não trava
+TAMANHO_RESUMO = 300   # a auditoria mostra a resposta da IA resumida (início do texto)
+
+
+def _resumir(texto: Optional[str]) -> Optional[str]:
+    if not texto:
+        return None
+    t = " ".join(texto.split())
+    return t if len(t) <= TAMANHO_RESUMO else t[:TAMANHO_RESUMO].rstrip() + "…"
 
 
 def _filtrar_log(q, usuario_id, ferramenta, data_inicio, data_fim):
@@ -179,6 +199,8 @@ def auditoria_resumo(usuario_id: Optional[int] = None, ferramenta: Optional[str]
         total=sum(por_status.values()), por_status=por_status,
         recusados=sum(por_status.get(s, 0) for s in STATUS_RECUSADOS),
         erros=sum(por_status.get(s, 0) for s in STATUS_ERROS),
+        recusadas_ia=sum(por_status.get(s, 0) for s in STATUS_RECUSAS_IA),
+        tentativas_indevidas=por_status.get(STATUS_RECUSA["tentativa_indevida"], 0),
         duracao_media_ms=int(round(float(media))) if media is not None else None, usuarios=usuarios)
 
 
@@ -195,7 +217,11 @@ def auditoria(usuario_id: Optional[int] = None, status: Optional[str] = None, fe
         q = q.filter(AssistenteLog.status.in_(estados))
     total = q.count()
     linhas = q.order_by(AssistenteLog.id.desc()).offset(offset).limit(limite).all()
+    # resposta que a IA deu ao usuário (resumida), buscada de uma vez só para a página
+    ids_msg = {l.mensagem_id for l, _ in linhas if l.mensagem_id}
+    respostas = dict(db.query(AssistenteMensagem.id, AssistenteMensagem.conteudo).filter(AssistenteMensagem.id.in_(ids_msg)).all()) if ids_msg else {}
     itens = [LogResponse(id=l.id, usuario_id=l.usuario_id, usuario_nome=nome, conversa_id=l.conversa_id, pergunta=l.pergunta,
                          ferramenta=l.ferramenta, entrada=l.entrada, views=l.views, status=l.status, linhas=l.linhas,
-                         duracao_ms=l.duracao_ms, erro=l.erro, created_at=l.created_at) for l, nome in linhas]
+                         duracao_ms=l.duracao_ms, erro=l.erro, created_at=l.created_at,
+                         resposta_resumo=_resumir(respostas.get(l.mensagem_id))) for l, nome in linhas]
     return AuditoriaResponse(total=total, itens=itens)

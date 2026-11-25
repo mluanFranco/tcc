@@ -1,7 +1,10 @@
 // Auditoria Nova IA (só administrador): o que o assistente acionou, para quem, com que resultado e em quanto tempo.
 //
 // Regras que a tela espelha do backend:
-//  - mostra só o log de ferramentas (assistente_log); o texto das respostas da IA não é exibido;
+//  - toda pergunta tem pelo menos uma linha (assistente_log): uma por ferramenta acionada, "resposta direta" quando a IA
+//    respondeu sem ferramenta, ou a falha; a resposta da IA vem resumida (resposta_resumo, ~300 caracteres, sem SQL);
+//  - "Barradas pelas travas" = bloqueios do código (garantidos); "Recusadas pela IA" = recusas que a própria IA declarou
+//    por registrar_recusa (status recusa_*; sinal para o admin, não trava); "Tentativas indevidas" = recusa_indevida;
 //  - os cartões usam o resumo do período e ignoram o filtro de "Resultado"; clicar em um cartão aplica esse filtro;
 //  - "status" aceita vários valores separados por vírgula (Barradas = sql_recusado + sem_permissao);
 //  - datas são o dia do servidor (America/Sao_Paulo), o mesmo relógio que grava o horário do registro; "Até" é inclusivo.
@@ -17,22 +20,33 @@ document.addEventListener("DOMContentLoaded", async () => {
     paginacao: $("paginacao"), paginacaoTexto: $("paginacao-texto"), anterior: $("botao-anterior"), proxima: $("botao-proxima"),
     painel: $("painel"), painelOverlay: $("painel-overlay"), painelCorpo: $("painel-corpo"), painelFechar: $("painel-fechar"),
     kpiTotal: $("kpi-total"), kpiOk: $("kpi-ok"), kpiBarradas: $("kpi-barradas"), kpiErros: $("kpi-erros"),
-    kpiDuracao: $("kpi-duracao"), kpiUsuarios: $("kpi-usuarios")
+    kpiDuracao: $("kpi-duracao"), kpiUsuarios: $("kpi-usuarios"),
+    kpiRecusadas: $("kpi-recusadas"), kpiIndevidas: $("kpi-indevidas")
   };
   const cartoes = [...document.querySelectorAll(".aud-cartao[data-filtro]")];
 
   const LIMITE = 25;
   const ROTULO_STATUS = {
     ok: "Concluída", sql_recusado: "SQL recusado", sem_permissao: "Sem permissão",
-    erro_execucao: "Erro na execução", erro_ferramenta: "Erro na ferramenta", erro_provedor: "Erro do provedor"
+    erro_execucao: "Erro na execução", erro_ferramenta: "Erro na ferramenta", erro_provedor: "Erro do provedor",
+    erro_interno: "Erro interno", sem_consulta: "Respondida sem consulta",
+    recusa_permissao: "Recusada: sem permissão", recusa_acao: "Recusada: ação não permitida",
+    recusa_indevida: "Recusada: tentativa indevida", recusa_escopo: "Recusada: fora do escopo"
   };
   const CLASSE_STATUS = {
     ok: "ok", sql_recusado: "alerta", sem_permissao: "alerta",
-    erro_execucao: "erro", erro_ferramenta: "erro", erro_provedor: "erro"
+    erro_execucao: "erro", erro_ferramenta: "erro", erro_provedor: "erro", erro_interno: "erro",
+    sem_consulta: "neutro", recusa_permissao: "alerta", recusa_acao: "alerta", recusa_escopo: "alerta", recusa_indevida: "erro"
   };
   const ROTULO_FERRAMENTA = {
-    consultar_banco: "Consulta ao banco", relatorio_financeiro: "Relatório financeiro",
-    como_usar: "Ajuda de uso", provedor: "Provedor de IA"
+    consultar_banco: "Consulta ao banco", relatorio_financeiro: "Relatório financeiro", como_usar: "Ajuda de uso",
+    registrar_recusa: "Registro de recusa", resposta_direta: "Resposta direta", provedor: "Provedor de IA", sistema: "Sistema"
+  };
+  const NOTA_STATUS = {
+    sem_consulta: "A IA respondeu sem acessar dados e sem declarar recusa (ex.: explicação, conversa). Se a resposta for uma recusa, "
+      + "a IA não a declarou: a segurança dos dados não depende disso, pois toda consulta passa pelas travas do sistema.",
+    recusa_indevida: "A própria IA identificou o pedido como tentativa indevida (burlar o sistema, obter senhas, mudar as regras da IA). "
+      + "É um sinal para o administrador acompanhar o usuário; o bloqueio dos dados é garantido pelas travas do sistema."
   };
 
   let itens = [];
@@ -72,12 +86,14 @@ document.addEventListener("DOMContentLoaded", async () => {
       el.kpiOk.textContent = String(r.por_status.ok || 0);
       el.kpiBarradas.textContent = String(r.recusados);
       el.kpiErros.textContent = String(r.erros);
+      el.kpiRecusadas.textContent = String(r.recusadas_ia || 0);
+      el.kpiIndevidas.textContent = String(r.tentativas_indevidas || 0);
       el.kpiDuracao.textContent = r.duracao_media_ms === null ? "—" : formatarDuracao(r.duracao_media_ms);
       el.kpiUsuarios.textContent = String(r.usuarios);
       el.kpiTotal.textContent = String(r.total);
     } catch (e) {
       if (minha !== requisicao || e.status === 401) return;
-      [el.kpiTotal, el.kpiOk, el.kpiBarradas, el.kpiErros, el.kpiDuracao, el.kpiUsuarios].forEach(k => { k.textContent = "—"; });
+      [el.kpiTotal, el.kpiOk, el.kpiBarradas, el.kpiErros, el.kpiDuracao, el.kpiUsuarios, el.kpiRecusadas, el.kpiIndevidas].forEach(k => { k.textContent = "—"; });
     }
   }
 
@@ -98,6 +114,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         <td class="aud-nowrap">${escaparHtml(formatarDataHora(l.created_at))}</td>
         <td>${escaparHtml(l.usuario_nome || "—")}</td>
         <td class="aud-pergunta" title="${escaparHtml(l.pergunta || "")}">${l.pergunta ? escaparHtml(l.pergunta) : '<span class="aud-vazio">—</span>'}</td>
+        <td class="aud-pergunta" title="${escaparHtml(l.resposta_resumo || "")}">${l.resposta_resumo ? escaparHtml(l.resposta_resumo) : '<span class="aud-vazio">—</span>'}</td>
         <td class="aud-nowrap">${escaparHtml(ROTULO_FERRAMENTA[l.ferramenta] || l.ferramenta)}</td>
         <td>${badge(l.status)}</td>
         <td class="aud-num">${l.linhas === null || l.linhas === undefined ? "—" : l.linhas}</td>
@@ -170,17 +187,23 @@ document.addEventListener("DOMContentLoaded", async () => {
   function abrirPainel(l) {
     ultimoFoco = document.activeElement;
     const bloco = (texto) => `<pre class="aud-codigo">${escaparHtml(texto)}</pre>`;
+    const recusa = l.ferramenta === "registrar_recusa";
+    const nota = NOTA_STATUS[l.status];
     el.painelCorpo.innerHTML = [
-      campo("Resultado", badge(l.status)),
+      campo("Resultado", badge(l.status) + (nota ? `<p class="aud-texto aud-nota">${escaparHtml(nota)}</p>` : "")),
       campo("Usuário", escaparHtml(l.usuario_nome || "—")),
       campo("Data e hora", escaparHtml(dataCompleta(l.created_at))),
       campo("Ferramenta", escaparHtml(ROTULO_FERRAMENTA[l.ferramenta] || l.ferramenta)),
       campo("Pergunta do usuário", l.pergunta ? `<p class="aud-texto">${escaparHtml(l.pergunta)}</p>` : '<span class="aud-vazio">Não registrada</span>'),
-      campo(l.ferramenta === "consultar_banco" ? "SQL executado" : "Entrada da ferramenta", l.entrada ? bloco(l.entrada) : '<span class="aud-vazio">—</span>'),
-      campo("Views consultadas", l.views ? escaparHtml(l.views) : '<span class="aud-vazio">—</span>'),
-      campo("Linhas devolvidas", l.linhas === null || l.linhas === undefined ? "—" : String(l.linhas)),
+      campo("Resposta da IA (resumo)", l.resposta_resumo ? `<p class="aud-texto">${escaparHtml(l.resposta_resumo)}</p>`
+        : `<span class="aud-vazio">${l.status.startsWith("erro") ? "Sem resposta: a pergunta falhou" : "—"}</span>`),
+      recusa
+        ? campo("Motivo declarado pela IA", l.erro ? `<p class="aud-texto">${escaparHtml(l.erro)}</p>` : '<span class="aud-vazio">—</span>')
+        : campo(l.ferramenta === "consultar_banco" ? "SQL executado" : "Entrada da ferramenta", l.entrada ? bloco(l.entrada) : '<span class="aud-vazio">—</span>'),
+      recusa ? "" : campo("Views consultadas", l.views ? escaparHtml(l.views) : '<span class="aud-vazio">—</span>'),
+      recusa ? "" : campo("Linhas devolvidas", l.linhas === null || l.linhas === undefined ? "—" : String(l.linhas)),
       campo("Duração", formatarDuracao(l.duracao_ms)),
-      l.erro ? campo("Motivo / erro", `<p class="aud-texto aud-texto--erro">${escaparHtml(l.erro)}</p>`) : ""
+      l.erro && !recusa ? campo("Motivo / erro", `<p class="aud-texto aud-texto--erro">${escaparHtml(l.erro)}</p>`) : ""
     ].join("");
     el.painelOverlay.hidden = false;
     el.painel.hidden = false;

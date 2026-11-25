@@ -25,7 +25,7 @@
       <div class="pagina-topo">
         <div>
           <h1>Auditoria Nova IA</h1>
-          <p class="aud-subtitulo">Cada consulta, relatório e falha do assistente fica registrado aqui. As respostas escritas pela IA não são exibidas, só o que ela acionou.</p>
+          <p class="aud-subtitulo">Toda pergunta feita ao assistente fica registrada aqui: o que ele acionou (consulta, relatório, ajuda), os pedidos que ele recusou, as respostas diretas e as falhas, com um resumo da resposta dada ao usuário.</p>
         </div>
       </div>
 
@@ -42,7 +42,15 @@
           <span class="aud-cartao__rotulo">Barradas pelas travas</span>
           <strong class="aud-cartao__valor" id="kpi-barradas">—</strong>
         </button>
-        <button type="button" class="aud-cartao aud-cartao--erro" id="cartao-erros" data-filtro="erro_execucao,erro_ferramenta,erro_provedor">
+        <button type="button" class="aud-cartao aud-cartao--alerta" id="cartao-recusadas" data-filtro="recusa_permissao,recusa_acao,recusa_indevida,recusa_escopo">
+          <span class="aud-cartao__rotulo">Recusadas pela IA</span>
+          <strong class="aud-cartao__valor" id="kpi-recusadas">—</strong>
+        </button>
+        <button type="button" class="aud-cartao aud-cartao--erro" id="cartao-indevidas" data-filtro="recusa_indevida">
+          <span class="aud-cartao__rotulo">Tentativas indevidas</span>
+          <strong class="aud-cartao__valor" id="kpi-indevidas">—</strong>
+        </button>
+        <button type="button" class="aud-cartao aud-cartao--erro" id="cartao-erros" data-filtro="erro_execucao,erro_ferramenta,erro_provedor,erro_interno">
           <span class="aud-cartao__rotulo">Erros</span>
           <strong class="aud-cartao__valor" id="kpi-erros">—</strong>
         </button>
@@ -69,10 +77,17 @@
             <option value="sql_recusado,sem_permissao">Barradas (SQL recusado ou sem permissão)</option>
             <option value="sql_recusado">SQL recusado</option>
             <option value="sem_permissao">Sem permissão</option>
-            <option value="erro_execucao,erro_ferramenta,erro_provedor">Erros (todos)</option>
+            <option value="recusa_permissao,recusa_acao,recusa_indevida,recusa_escopo">Recusadas pela IA (todas)</option>
+            <option value="recusa_permissao">Recusada: sem permissão</option>
+            <option value="recusa_acao">Recusada: ação não permitida</option>
+            <option value="recusa_indevida">Recusada: tentativa indevida</option>
+            <option value="recusa_escopo">Recusada: fora do escopo</option>
+            <option value="sem_consulta">Respondida sem consulta</option>
+            <option value="erro_execucao,erro_ferramenta,erro_provedor,erro_interno">Erros (todos)</option>
             <option value="erro_execucao">Erro na execução</option>
             <option value="erro_ferramenta">Erro na ferramenta</option>
             <option value="erro_provedor">Erro do provedor</option>
+            <option value="erro_interno">Erro interno</option>
           </select>
         </div>
         <div class="aud-campo">
@@ -82,7 +97,10 @@
             <option value="consultar_banco">Consulta ao banco</option>
             <option value="relatorio_financeiro">Relatório financeiro</option>
             <option value="como_usar">Ajuda de uso</option>
+            <option value="registrar_recusa">Registro de recusa</option>
+            <option value="resposta_direta">Resposta direta (sem consulta)</option>
             <option value="provedor">Provedor de IA</option>
+            <option value="sistema">Sistema (erro interno)</option>
           </select>
         </div>
         <div class="aud-campo">
@@ -105,6 +123,7 @@
                 <th>Data e hora</th>
                 <th>Usuário</th>
                 <th>Pergunta</th>
+                <th>Resposta (resumo)</th>
                 <th>Ferramenta</th>
                 <th>Resultado</th>
                 <th class="aud-num">Linhas</th>

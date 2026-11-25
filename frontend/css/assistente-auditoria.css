@@ -113,7 +113,7 @@ button.aud-cartao:focus-visible { outline: 2px solid var(--azul-acao); outline-o
 .aud-tabela { min-width: 860px; }
 .aud-nowrap { white-space: nowrap; }
 .aud-num { text-align: right; white-space: nowrap; }
-.aud-pergunta { max-width: 340px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.aud-pergunta { max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .aud-vazio { color: var(--neutro-placeholder); }
 .aud-tabela tbody tr:focus-visible { outline: 2px solid var(--azul-acao); outline-offset: -2px; }
 
@@ -129,6 +129,7 @@ button.aud-cartao:focus-visible { outline: 2px solid var(--azul-acao); outline-o
 .aud-badge--alerta { background: #FFFBEB; color: #B45309; }
 .aud-badge--erro { background: var(--erro-fundo); color: var(--erro); }
 .aud-badge--neutro { background: #F3F4F6; color: var(--neutro-secundario); }
+.aud-nota { margin-top: 8px; font-size: 13px; color: var(--neutro-secundario); }
 
 .aud-paginacao {
   display: flex;
