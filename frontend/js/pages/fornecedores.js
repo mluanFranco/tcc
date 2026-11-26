@@ -9,10 +9,10 @@ let razaoSocialOriginal = "";   // para saber se um cadastro antigo já tinha ra
 let fornecedoresVisiveis = [];   // o que a tabela está mostrando (base da exportação)
 
 document.addEventListener("DOMContentLoaded", async () => {
-  if (!exigirAutenticacao()) return;
+  if (!exigirPermissao("fornecedores.ver")) return;
 
-  // Cadastros: qualquer usuário logado consulta; criar, editar e desativar exigem cadastros.editar.
-  const podeEditar = temPermissao("cadastros.editar");
+  // Ver a tela exige fornecedores.ver; criar, editar e desativar exigem fornecedores.editar.
+  const podeEditar = temPermissao("fornecedores.editar");
 
   const elementos = {
     tabelaCorpo: document.getElementById("tabela-fornecedores-corpo"),
@@ -358,8 +358,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (e.target === elementos.modalVisualizarOverlay) fecharModalVisualizacao();
   });
 
-  // Exportar (PDF/Excel): cadastros em massa só para quem pode editar cadastros
-  if (temPermissao("cadastros.editar")) {
+  // Exportar (PDF/Excel): cadastros em massa só para quem pode editar fornecedores
+  if (temPermissao("fornecedores.editar")) {
     exportador.montar({
       modulo: "fornecedores",
       obterIds: () => fornecedoresVisiveis.map(f => f.id),

@@ -10,6 +10,7 @@ def _limpar_texto(valor):
 class UnidadeMedidaCreate(BaseModel):
     nome: str = Field(min_length=1, max_length=50)
     sigla: str = Field(min_length=1, max_length=10)
+    fracionavel: bool = True     # False = unidade inteira (un, pote, caixa): não aceita casas decimais
 
     @field_validator("nome", "sigla", mode="before")
     @classmethod
@@ -20,6 +21,7 @@ class UnidadeMedidaCreate(BaseModel):
 class UnidadeMedidaUpdate(BaseModel):
     nome: Optional[str] = Field(default=None, min_length=1, max_length=50)
     sigla: Optional[str] = Field(default=None, min_length=1, max_length=10)
+    fracionavel: Optional[bool] = None
     ativo: Optional[bool] = None
 
     @field_validator("nome", "sigla", mode="before")
@@ -32,6 +34,7 @@ class UnidadeMedidaResponse(BaseModel):
     id: int
     nome: str
     sigla: str
+    fracionavel: bool
     ativo: bool
     created_at: datetime
     updated_at: datetime

@@ -1,6 +1,6 @@
 // Navegação lateral (sidebar) colapsável.
 // Cada item declara a permissão necessária (temPermissao, de auth.js); sem permissão, o item não aparece.
-// Itens sem "permissao" aparecem para qualquer usuário logado (ex.: cadastros, cuja leitura é livre).
+// Itens sem "permissao" aparecem para qualquer usuário logado. Cada cadastro tem a sua permissão ("produtos.ver"...).
 // "apenasAdmin" é para o que só administrador acessa. "tambem" lista páginas internas que mantêm o item ativo.
 
 const SIDEBAR_COLAPSADO_KEY = "nova_sorvetes_sidebar_colapsado";
@@ -11,12 +11,12 @@ const ITENS_MENU = [
   {
     tipo: "grupo", label: "Cadastros", icone: "cadastro",
     subitens: [
-      { label: "Produtos",           href: "produtos.html" },
-      { label: "Categorias",         href: "categorias.html" },
-      { label: "Subcategorias",      href: "subcategorias.html" },
-      { label: "Unidades de Medida", href: "unidades-medida.html" },
-      { label: "Clientes",           href: "clientes.html" },
-      { label: "Fornecedores",       href: "fornecedores.html" }
+      { label: "Produtos",           href: "produtos.html",        permissao: "produtos.ver" },
+      { label: "Categorias",         href: "categorias.html",      permissao: "categorias.ver" },
+      { label: "Subcategorias",      href: "subcategorias.html",   permissao: "subcategorias.ver" },
+      { label: "Unidades de Medida", href: "unidades-medida.html", permissao: "unidades.ver" },
+      { label: "Clientes",           href: "clientes.html",        permissao: "clientes.ver" },
+      { label: "Fornecedores",       href: "fornecedores.html",    permissao: "fornecedores.ver" }
     ]
   },
   {
@@ -28,7 +28,7 @@ const ITENS_MENU = [
   },
   { label: "Cotações",            href: "cotacoes.html",         tambem: ["cotacao-nova.html", "cotacao-detalhe.html"],   permissao: "cotacoes.ver",   icone: "cotacao" },
   { label: "Produção",            href: "producao.html",         tambem: ["receita-nova.html", "receita-detalhe.html", "ordem-producao-nova.html", "ordem-producao-detalhe.html"], permissao: "producao.ver", icone: "producao" },
-  { label: "Formas de Pagamento", href: "formas-pagamento.html", icone: "pagamento" },
+  { label: "Formas de Pagamento", href: "formas-pagamento.html", permissao: "formas_pagamento.ver", icone: "pagamento" },
   { label: "Financeiro",          href: "financeiro.html",       tambem: ["titulo-detalhe.html"], permissao: "financeiro.ver", icone: "financeiro" },
   { label: "Geladeiras",          href: "geladeiras.html",       tambem: ["geladeira-detalhe.html"], permissao: "geladeiras.ver", icone: "geladeira" },
   { label: "Grupos de Acesso",    href: "grupos-acesso.html",    apenasAdmin: true, icone: "grupo" },
@@ -147,7 +147,7 @@ function renderizarSidebar() {
   container.className = `sidebar ${colapsado ? "colapsado" : ""}`;
   container.innerHTML = `
     <div class="sidebar__topo">
-      <a href="${_podeVer({ permissao: "relatorios.ver" }, ehAdmin) ? "dashboard.html" : PAGINA_INICIAL_USUARIO_COMUM}" class="sidebar__marca" title="Nova Sorvetes">
+      <a href="${destinoPosLogin() || "login.html"}" class="sidebar__marca" title="Nova Sorvetes">
         <img src="../assets/images/logo-sidebar.png" alt="" class="sidebar__logo" width="34" height="26">
         <span class="sidebar__marca-texto">Nova Sorvetes</span>
       </a>

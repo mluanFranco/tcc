@@ -1,13 +1,14 @@
 from datetime import date
 from typing import Optional
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import Response
 from sqlalchemy.orm import Session
 
 from core import pdf
 from core.relatorios import resolver_periodo
-from core.permissoes import exigir
+from core.permissoes import exigir, exigir_tipo_cotacao
+from models import Cotacao
 from core.security import get_current_user
 from database import get_db
 
@@ -23,8 +24,12 @@ def _resposta(conteudo: bytes, nome_arquivo: str) -> Response:
 
 
 @router.get("/cotacoes/{cotacao_id}/pdf", dependencies=[Depends(exigir("cotacoes.ver"))], response_class=Response, responses={200: {"content": {"application/pdf": {}}}})
-def pdf_da_cotacao(cotacao_id: int, db: Session = Depends(get_db), usuario=Depends(get_current_user)):
+def pdf_da_cotacao(cotacao_id: int, request: Request, db: Session = Depends(get_db), usuario=Depends(get_current_user)):
     """Cotação em PDF (venda ou compra): partes, itens, total e condição de pagamento. Não altera nada."""
+    cotacao = db.get(Cotacao, cotacao_id)
+    if cotacao is None:
+        raise HTTPException(status_code=404, detail="Cotação não encontrada")
+    exigir_tipo_cotacao(request, db, usuario, cotacao.tipo)   # tipo sem acesso: 404
     return _resposta(*pdf.pdf_cotacao(db, cotacao_id, usuario.nome))
 
 

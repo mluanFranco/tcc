@@ -16,6 +16,7 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from core.estoque import quantidade_base, travar_produtos
+from core.quantidades import exigir_inteiro, unidade_negociacao
 from core.financeiro import gerar_titulos
 from models import (
     PedidoVenda, ItemPedidoVenda, PedidoCompra, ItemPedidoCompra,
@@ -78,6 +79,7 @@ def registrar_pedido_venda(db: Session, usuario_id: int, dados: PedidoVendaCreat
             raise HTTPException(status_code=404, detail=f"Produto {item.produto_id} não encontrado")
         if not produto.ativo:
             raise HTTPException(status_code=400, detail=f"O produto '{produto.nome}' está inativo")
+        exigir_inteiro(item.quantidade, unidade_negociacao(produto), f"Quantidade de '{produto.nome}'")
 
     # Disponibilidade: soma as linhas do mesmo produto antes de comparar com o saldo,
     # senão duas linhas do mesmo produto passariam, cada uma, sozinha.
@@ -157,6 +159,7 @@ def registrar_pedido_compra(db: Session, usuario_id: int, dados: PedidoCompraCre
             raise HTTPException(status_code=404, detail=f"Produto {item.produto_id} não encontrado")
         if not produto.ativo:
             raise HTTPException(status_code=400, detail=f"O produto '{produto.nome}' está inativo")
+        exigir_inteiro(item.quantidade, unidade_negociacao(produto), f"Quantidade de '{produto.nome}'")
 
         subtotal = round(item.preco_unitario * float(item.quantidade), 2)
         valor_total += subtotal

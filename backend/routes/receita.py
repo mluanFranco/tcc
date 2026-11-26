@@ -9,6 +9,7 @@ from schemas.receita import (
 )
 from core.security import get_current_user
 from core.receita import calcular_consumo
+from core.quantidades import exigir_inteiro, e_inteira
 from typing import List, Optional
 from decimal import Decimal
 
@@ -43,6 +44,7 @@ def _montar_resposta(receita: Receita) -> ReceitaResponse:
         produto_id=receita.produto_id,
         produto_nome=receita.produto.nome,
         unidade_sigla=_sigla(receita.produto),
+        unidade_fracionavel=not e_inteira(receita.produto.unidade_medida),
         rendimento=receita.rendimento,
         observacao=receita.observacao,
         ativo=bool(receita.ativo),
@@ -61,7 +63,11 @@ def _buscar_ou_404(db: Session, receita_id: int) -> Receita:
     return receita
 
 
-def _validar_insumos(db: Session, produto_produzido_id: int, itens) -> None:
+def _validar_insumos(db: Session, produto_produzido_id: int, itens, rendimento=None) -> None:
+    """Insumos válidos e quantidades inteiras onde a unidade é inteira (o rendimento segue a unidade do produto fabricado)."""
+    fabricado = db.get(Produto, produto_produzido_id)
+    if fabricado is not None:
+        exigir_inteiro(rendimento, fabricado.unidade_medida, f"Rendimento de '{fabricado.nome}'")
     ids = [i.produto_id for i in itens]
     if produto_produzido_id in ids:
         raise HTTPException(status_code=400, detail="O produto não pode ser insumo da própria receita")
@@ -74,6 +80,7 @@ def _validar_insumos(db: Session, produto_produzido_id: int, itens) -> None:
             raise HTTPException(status_code=400, detail=f"O insumo '{insumo.nome}' está inativo")
         if not insumo.e_insumo:
             raise HTTPException(status_code=400, detail=f"O produto '{insumo.nome}' não está marcado como insumo")
+        exigir_inteiro(item.quantidade, insumo.unidade_medida, f"Quantidade de '{insumo.nome}' na receita")
 
 
 # ---------- rotas ----------
@@ -93,7 +100,7 @@ def criar_receita(dados: ReceitaCreate, db: Session = Depends(get_db), _=Depends
             detail=f"O produto '{produto.nome}' já possui a receita {existente.id}. Use PUT /receitas/{existente.id} para alterá-la",
         )
 
-    _validar_insumos(db, dados.produto_id, dados.itens)
+    _validar_insumos(db, dados.produto_id, dados.itens, dados.rendimento)
 
     receita = Receita(
         produto_id=dados.produto_id,
@@ -159,6 +166,7 @@ def simular_producao(
 ):
     """Somente leitura: mostra o que seria consumido para produzir `quantidade`. Não reserva nem altera estoque."""
     receita = _buscar_ou_404(db, receita_id)
+    exigir_inteiro(quantidade, receita.produto.unidade_medida, f"Quantidade a produzir de '{receita.produto.nome}'")
     consumos = dict(calcular_consumo(receita, quantidade))
 
     itens = []
@@ -195,7 +203,7 @@ def simular_producao(
 @router.put("/{receita_id}", response_model=ReceitaResponse)
 def atualizar_receita(receita_id: int, dados: ReceitaUpdate, db: Session = Depends(get_db), _=Depends(get_current_user)):
     receita = _buscar_ou_404(db, receita_id)
-    _validar_insumos(db, receita.produto_id, dados.itens)
+    _validar_insumos(db, receita.produto_id, dados.itens, dados.rendimento)
 
     receita.rendimento = dados.rendimento
     receita.observacao = dados.observacao

@@ -7,10 +7,10 @@ let abaAtivaSubcategoria = "ativos";
 let subcategoriaEmEdicaoId = null;
 
 document.addEventListener("DOMContentLoaded", async () => {
-  if (!exigirAutenticacao()) return;
+  if (!exigirPermissao("subcategorias.ver")) return;
 
-  // Cadastros: qualquer usuário logado consulta; criar, editar e desativar exigem cadastros.editar.
-  const podeEditar = temPermissao("cadastros.editar");
+  // Ver a tela exige subcategorias.ver; criar, editar e desativar exigem subcategorias.editar.
+  const podeEditar = temPermissao("subcategorias.editar");
 
   const elementos = {
     tabelaCorpo: document.getElementById("tabela-subcategorias-corpo"),

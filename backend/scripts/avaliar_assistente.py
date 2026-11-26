@@ -170,7 +170,7 @@ def imprimir_resumo(resumo):
     print(f"Médias: {resumo['passos_medios']} passos, {resumo['tokens_entrada_medios']}/{resumo['tokens_saida_medios']} tokens, "
           f"{resumo['duracao_media_ms']} ms (mediana {resumo['duracao_mediana_ms']} ms)")
     print(f"Modelos que responderam: {resumo['modelos_que_responderam']}")
-    print("Integridade do banco (contagem das 15 views antes = depois): " + ("OK" if resumo["integridade_ok"] else f"DIFERENTE! {resumo['integridade_detalhe']}"))
+    print("Integridade do banco (contagem das views antes = depois): " + ("OK" if resumo["integridade_ok"] else f"DIFERENTE! {resumo['integridade_detalhe']}"))
 
 
 def main() -> int:

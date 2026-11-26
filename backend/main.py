@@ -6,7 +6,7 @@ from routes import (
     cotacao, geladeira, historico_manutencao,
     categoria, subcategoria, unidade_medida, receita, ordem_producao, financeiro, categoria_financeira, relatorios, pdf, exportacao, grupo_acesso, assistente
 )
-from core.permissoes import exigir_modulo
+from core.permissoes import exigir_cadastro, exigir_modulo
 
 app = FastAPI(
     title="Sistema de Gestão de Estoque - Nova Sorvetes",
@@ -25,14 +25,14 @@ app.include_router(usuario.router)
 app.include_router(grupo_acesso.router)
 
 # Permissão por módulo (core/permissoes.py): GET exige "<módulo>.ver" e os demais métodos "<módulo>.editar".
-# Cadastros: a leitura é liberada a qualquer usuário logado; só a escrita exige "cadastros.editar".
-app.include_router(produto.router,             dependencies=[Depends(exigir_modulo("cadastros"))])
-app.include_router(cliente.router,             dependencies=[Depends(exigir_modulo("cadastros"))])
-app.include_router(fornecedor.router,          dependencies=[Depends(exigir_modulo("cadastros"))])
-app.include_router(forma_pagamento.router,     dependencies=[Depends(exigir_modulo("cadastros"))])
-app.include_router(categoria.router,           dependencies=[Depends(exigir_modulo("cadastros"))])
-app.include_router(subcategoria.router,        dependencies=[Depends(exigir_modulo("cadastros"))])
-app.include_router(unidade_medida.router,      dependencies=[Depends(exigir_modulo("cadastros"))])
+# Cadastros: cada um tem ver/editar; a leitura também vale para quem usa um módulo que depende dele (core/permissoes.py).
+app.include_router(produto.router,             dependencies=[Depends(exigir_cadastro("produtos"))])
+app.include_router(cliente.router,             dependencies=[Depends(exigir_cadastro("clientes"))])
+app.include_router(fornecedor.router,          dependencies=[Depends(exigir_cadastro("fornecedores"))])
+app.include_router(forma_pagamento.router,     dependencies=[Depends(exigir_cadastro("formas_pagamento"))])
+app.include_router(categoria.router,           dependencies=[Depends(exigir_cadastro("categorias"))])
+app.include_router(subcategoria.router,        dependencies=[Depends(exigir_cadastro("subcategorias"))])
+app.include_router(unidade_medida.router,      dependencies=[Depends(exigir_cadastro("unidades"))])
 app.include_router(geladeira.router,           dependencies=[Depends(exigir_modulo("geladeiras"))])
 app.include_router(historico_manutencao.router, dependencies=[Depends(exigir_modulo("geladeiras"))])
 app.include_router(pedido_venda.router,        dependencies=[Depends(exigir_modulo("vendas"))])

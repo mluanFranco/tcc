@@ -9,6 +9,7 @@ from schemas.ordem_producao import (
 from core.security import get_current_user
 from core.estoque import travar_produtos
 from core.receita import calcular_consumo
+from core.quantidades import exigir_inteiro
 from typing import List, Optional
 from decimal import Decimal
 from datetime import datetime, date, time, timedelta
@@ -37,13 +38,12 @@ def _item_resposta(insumo: Produto, quantidade: Decimal, custo_unitario: float, 
 
 def _montar_resposta(ordem: OrdemProducao) -> OrdemProducaoResponse:
     if ordem.status == "aberta":
-        # Prévia: consumo e custo pela receita ATUAL. Só é congelado na confirmação.
-        itens_receita = {i.produto_id: i for i in ordem.receita.itens}
+        # Quantidades = o que foi RESERVADO na criação (congelado). O custo ainda é prévia (custo atual do insumo):
+        # só é congelado na confirmação.
         itens = []
-        for produto_id, consumo in calcular_consumo(ordem.receita, ordem.quantidade):
-            insumo = itens_receita[produto_id].produto
-            custo = insumo.custo_unidade_base   # custo de 1 unidade base (embalagem ÷ fator)
-            itens.append(_item_resposta(insumo, consumo, custo, round(float(consumo) * custo, 2)))
+        for i in ordem.itens:
+            custo = i.produto.custo_unidade_base   # custo de 1 unidade base (embalagem ÷ fator)
+            itens.append(_item_resposta(i.produto, i.quantidade, custo, round(float(i.quantidade) * custo, 2)))
         previa = True
     else:
         itens = [_item_resposta(i.produto, i.quantidade, i.custo_unitario, i.subtotal) for i in ordem.itens]
@@ -87,7 +87,32 @@ def criar_ordem_producao(
     if not receita.produto.ativo:
         raise HTTPException(status_code=400, detail=f"O produto '{receita.produto.nome}' está inativo")
 
-    # Ordem aberta não reserva nada: o estoque só é verificado e movimentado na confirmação.
+    # Ordem aberta RESERVA os insumos (como o pedido de venda aberto): o consumo é calculado agora, pela receita,
+    # e fica congelado nos itens da ordem. A confirmação consome exatamente o que foi reservado.
+    exigir_inteiro(dados.quantidade, receita.produto.unidade_medida, f"Quantidade a produzir de '{receita.produto.nome}'")
+    consumos = calcular_consumo(receita, dados.quantidade)
+    if not consumos:
+        raise HTTPException(status_code=400, detail="A receita não tem insumos")
+    ids = [produto_id for produto_id, _ in consumos]
+    produtos = travar_produtos(db, ids)
+    if any(pid not in produtos for pid in ids):
+        raise HTTPException(status_code=400, detail="A receita foi alterada durante a criação. Tente novamente")
+
+    faltas = []
+    for produto_id, consumo in consumos:
+        insumo = produtos[produto_id]
+        if produto_id == receita.produto_id:
+            raise HTTPException(status_code=400, detail="O produto não pode ser insumo da própria receita")
+        if not insumo.ativo:
+            raise HTTPException(status_code=400, detail=f"O insumo '{insumo.nome}' está inativo")
+        if not insumo.e_insumo:
+            raise HTTPException(status_code=400, detail=f"O produto '{insumo.nome}' não está mais marcado como insumo")
+        disponivel = (insumo.estoque_atual or ZERO) - (insumo.estoque_reservado or ZERO)
+        if disponivel < consumo:
+            faltas.append(f"'{insumo.nome}' (disponível {disponivel:.3f}, necessário {consumo:.3f})")
+    if faltas:
+        raise HTTPException(status_code=400, detail="Insumos insuficientes para reservar: " + "; ".join(faltas))
+
     ordem = OrdemProducao(
         receita_id=receita.id,
         produto_id=receita.produto_id,
@@ -96,6 +121,13 @@ def criar_ordem_producao(
         usuario_id=usuario.id,
         observacao=dados.observacao,
     )
+    for produto_id, consumo in consumos:
+        insumo = produtos[produto_id]
+        insumo.estoque_reservado = (insumo.estoque_reservado or ZERO) + consumo   # reserva, não debita ainda
+        custo = insumo.custo_unidade_base   # prévia; recalculado na confirmação
+        ordem.itens.append(OrdemProducaoItem(
+            produto_id=produto_id, quantidade=consumo, custo_unitario=custo, subtotal=round(float(consumo) * custo, 2),
+        ))
     db.add(ordem)
     db.commit()
     db.refresh(ordem)
@@ -178,55 +210,46 @@ def atualizar_status_ordem_producao(
             detail=f"Transição de status inválida: '{status_atual}' → '{novo_status}'",
         )
 
-    # ABERTA -> CANCELADA: nada foi movimentado
+    # ABERTA -> CANCELADA: libera a reserva dos insumos (nada foi consumido; os itens reservados são descartados)
     if status_atual == "aberta" and novo_status == "cancelada":
+        reservas = {i.produto_id: i.quantidade for i in ordem.itens}
+        produtos = travar_produtos(db, reservas.keys())
+        for produto_id, quantidade in reservas.items():
+            p = produtos[produto_id]
+            p.estoque_reservado = max(ZERO, (p.estoque_reservado or ZERO) - quantidade)
+        ordem.itens.clear()
         ordem.status = "cancelada"
         ordem.cancelada_em = datetime.now()
 
-    # ABERTA -> CONFIRMADA: consome os insumos e dá entrada no produto fabricado
+    # ABERTA -> CONFIRMADA: consome o que foi RESERVADO na criação e dá entrada no produto fabricado
     elif status_atual == "aberta" and novo_status == "confirmada":
-        receita = ordem.receita
-        if not receita.ativo:
+        if not ordem.receita.ativo:
             raise HTTPException(status_code=400, detail="A receita desta ordem está inativa")
 
-        consumos = calcular_consumo(receita, ordem.quantidade)
-
-        ids = [produto_id for produto_id, _ in consumos] + [ordem.produto_id]
-        produtos = travar_produtos(db, ids)
-
-        # Se a receita ganhou um insumo novo entre a leitura e o travamento, recomeça
-        if any(pid not in produtos for pid in ids):
-            raise HTTPException(status_code=400, detail="A receita foi alterada durante a confirmação. Tente novamente")
+        reservas = {i.produto_id: i.quantidade for i in ordem.itens}
+        produtos = travar_produtos(db, list(reservas.keys()) + [ordem.produto_id])
 
         fabricado = produtos[ordem.produto_id]
         if not fabricado.ativo:
             raise HTTPException(status_code=400, detail=f"O produto '{fabricado.nome}' está inativo")
 
-        faltas = []
-        for produto_id, consumo in consumos:
+        for produto_id, consumo in reservas.items():
             insumo = produtos[produto_id]
-            if produto_id == ordem.produto_id:
-                raise HTTPException(status_code=400, detail="O produto não pode ser insumo da própria receita")
             if not insumo.ativo:
-                raise HTTPException(status_code=400, detail=f"O insumo '{insumo.nome}' está inativo")
-            if not insumo.e_insumo:
-                raise HTTPException(status_code=400, detail=f"O produto '{insumo.nome}' não está mais marcado como insumo")
-            disponivel = (insumo.estoque_atual or ZERO) - (insumo.estoque_reservado or ZERO)
-            if disponivel < consumo:
-                faltas.append(f"'{insumo.nome}' (disponível {disponivel:.3f}, necessário {consumo:.3f})")
-        if faltas:
-            raise HTTPException(status_code=400, detail="Insumos insuficientes: " + "; ".join(faltas))
+                raise HTTPException(status_code=400, detail=f"O insumo '{insumo.nome}' está inativo. Cancele a ordem para liberar a reserva")
+            # o reservado já garante o saldo; a conferência é só uma proteção contra dado inconsistente
+            if (insumo.estoque_atual or ZERO) < consumo or (insumo.estoque_reservado or ZERO) < consumo:
+                raise HTTPException(status_code=400, detail=f"Estoque reservado de '{insumo.nome}' inconsistente. Cancele e crie a ordem novamente")
 
         custo_total = 0.0
-        for produto_id, consumo in consumos:
-            insumo = produtos[produto_id]
-            custo = insumo.custo_unidade_base   # custo de 1 unidade base (embalagem ÷ fator)
-            subtotal = round(float(consumo) * custo, 2)
-            custo_total += subtotal
-            insumo.estoque_atual -= consumo
-            ordem.itens.append(OrdemProducaoItem(
-                produto_id=produto_id, quantidade=consumo, custo_unitario=custo, subtotal=subtotal,
-            ))
+        for item in ordem.itens:
+            insumo = produtos[item.produto_id]
+            custo = insumo.custo_unidade_base   # custo congelado agora (embalagem ÷ fator)
+            item.custo_unitario = custo
+            item.subtotal = round(float(item.quantidade) * custo, 2)
+            custo_total += item.subtotal
+            insumo.estoque_atual -= item.quantidade
+            insumo.estoque_reservado -= item.quantidade   # a reserva vira consumo
         fabricado.estoque_atual = (fabricado.estoque_atual or ZERO) + ordem.quantidade
 
         custo_total = round(custo_total, 2)

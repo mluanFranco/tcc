@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, Float, String, Boolean, ForeignKey, DateTime, Date, Text, Numeric, UniqueConstraint, CheckConstraint, Index
+from sqlalchemy import Column, Integer, Float, String, Boolean, ForeignKey, DateTime, Date, Text, Numeric, UniqueConstraint, CheckConstraint, Index, true as sa_true
 from decimal import Decimal
 from sqlalchemy.orm import relationship
 from database import Base
@@ -115,6 +115,8 @@ class UnidadeMedida(Base):
     id         = Column(Integer, primary_key=True, autoincrement=True)
     nome       = Column(String(50), nullable=False)   # ex: "Quilograma"
     sigla      = Column(String(10), nullable=False, unique=True)  # ex: "kg"
+    # False = unidade inteira (un, pote, caixa...): quantidades nessa unidade não podem ter casas decimais
+    fracionavel = Column(Boolean, nullable=False, default=True, server_default=sa_true())
     ativo      = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.now)
     updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)

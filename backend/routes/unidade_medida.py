@@ -2,7 +2,8 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from database import get_db
-from models import UnidadeMedida
+from models import UnidadeMedida, Produto, Receita, ReceitaItem
+from core.quantidades import tem_fracao
 from schemas.unidade_medida import UnidadeMedidaCreate, UnidadeMedidaUpdate, UnidadeMedidaResponse
 from core.security import get_current_user
 from typing import List
@@ -63,6 +64,25 @@ def buscar_unidade_medida(unidade_id: int, db: Session = Depends(get_db), _=Depe
     return unidade
 
 
+def _conferir_virar_inteira(db: Session, unidade: UnidadeMedida) -> None:
+    """Só deixa a unidade virar inteira se nada que está NESSA unidade base tiver casas decimais."""
+    problemas = []
+    for p in db.query(Produto).filter(Produto.unidade_medida_id == unidade.id).all():
+        campos = [n for n, v in (("estoque atual", p.estoque_atual), ("estoque reservado", p.estoque_reservado),
+                                 ("estoque mínimo", p.estoque_minimo), ("fator da embalagem", p.fator_embalagem)) if v is not None and tem_fracao(v)]
+        if campos:
+            problemas.append(f"'{p.nome}' ({', '.join(campos)})")
+    for ri in db.query(ReceitaItem).join(Produto, Produto.id == ReceitaItem.produto_id).filter(Produto.unidade_medida_id == unidade.id).all():
+        if tem_fracao(ri.quantidade):
+            problemas.append(f"receita {ri.receita_id} (quantidade de '{ri.produto.nome}')")
+    for r in db.query(Receita).join(Produto, Produto.id == Receita.produto_id).filter(Produto.unidade_medida_id == unidade.id).all():
+        if tem_fracao(r.rendimento):
+            problemas.append(f"receita {r.id} (rendimento)")
+    if problemas:
+        raise HTTPException(status_code=400, detail="Não é possível tornar a unidade inteira: há quantidades fracionadas em "
+                                                    + "; ".join(problemas[:8]) + ("..." if len(problemas) > 8 else "") + ". Corrija-as antes.")
+
+
 @router.put("/{unidade_id}", response_model=UnidadeMedidaResponse)
 def atualizar_unidade_medida(unidade_id: int, dados: UnidadeMedidaUpdate, db: Session = Depends(get_db), _=Depends(get_current_user)):
     unidade = db.query(UnidadeMedida).filter(UnidadeMedida.id == unidade_id).first()
@@ -75,6 +95,9 @@ def atualizar_unidade_medida(unidade_id: int, dados: UnidadeMedidaUpdate, db: Se
         raise HTTPException(status_code=400, detail=MSG_NOME)
     if "sigla" in atualizacoes and _campo_duplicado(db, UnidadeMedida.sigla, atualizacoes["sigla"], ignorar_id=unidade_id):
         raise HTTPException(status_code=400, detail=MSG_SIGLA)
+
+    if atualizacoes.get("fracionavel") is False and unidade.fracionavel:
+        _conferir_virar_inteira(db, unidade)
 
     for campo, valor in atualizacoes.items():
         setattr(unidade, campo, valor)

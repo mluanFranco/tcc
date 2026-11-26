@@ -82,7 +82,7 @@ O modelo relacional é composto por **32 tabelas**, distribuídas nos domínios 
 - **Monitoramento:** `geladeira`, `historico_manutencao`
 - **Assistente de IA:** `assistente_conversa`, `assistente_mensagem`, `assistente_log`
 
-Além das tabelas, o banco tem **15 views `v_*`** (somente leitura), que expõem os dados já com as regras de negócio aplicadas e **sem dados pessoais**. Elas são a única coisa que o Assistente de IA consegue consultar.
+Além das tabelas, o banco tem **16 views `v_*`** (somente leitura), que expõem os dados já com as regras de negócio aplicadas e **sem dados pessoais**. Elas são a única coisa que o Assistente de IA consegue consultar.
 
 > O diagrama abaixo mostra as **32 tabelas** e os **59 relacionamentos** (chaves estrangeiras) do banco. Ele é gerado direto de `backend/models.py` pelo script `backend/scripts/gerar_der.py`, então reflete o schema real. A cor do cabeçalho indica o módulo; a notação é pé de galinha (`||` um, `o|` zero ou um, `o<` muitos).
 
@@ -94,12 +94,12 @@ Além das tabelas, o banco tem **15 views `v_*`** (somente leitura), que expõem
 |---|---|
 | `id` | Chave primária |
 | `nome`, `descricao`, `categoria_id`, `subcategoria_id` | Identificação e categorização |
-| `unidade_medida_id` | Unidade **base**, em que ficam o estoque, o estoque mínimo e as receitas (ex.: L) |
+| `unidade_medida_id` | Unidade **base**, em que ficam o estoque, o estoque mínimo e as receitas (ex.: L). Se a unidade não for fracionável (`unidade_medida.fracionavel = false`: un, pote, caixa, fardo, saco, balde, galão, pacote, lata), toda quantidade nela precisa ser inteira |
 | `embalagem_unidade_id`, `fator_embalagem` | Embalagem opcional em que o produto é comprado e vendido, e quantas unidades base cabem nela (ex.: Pote = 5 L). Sem embalagem, o fator é 1 |
 | `e_insumo`, `e_vendavel` | Define se entra em receitas (insumo) e/ou pode ser vendido |
 | `preco_custo`, `porcentagem`, `preco_venda` | Precificação (por embalagem, quando houver) |
-| `estoque_atual` | Quantidade física real, atualizada pelos pedidos e pela produção (até 3 casas decimais) |
-| `estoque_reservado` | Quantidade comprometida em pedidos de venda ainda não confirmados |
+| `estoque_atual` | Quantidade física real, atualizada pelos pedidos e pela produção (até 3 casas decimais; inteira em unidades não fracionáveis) |
+| `estoque_reservado` | Quantidade comprometida em pedidos de venda ainda não confirmados e nos insumos das ordens de produção abertas |
 | `estoque_minimo` | Base do alerta de estoque baixo |
 | `ativo` | Soft delete |
 | `created_at`, `updated_at` | Auditoria |
@@ -178,7 +178,7 @@ As linhas de produto são travadas (`SELECT ... FOR UPDATE`) durante a operaçã
 
 Um produto pode ser negociado numa embalagem diferente da unidade em que é controlado, como um pote de 5 L ou um saco de 10 kg. O cadastro guarda a unidade base (L), a embalagem (Pote) e o fator (5):
 
-- **Pedidos e cotações** são digitados na embalagem (2 Pote) e aceitam fração (0,5 Pote). Cada item grava uma cópia do fator do momento (`fator`), então mudar o cadastro depois não altera pedidos antigos;
+- **Pedidos e cotações** são digitados na embalagem (2 Pote). Fração (0,5) só é aceita se a unidade da embalagem for fracionável (ex.: Kg); em unidades inteiras, como Pote ou Caixa, a quantidade precisa ser inteira. Cada item grava uma cópia do fator do momento (`fator`), então mudar o cadastro depois não altera pedidos antigos;
 - **Estoque, estoque mínimo e receitas** ficam sempre na unidade base. Toda entrada e saída converte por `quantidade × fator` em um único ponto (`core/estoque.py → quantidade_base`): comprar 4 potes soma 20 L ao estoque;
 - **Preços** de custo e de venda são por embalagem. Receitas e produção usam o custo da unidade base (`preco_custo ÷ fator`), e o custo congelado na venda é calculado com o fator do item;
 - **Cotação aprovada** é bloqueada se a embalagem do produto mudou depois que ela foi feita, para não gerar um pedido com quantidades erradas. O comparativo de fornecedores compara pelo preço na unidade base;
@@ -189,6 +189,8 @@ Um produto pode ser negociado numa embalagem diferente da unidade em que é cont
 Cada item rastreia `quantidade` (pedida) separadamente de `quantidade_recebida` (acumulado). O endpoint `POST /pedidos-compra/{id}/receber` pode ser chamado várias vezes, sempre com a quantidade **daquela entrega**. O pedido fica `pendente` até todos os itens completarem a quantidade pedida e então vira `recebido` automaticamente. O cancelamento estorna do estoque exatamente o que foi recebido, com validação para não deixar o estoque negativo. As contas a pagar nascem junto com o pedido.
 
 ### Cotações
+
+**Acesso por tipo:** além de `cotacoes.ver`/`cotacoes.editar`, a cotação de compra exige ao menos `compras.ver` e a de venda, `vendas.ver`. Quem não tem acesso a um tipo não o vê na listagem, no detalhe, no PDF nem na exportação (a API responde 404, sem revelar que a cotação existe), não pode criá-lo (403) e não vê a opção na tela. Ex.: o grupo Vendas só trabalha com cotações de venda. O comparativo de fornecedores é de compra e exige `compras.ver`.
 
 A comparação de preços considera só cotações de **compra** já respondidas (`recebida` ou `aprovada`) e itens com preço. Uma cotação de compra só pode ser aprovada depois que a resposta do fornecedor é registrada (status `recebida`, com todos os preços); a de venda, a partir de `enviada`. Nos dois casos a cotação precisa estar dentro da validade e ter forma de pagamento. A aprovação gera o pedido (compra ou venda, reservando estoque) **em uma única transação**: se o pedido não puder ser criado, por exemplo uma venda sem estoque, nada é gravado.
 
@@ -202,13 +204,17 @@ A comparação de preços considera só cotações de **compra** já respondidas
 
 ### Produção
 
-O consumo de cada insumo é `quantidade_do_item × (quantidade_a_produzir ÷ rendimento)`, **arredondado para cima** na 3ª casa decimal: na dúvida, consome-se um milésimo a mais, nunca a menos. A mesma função alimenta a simulação da receita e a ordem de produção, então os dois sempre dão o mesmo número.
+O consumo de cada insumo é `quantidade_do_item × (quantidade_a_produzir ÷ rendimento)`, **arredondado para cima** na 3ª casa decimal: na dúvida, consome-se um milésimo a mais, nunca a menos. Insumo em unidade inteira (un, pote, caixa...) é arredondado para cima **até a unidade** (1,4 pote vira 2). A mesma função alimenta a simulação da receita e a ordem de produção, então os dois sempre dão o mesmo número.
 
-Ao **confirmar** a ordem, o sistema valida insumos e produto (ativos, e insumo marcado como tal), confere o saldo disponível de cada insumo, debita os insumos, dá entrada no produto fabricado e **congela** o consumo e o custo (`custo_total` e `custo_unitario`). Ordem aberta mostra apenas uma prévia. Cancelar uma ordem confirmada devolve os insumos e retira o produto fabricado (só se ele ainda tiver saldo para isso).
+Ao **criar** a ordem, o sistema confere o saldo disponível de cada insumo e **reserva** o consumo (`estoque_reservado`), como faz o pedido de venda aberto; se faltar insumo, a ordem não é criada. As quantidades reservadas ficam gravadas nos itens da ordem e não mudam se a receita for editada depois. Ao **confirmar**, consome exatamente o reservado, dá entrada no produto fabricado e **congela** o custo (`custo_total` e `custo_unitario`). Cancelar uma ordem aberta libera a reserva; cancelar uma confirmada devolve os insumos e retira o produto fabricado (só se ele ainda tiver saldo para isso).
+
+### Unidades inteiras
+
+Cada unidade de medida diz se é **fracionável** (Kg, L, g, mL) ou **inteira** (un, pote, caixa, fardo, saco, balde, galão, pacote, lata). Em unidade inteira o backend recusa casas decimais (400) em todos os pontos onde se digita quantidade: estoque mínimo e fator da embalagem do produto, quantidades e rendimento da receita, ordem de produção, itens de pedido de venda e de compra, recebimento e cotação. A regra fica em um só lugar (`core/quantidades.py`). Uma unidade só pode passar a inteira se nenhum produto, receita ou estoque nela tiver valor quebrado.
 
 ### Exportação (PDF e Excel)
 
-As listagens de produtos, clientes, fornecedores, pedidos de venda e de compra, cotações e produção (ordens ou receitas, conforme a aba) têm o botão **Exportar** com PDF e Excel; o financeiro exporta só em Excel (títulos do filtro e as baixas deles) e o relatório de geladeiras ganhou o botão **Gerar Excel**. Como as telas filtram no navegador, a tela envia os ids das linhas visíveis, na ordem em que aparecem, e a descrição dos filtros (`POST /exportacao/{modulo}?formato=pdf|xlsx`); o financeiro usa os mesmos filtros da listagem (`GET /exportacao/financeiro`). Cada módulo declara as colunas uma vez (`core/exportacao_modulos.py`) e o mesmo molde gera os dois formatos (`core/exportacao.py`, com ReportLab e openpyxl). O Excel traz número e data como valores de verdade, filtro automático, cabeçalho congelado, linha de total com `SUBTOTAL` e uma aba extra com os itens (pedidos, cotações, ordens, receitas) ou as baixas (financeiro). Exportar cadastros em massa (produtos, clientes, fornecedores) exige `cadastros.editar`, por envolver dados pessoais; os demais módulos exigem o `.ver` do próprio módulo. O limite é de 10.000 linhas por arquivo.
+As listagens de produtos, clientes, fornecedores, pedidos de venda e de compra, cotações e produção (ordens ou receitas, conforme a aba) têm o botão **Exportar** com PDF e Excel; o financeiro exporta só em Excel (títulos do filtro e as baixas deles) e o relatório de geladeiras ganhou o botão **Gerar Excel**. Como as telas filtram no navegador, a tela envia os ids das linhas visíveis, na ordem em que aparecem, e a descrição dos filtros (`POST /exportacao/{modulo}?formato=pdf|xlsx`); o financeiro usa os mesmos filtros da listagem (`GET /exportacao/financeiro`). Cada módulo declara as colunas uma vez (`core/exportacao_modulos.py`) e o mesmo molde gera os dois formatos (`core/exportacao.py`, com ReportLab e openpyxl). O Excel traz número e data como valores de verdade, filtro automático, cabeçalho congelado, linha de total com `SUBTOTAL` e uma aba extra com os itens (pedidos, cotações, ordens, receitas) ou as baixas (financeiro). Exportar cadastros em massa (produtos, clientes, fornecedores) exige `<cadastro>.editar` (ex.: `clientes.editar`), por envolver dados pessoais; os demais módulos exigem o `.ver` do próprio módulo. O limite é de 10.000 linhas por arquivo.
 
 ### Relatórios e dashboard
 
@@ -224,8 +230,8 @@ Também existem o **fluxo de caixa realizado** (regime de caixa, pelas baixas e 
 
 ### Controle de acesso
 
-- **Catálogo de 15 permissões**, no formato `<módulo>.<ver|editar>`. Os módulos são `cadastros`, `geladeiras`, `vendas`, `compras`, `cotacoes`, `producao`, `financeiro`, `relatorios` e `assistente`. `editar` já inclui `ver`.
-- **Cadastros só tem `editar`:** a leitura dos cadastros é liberada a qualquer usuário logado, porque as telas de venda, compra e produção precisam listar produtos, clientes e fornecedores.
+- **Catálogo de 28 permissões**, no formato `<módulo>.<ver|editar>`. Os módulos são os 7 cadastros (`produtos`, `categorias`, `subcategorias`, `unidades`, `clientes`, `fornecedores`, `formas_pagamento`) e `geladeiras`, `vendas`, `compras`, `cotacoes`, `producao`, `financeiro`, `relatorios` e `assistente`. `editar` já inclui `ver`.
+- **Cada cadastro tem `ver` e `editar`:** `ver` libera a tela (menu, listagem, Nova IA) e `editar`, criar, alterar, desativar e exportar. Para os formulários de outros módulos funcionarem, a **leitura** de um cadastro pela API também é liberada a quem usa um módulo que depende dele (`LEITURA_POR_DEPENDENCIA` em `core/permissoes.py`): por exemplo, quem vê vendas lista clientes, produtos, unidades e formas de pagamento no pedido, mesmo sem a tela de Clientes. Alterar sempre exige o `editar` do próprio cadastro, e a Nova IA não usa essa leitura por dependência (`v_produtos`, `v_clientes` e `v_fornecedores` exigem o `ver` do cadastro).
 - **Permissão efetiva** = permissões do grupo (se ativo) + permissões extras do usuário. O administrador tem tudo, independentemente de grupo.
 - **Grupos padrão** criados pelas migrations: *Gerência* (tudo), *Operacional* (operação, sem financeiro e relatórios) e *Consulta* (somente leitura operacional).
 - Cada usuário pode **trocar a própria senha** (pedindo a senha atual); a troca encerra as sessões abertas em outros dispositivos.
@@ -604,10 +610,10 @@ alembic upgrade head
 
 Na interface o assistente se chama **Nova IA**. Ele responde perguntas em linguagem natural ("quais clientes estão com títulos vencidos?", "quanto gastei com manutenção?") consultando o banco por meio de um modelo de linguagem (Google Gemini). Ele foi desenhado para ser seguro mesmo que o modelo erre:
 
-1. **Banco:** o usuário MySQL `sistema_ia` só tem `SELECT` nas 15 views, em sessão somente leitura, com limite de tempo e de linhas.
+1. **Banco:** o usuário MySQL `sistema_ia` só tem `SELECT` nas 16 views, em sessão somente leitura, com limite de tempo e de linhas.
 2. **Views:** documentadas, com as regras de negócio embutidas e **sem dados pessoais** (sem CPF/CNPJ, telefone, e-mail, endereço completo, senhas ou observações livres).
 3. **Validador de SQL:** lista de permissões (*whitelist*). Só passa um único `SELECT` sobre as views; o SQL executado é **regerado a partir da árvore sintática**, nunca o texto original.
-4. **Escopo por permissão:** cada view pertence a um módulo e exige `<módulo>.ver`, então a IA só consulta o que o usuário já veria nas telas.
+4. **Escopo por permissão:** cada view pertence a um módulo e exige `<módulo>.ver`, então a IA só consulta o que o usuário já veria nas telas. As cotações ficam em duas views, uma por tipo: `v_cotacoes_compra` exige `cotacoes.ver` **e** `compras.ver`; `v_cotacoes_venda`, `cotacoes.ver` **e** `vendas.ver` (as telas de cotação seguem a mesma regra).
 
 No chat, o usuário vê só a resposta (e a tabela com o resultado, quando houver): o SQL executado **não** aparece na conversa nem na resposta da API. Toda pergunta é auditada em `assistente_log`: uma linha por ferramenta acionada (com o SQL), uma linha de "recusa" quando a própria IA declara que recusou o pedido, pela ferramenta `registrar_recusa`, com motivo de lista fechada (sem permissão, ação não permitida, tentativa indevida ou fora do escopo), uma linha de "resposta direta" quando ela responde sem consultar nada e uma linha de falha quando o provedor ou o sistema erra. A recusa declarada é um sinal para o administrador, não uma trava: a proteção dos dados continua no validador de SQL e no escopo por permissão, contados à parte como "barradas pelas travas". Só administradores a consultam, vendo também um resumo da resposta dada ao usuário, na tela **Auditoria Nova IA** (`GET /assistente/auditoria`). Há limite de perguntas por hora. O resultado das consultas é tratado como dado, nunca como instrução. O script `backend/scripts/avaliar_assistente.py` roda uma avaliação com 20 perguntas básicas e 11 avançadas, mais verificações determinísticas das camadas de defesa. O assistente fica desligado sem `GEMINI_API_KEY` ou com `IA_HABILITADO=false`.
 

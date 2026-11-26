@@ -5,8 +5,18 @@
 const TOKEN_KEY = "nova_sorvetes_token";
 const PERFIL_KEY = "nova_sorvetes_perfil";
 
-// Página inicial do usuário comum, já que dashboard.html é exclusivo de admin.
-const PAGINA_INICIAL_USUARIO_COMUM = "produtos.html";
+// Versão do formato das permissões no perfil salvo. Mudou o catálogo (ex.: "cadastros.editar" virou 7 módulos)?
+// Sobe o número: o perfil antigo é descartado e o usuário entra de novo uma única vez.
+const VERSAO_PERFIL = 2;
+
+// Página inicial de quem não vê o Dashboard: a primeira tela que o usuário pode abrir, nesta ordem.
+const PAGINAS_INICIAIS = [
+  ["produtos.ver", "produtos.html"], ["vendas.ver", "pedidos-venda.html"], ["compras.ver", "pedidos-compra.html"],
+  ["cotacoes.ver", "cotacoes.html"], ["producao.ver", "producao.html"], ["clientes.ver", "clientes.html"],
+  ["fornecedores.ver", "fornecedores.html"], ["geladeiras.ver", "geladeiras.html"], ["financeiro.ver", "financeiro.html"],
+  ["formas_pagamento.ver", "formas-pagamento.html"], ["categorias.ver", "categorias.html"],
+  ["subcategorias.ver", "subcategorias.html"], ["unidades.ver", "unidades-medida.html"], ["assistente.ver", "assistente.html"]
+];
 
 function setToken(token) {
   localStorage.setItem(TOKEN_KEY, token);
@@ -65,7 +75,7 @@ function exigirAdmin() {
     return false;
   }
   if (!isAdmin()) {
-    window.location.href = PAGINA_INICIAL_USUARIO_COMUM;
+    window.location.href = destinoPosLogin() || "login.html";
     return false;
   }
   return true;
@@ -85,12 +95,13 @@ function exigirAutenticacao() {
 // O backend continua sendo quem de fato barra o acesso (403); aqui só decidimos o que mostrar.
 
 function salvarPerfil(perfil) {
-  localStorage.setItem(PERFIL_KEY, JSON.stringify(perfil));
+  localStorage.setItem(PERFIL_KEY, JSON.stringify({ ...perfil, _versao: VERSAO_PERFIL }));
 }
 
 function getPerfil() {
   try {
-    return JSON.parse(localStorage.getItem(PERFIL_KEY));
+    const perfil = JSON.parse(localStorage.getItem(PERFIL_KEY));
+    return perfil && perfil._versao === VERSAO_PERFIL ? perfil : null;   // perfil de versão antiga: pede login de novo
   } catch {
     return null;
   }
@@ -100,6 +111,11 @@ async function carregarPerfil() {
   const perfil = await apiFetch("/usuarios/me");
   salvarPerfil(perfil);
   return perfil;
+}
+
+// Tipos de cotação que o usuário pode ver/criar: compra exige compras.ver; venda, vendas.ver (o backend aplica a mesma regra).
+function tiposCotacaoPermitidos() {
+  return ["compra", "venda"].filter(t => temPermissao(t === "compra" ? "compras.ver" : "vendas.ver"));
 }
 
 // Mesma regra do backend: admin tem tudo; "editar" de um módulo inclui o "ver" dele.
@@ -113,10 +129,12 @@ function temPermissao(codigo) {
   return codigo.endsWith(".ver") && efetivas.includes(codigo.slice(0, -4) + ".editar");
 }
 
-// Para onde o usuário vai depois do login: dashboard para quem pode ver relatórios;
-// os demais caem em Produtos (cadastros são de leitura livre para qualquer usuário logado).
+// Para onde o usuário vai depois do login (e quando abre uma tela sem acesso): dashboard para quem vê relatórios;
+// os demais, a primeira tela permitida. Sem nenhuma tela: null (o login avisa e não entra).
 function destinoPosLogin() {
-  return temPermissao("relatorios.ver") ? "dashboard.html" : PAGINA_INICIAL_USUARIO_COMUM;
+  if (temPermissao("relatorios.ver")) return "dashboard.html";
+  const pagina = PAGINAS_INICIAIS.find(([codigo]) => temPermissao(codigo));
+  return pagina ? pagina[1] : null;
 }
 
 // Protege páginas que exigem uma permissão (ex.: exigirPermissao("relatorios.ver")).
@@ -133,7 +151,13 @@ function exigirPermissao(codigo) {
     return false;
   }
   if (!temPermissao(codigo)) {
-    window.location.href = destinoPosLogin();
+    const destino = destinoPosLogin();
+    if (destino && !window.location.pathname.endsWith("/" + destino)) {
+      window.location.href = destino;
+    } else {   // nenhuma tela permitida: volta ao login, que explica
+      clearToken();
+      window.location.href = "login.html";
+    }
     return false;
   }
   return true;
@@ -164,4 +188,4 @@ async function alterarSenha(senhaAtual, senhaNova) {
 function logout() {
   clearToken();
   window.location.href = "login.html";
-}
+}

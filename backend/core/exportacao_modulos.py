@@ -482,9 +482,9 @@ def geladeiras(db: Session, *, status: Optional[str], inicio: date, fim: date) -
 
 # módulo -> (função, permissão para exportar, formatos)
 MODULOS = {
-    "produtos":        (produtos, "cadastros.editar"),
-    "clientes":        (clientes, "cadastros.editar"),
-    "fornecedores":    (fornecedores, "cadastros.editar"),
+    "produtos":        (produtos, "produtos.editar"),
+    "clientes":        (clientes, "clientes.editar"),
+    "fornecedores":    (fornecedores, "fornecedores.editar"),
     "pedidos-venda":   (pedidos_venda, "vendas.ver"),
     "pedidos-compra":  (pedidos_compra, "compras.ver"),
     "cotacoes":        (cotacoes, "cotacoes.ver"),

@@ -18,6 +18,7 @@ function criarFormularioReceita(raiz, { modo = "criar", receita = null, aoMudar 
   let produtosTodos = [];
   let produtosPorId = {};
   let siglasPorUnidade = {};
+  let unidadesInteiras = new Set();   // ids das unidades que não aceitam fração (un, pote, caixa...)
   let produtoFabricadoId = editando ? receita.produto_id : null;
   let itens = [];                 // [{ uid, produto_id, quantidade, erro }]
   let proximoUid = 1;
@@ -98,6 +99,8 @@ function criarFormularioReceita(raiz, { modo = "criar", receita = null, aoMudar 
   const arredondar2 = (n) => Math.round((n + Number.EPSILON) * 100) / 100;
   const itemPorUid = (uid) => itens.find(i => i.uid === Number(uid));
   const siglaDe = (produto) => siglasPorUnidade[produto?.unidade_medida_id] || "";
+  const eInteira = (produto) => Boolean(produto) && unidadesInteiras.has(produto.unidade_medida_id);
+  const textoInteira = (produto) => `A unidade ${siglaDe(produto) || ""} de '${produto.nome}' é inteira: use um número sem casas decimais.`.replace("  ", " ");
 
   function casasDecimaisOk(valor, casas) {
     const fator = 10 ** casas;
@@ -142,6 +145,7 @@ function criarFormularioReceita(raiz, { modo = "criar", receita = null, aoMudar 
   function atualizarSiglaRendimento() {
     const p = produtosPorId[produtoFabricadoId];
     el.siglaRendimento.textContent = p ? siglaDe(p) : "";
+    el.rendimento.step = eInteira(p) ? "1" : "0.001";
     el.rotuloUnitario.textContent = p && siglaDe(p) ? `Custo por ${siglaDe(p)}` : "Custo por unidade";
   }
 
@@ -222,11 +226,15 @@ function criarFormularioReceita(raiz, { modo = "criar", receita = null, aoMudar 
     const produto = produtosPorId[item.produto_id];
 
     tr.querySelector("[data-sigla]").textContent = produto ? siglaDe(produto) : "";
+    tr.querySelector('[data-campo="quantidade"]').step = eInteira(produto) ? "1" : "0.001";
     tr.querySelector("[data-custo]").textContent = produto ? formatarMoeda(custoDoItem(item)) : "—";
     tr.querySelector("[data-subtotal]").textContent = produto && Number(item.quantidade) > 0 ? formatarMoeda(subtotalDoItem(item)) : "—";
 
     // aviso fixo para insumo que deixou de servir; senão o erro de validação (se houver)
     let mensagem = item.erro;
+    if (!mensagem && eInteira(produto) && item.quantidade !== "" && !Number.isInteger(Number(item.quantidade))) {
+      mensagem = textoInteira(produto);
+    }
     if (!mensagem && produto && !insumoApto(produto)) {
       mensagem = produto.ativo ? "Este produto não está mais marcado como insumo: remova-o ou troque por outro." : "Este insumo está inativo: remova-o ou troque por outro.";
     }
@@ -321,6 +329,7 @@ function criarFormularioReceita(raiz, { modo = "criar", receita = null, aoMudar 
     let erroRendimento = "";
     if (el.rendimento.value === "" || !(rendimento > 0)) erroRendimento = "Informe um rendimento maior que zero.";
     else if (!casasDecimaisOk(rendimento, 3)) erroRendimento = "O rendimento aceita no máximo 3 casas decimais.";
+    else if (eInteira(produtosPorId[produtoFabricadoId]) && !Number.isInteger(rendimento)) erroRendimento = textoInteira(produtosPorId[produtoFabricadoId]);
     el.grupoRendimento.classList.toggle("invalido", Boolean(erroRendimento));
     if (erroRendimento) {
       el.erroRendimento.textContent = erroRendimento;
@@ -340,6 +349,7 @@ function criarFormularioReceita(raiz, { modo = "criar", receita = null, aoMudar 
       else if (!insumoApto(produto)) { erro = produto && produto.ativo ? "Este produto não está mais marcado como insumo: remova-o ou troque por outro." : "Este insumo está inativo: remova-o ou troque por outro."; campo = "produto_id"; }
       else if (item.quantidade === "" || !(qtd > 0)) { erro = "Informe uma quantidade maior que zero."; campo = "quantidade"; }
       else if (!casasDecimaisOk(qtd, 3)) { erro = "A quantidade aceita no máximo 3 casas decimais."; campo = "quantidade"; }
+      else if (eInteira(produto) && !Number.isInteger(qtd)) { erro = textoInteira(produto); campo = "quantidade"; }
 
       item.erro = erro;
       atualizarLinha(tr);
@@ -391,6 +401,7 @@ function criarFormularioReceita(raiz, { modo = "criar", receita = null, aoMudar 
       produtosTodos = prods;
       produtosPorId = Object.fromEntries(prods.map(p => [p.id, p]));
       siglasPorUnidade = Object.fromEntries(unidades.map(u => [u.id, u.sigla]));
+      unidadesInteiras = new Set(unidades.filter(u => u.fracionavel === false).map(u => u.id));
 
       montarProdutoFabricado(new Set(receitas.map(r => r.produto_id)));
       el.adicionar.disabled = false;

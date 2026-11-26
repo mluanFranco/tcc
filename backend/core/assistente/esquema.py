@@ -2,8 +2,10 @@
 
 - As views guardam as regras de negócio (por exemplo, "venda só conta quando confirmada"), então a IA não precisa adivinhá-las.
 - Não há CPF/CNPJ, telefone, e-mail, endereço completo, senhas nem observações livres.
-- 'modulo' diz qual permissão de leitura (<modulo>.ver) o usuário precisa para consultar a view.
-  modulo=None (cadastros): a leitura é livre para qualquer usuário logado, como nas rotas.
+- 'modulo' diz qual permissão de leitura (<modulo>.ver) o usuário precisa para consultar a view; 'modulo_extra', quando houver,
+  é uma segunda permissão exigida JUNTO (ex.: cotações de compra = cotacoes.ver + compras.ver).
+  Os cadastros exigem o .ver do próprio cadastro (produtos.ver, clientes.ver, fornecedores.ver): a IA só consulta
+  o que o usuário pode ver na tela daquele cadastro (a leitura 'por dependência' dos formulários não vale aqui).
 - A migration cria as views; um teste compara as colunas deste arquivo com as do banco (nada fica sem documentação).
 """
 from dataclasses import dataclass
@@ -23,6 +25,12 @@ class ViewInfo:
     modulo: Optional[str]
     descricao: str
     colunas: Tuple[Coluna, ...]
+    modulo_extra: Optional[str] = None
+
+    @property
+    def modulos(self) -> Tuple[str, ...]:
+        """Todos os módulos cujo .ver é exigido (vazio = leitura livre)."""
+        return tuple(m for m in (self.modulo, self.modulo_extra) if m)
 
 
 def _c(nome, tipo, descricao=""):
@@ -32,7 +40,7 @@ def _c(nome, tipo, descricao=""):
 _VENDA_STATUS = "aberto (reserva estoque), confirmado (é venda de fato, baixa estoque e gera títulos a receber) ou cancelado"
 
 VIEWS: Dict[str, ViewInfo] = {v.nome: v for v in (
-    ViewInfo("v_produtos", None,
+    ViewInfo("v_produtos", "produtos",
              "Produtos e insumos, com estoque. Estoque baixo = estoque_atual <= estoque_minimo (coluna abaixo_do_minimo). "
              "Estoques ficam SEMPRE na unidade base (coluna unidade). Produto com embalagem (ex.: Pote de 5 L) é comprado e "
              "vendido na embalagem: 1 embalagem = fator_embalagem unidades base, e os preços são da embalagem.", (
@@ -43,15 +51,15 @@ VIEWS: Dict[str, ViewInfo] = {v.nome: v for v in (
         _c("e_insumo", "booleano", "1 = matéria-prima usada na produção"), _c("e_vendavel", "booleano", "1 = pode ser vendido"),
         _c("preco_custo", "decimal", "da embalagem (custo da unidade base = preco_custo / fator_embalagem)"),
         _c("preco_venda", "decimal", "da embalagem; pode ser nulo em insumos"),
-        _c("estoque_atual", "decimal"), _c("estoque_reservado", "decimal", "separado por vendas em aberto"),
+        _c("estoque_atual", "decimal"), _c("estoque_reservado", "decimal", "separado por vendas em aberto e por ordens de produção abertas (insumos)"),
         _c("estoque_disponivel", "decimal", "estoque_atual - estoque_reservado"), _c("estoque_minimo", "decimal"),
         _c("abaixo_do_minimo", "booleano", "1 = estoque_atual <= estoque_minimo"), _c("ativo", "booleano", "0 = produto desativado"),
     )),
-    ViewInfo("v_clientes", None, "Clientes (sem documento, telefone, e-mail ou endereço completo).", (
+    ViewInfo("v_clientes", "clientes", "Clientes (sem documento, telefone, e-mail ou endereço completo).", (
         _c("id", "inteiro"), _c("nome", "texto"), _c("tipo", "texto", "PF ou PJ"),
         _c("cidade", "texto", "do endereço principal"), _c("uf", "texto", "do endereço principal"), _c("ativo", "booleano"),
     )),
-    ViewInfo("v_fornecedores", None, "Fornecedores (sem CNPJ, telefone, e-mail ou endereço completo).", (
+    ViewInfo("v_fornecedores", "fornecedores", "Fornecedores (sem CNPJ, telefone, e-mail ou endereço completo).", (
         _c("id", "inteiro"), _c("nome", "texto"), _c("cidade", "texto"), _c("uf", "texto"), _c("ativo", "booleano"),
     )),
     ViewInfo("v_geladeiras", "geladeiras", "Geladeiras (equipamentos) alocadas em clientes.", (
@@ -103,15 +111,22 @@ VIEWS: Dict[str, ViewInfo] = {v.nome: v for v in (
         _c("quantidade_base", "decimal", "quantidade x fator, na unidade base"),
         _c("preco_unitario", "decimal", "da embalagem"), _c("subtotal", "decimal"),
     )),
-    ViewInfo("v_cotacao_itens", "cotacoes", "Itens de cotações de compra (parte = fornecedor) e de venda (parte = cliente). "
-             "Status: rascunho, enviada, recebida, aprovada ou recusada.", (
-        _c("cotacao_id", "inteiro"), _c("tipo", "texto", "compra ou venda"), _c("data_cotacao", "data_hora"), _c("validade", "data"),
-        _c("status", "texto"), _c("parte", "texto", "fornecedor (compra) ou cliente (venda)"), _c("produto_id", "inteiro"),
-        _c("produto", "texto"), _c("quantidade", "decimal", "na embalagem do produto"),
-        _c("fator", "decimal", "unidades base por embalagem neste item"),
+    ViewInfo("v_cotacoes_compra", "cotacoes", "Itens de cotações de COMPRA (pedidas a fornecedores), um por linha. "
+             "Status: rascunho, enviada, recebida (fornecedor respondeu), aprovada (gerou pedido de compra) ou recusada.", (
+        _c("cotacao_id", "inteiro"), _c("data_cotacao", "data_hora"), _c("validade", "data"), _c("status", "texto"),
+        _c("fornecedor_id", "inteiro"), _c("fornecedor", "texto"), _c("produto_id", "inteiro"), _c("produto", "texto"),
+        _c("quantidade", "decimal", "na embalagem do produto"), _c("fator", "decimal", "unidades base por embalagem neste item"),
         _c("preco_unitario", "decimal", "da embalagem; nulo se o fornecedor ainda não respondeu"),
-        _c("desconto", "decimal"), _c("subtotal", "decimal", "nulo se não houver preço"),
-    )),
+        _c("subtotal", "decimal", "nulo se não houver preço"),
+    ), modulo_extra="compras"),
+    ViewInfo("v_cotacoes_venda", "cotacoes", "Itens de cotações de VENDA (propostas a clientes), um por linha. "
+             "Status: rascunho, enviada, aprovada (gerou pedido de venda) ou recusada.", (
+        _c("cotacao_id", "inteiro"), _c("data_cotacao", "data_hora"), _c("validade", "data"), _c("status", "texto"),
+        _c("cliente_id", "inteiro"), _c("cliente", "texto"), _c("produto_id", "inteiro"), _c("produto", "texto"),
+        _c("quantidade", "decimal", "na embalagem do produto"), _c("fator", "decimal", "unidades base por embalagem neste item"),
+        _c("preco_unitario", "decimal", "da embalagem"), _c("desconto", "decimal", "em reais, no item"),
+        _c("subtotal", "decimal", "quantidade x preço - desconto"),
+    ), modulo_extra="vendas"),
     ViewInfo("v_receitas", "producao", "Receitas de produção: uma linha por insumo de cada receita.", (
         _c("receita_id", "inteiro"), _c("produto_final", "texto", "o que a receita fabrica"), _c("rendimento", "decimal", "quanto a receita rende"),
         _c("insumo", "texto"), _c("quantidade", "decimal", "quantidade do insumo para o rendimento"), _c("ativa", "booleano"),

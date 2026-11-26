@@ -2,7 +2,7 @@
 Exportação das listagens em PDF e Excel.
 
 - POST /exportacao/{modulo}?formato=pdf|xlsx  -> a tela manda os ids das linhas visíveis (na ordem da tela) e a
-  descrição dos filtros; produtos, clientes e fornecedores exigem cadastros.editar (dados pessoais em massa, LGPD);
+  descrição dos filtros; produtos, clientes e fornecedores exigem o .editar do cadastro (dados pessoais em massa, LGPD);
   os demais, o ".ver" do módulo. É um POST só porque a lista de ids pode ser grande: nada é alterado.
 - GET /exportacao/financeiro (só Excel) -> mesmos filtros da listagem de títulos (financeiro.ver).
 - GET /geladeiras/relatorio/xlsx -> Excel do relatório de patrimônio (mesmos filtros do PDF; geladeiras.ver).
@@ -18,11 +18,11 @@ from sqlalchemy.orm import Session, joinedload
 
 from core import exportacao_modulos as M
 from core.exportacao import gerar_pdf, gerar_xlsx
-from core.permissoes import checar_permissao, exigir
+from core.permissoes import checar_permissao, exigir, tipos_cotacao_permitidos
 from core.relatorios import resolver_periodo
 from core.security import get_current_user
 from database import get_db
-from models import CategoriaFinanceira, TituloFinanceiro
+from models import CategoriaFinanceira, Cotacao, TituloFinanceiro
 from routes.financeiro import _aplicar_filtros, filtros_titulos
 
 router = APIRouter(tags=["Exportação"])
@@ -57,6 +57,10 @@ def exportar_listagem(
     """Exporta as linhas que a tela está mostrando (com os filtros aplicados) em PDF ou Excel. Não altera nada."""
     funcao, permissao = M.MODULOS[modulo]
     checar_permissao(request, db, usuario, permissao)
+    if modulo == "cotacoes":   # só exporta cotações dos tipos que o usuário pode ver
+        permitidos = tipos_cotacao_permitidos(request, db, usuario)
+        visiveis = {i for (i,) in db.query(Cotacao.id).filter(Cotacao.id.in_(dados.ids), Cotacao.tipo.in_(permitidos)).all()}
+        dados.ids = [i for i in dados.ids if i in visiveis]
     relatorio = funcao(db, dados.ids, dados.filtros, dados.aba)
     conteudo, nome = (gerar_pdf if formato == "pdf" else gerar_xlsx)(relatorio, usuario.nome)
     return _arquivo(conteudo, nome, formato)

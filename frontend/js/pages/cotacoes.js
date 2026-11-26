@@ -26,7 +26,16 @@ document.addEventListener("DOMContentLoaded", async () => {
     tabelaComparativoCorpo: $("tabela-comparativo-corpo"), estadoVazioComparativo: $("estado-vazio-comparativo")
   };
 
-  el.botaoIncluir.hidden = !podeEditar;
+  // tipos que o usuário pode ver: o filtro só oferece esses; o comparativo de fornecedores é de compra
+  const tipos = tiposCotacaoPermitidos();
+  [...el.filtroTipo.options].forEach(o => { if (o.value && !tipos.includes(o.value)) o.remove(); });
+  if (tipos.length === 1) el.filtroTipo.options[0].textContent = tipos[0] === "venda" ? "Venda" : "Compra";
+  el.abaComparativo.hidden = !tipos.includes("compra");
+  if (!tipos.includes("compra")) {   // "recebida" (fornecedor respondeu) só existe em cotação de compra
+    const abaRecebida = document.querySelector('.aba-status[data-status="recebida"]');
+    if (abaRecebida) abaRecebida.hidden = true;
+  }
+  el.botaoIncluir.hidden = !podeEditar || tipos.length === 0;
 
   const ROTULOS_STATUS = { rascunho: "Rascunho", enviada: "Enviada", recebida: "Recebida", aprovada: "Aprovada", recusada: "Recusada" };
   const STATUS_EM_ABERTO = ["rascunho", "enviada", "recebida"];
@@ -113,8 +122,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   async function carregarNomes() {
     const [rForn, rCli] = await Promise.allSettled([
-      fornecedorService.listar({ incluirInativos: true }),
-      clienteService.listar({ incluirInativos: true })
+      // só busca a parte dos tipos que o usuário vê (quem não vê compras não lê fornecedores)
+      tipos.includes("compra") ? fornecedorService.listar({ incluirInativos: true }) : Promise.resolve([]),
+      tipos.includes("venda") ? clienteService.listar({ incluirInativos: true }) : Promise.resolve([])
     ]);
     if (rForn.status === "fulfilled") nomesFornecedor = Object.fromEntries(rForn.value.map(f => [f.id, f.nome]));
     if (rCli.status === "fulfilled") nomesCliente = Object.fromEntries(rCli.value.map(c => [c.id, c.nome]));
@@ -232,7 +242,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     el.abaComparativo.classList.toggle("aba-secundaria--ativa", !lista);
     el.painelLista.hidden = !lista;
     el.painelComparativo.hidden = lista;
-    el.botaoIncluir.hidden = !(lista && podeEditar);
+    el.botaoIncluir.hidden = !(lista && podeEditar && tipos.length > 0);
   }
 
   el.abaLista.addEventListener("click", () => trocarAba("lista"));

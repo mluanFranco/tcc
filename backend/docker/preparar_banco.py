@@ -77,6 +77,13 @@ def preparar_usuario_ia() -> None:
             cur.execute("ALTER USER %s@'%%' IDENTIFIED BY %s WITH MAX_USER_CONNECTIONS 5", (ia_usuario, ia_senha))
             for view in views:
                 cur.execute(f"GRANT SELECT ON `{DB_NAME}`.`{view}` TO %s@'%%'", (ia_usuario,))
+            # O MySQL não apaga o GRANT quando a view é apagada (ex.: v_cotacao_itens virou duas views): retira o que sobrou,
+            # para o sistema_ia ter SELECT exatamente nas views que existem.
+            cur.execute("SELECT Table_name FROM mysql.tables_priv WHERE User = %s AND Db = %s", (ia_usuario, DB_NAME))
+            for (sobra,) in cur.fetchall():
+                if sobra not in views:
+                    cur.execute(f"REVOKE ALL PRIVILEGES ON `{DB_NAME}`.`{sobra}` FROM %s@'%%'", (ia_usuario,))
+                    log(f"Usuário da IA: permissão retirada de '{sobra}' (não existe mais).")
             cur.execute("FLUSH PRIVILEGES")
         log(f"Usuário da IA '{ia_usuario}' pronto: SELECT em {len(views)} views.")
     finally:

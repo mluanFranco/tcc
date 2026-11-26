@@ -21,8 +21,12 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (isAuthenticated()) {
     try {
       if (!getPerfil()) await carregarPerfil();
-      window.location.href = destinoPosLogin();
-      return;
+      const destino = destinoPosLogin();
+      if (destino) {
+        window.location.href = destino;
+        return;
+      }
+      clearToken();
     } catch {
       clearToken();
     }
@@ -77,7 +81,14 @@ document.addEventListener("DOMContentLoaded", async () => {
     try {
       await login(email, senha);
       await carregarPerfil();
-      window.location.href = destinoPosLogin();
+      const destino = destinoPosLogin();
+      if (!destino) {
+        clearToken();
+        exibirErro("Seu usuário ainda não tem acesso a nenhuma tela. Peça ao administrador para liberar as permissões.");
+        definirCarregando(false);
+        return;
+      }
+      window.location.href = destino;
     } catch (erro) {
       clearToken();   // não deixa um token sem perfil para trás
       // 401/403: credenciais ou usuário inativo (a mensagem vem do backend); 0: servidor fora do ar.

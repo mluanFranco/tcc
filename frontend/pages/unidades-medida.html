@@ -48,6 +48,7 @@
             <tr>
               <th>Nome</th>
               <th>Sigla</th>
+              <th>Quantidade</th>
               <th>Status</th>
               <th><span class="sr-only">Ações</span></th>
             </tr>
@@ -88,6 +89,17 @@
             <span class="campo-erro-msg">Informe a sigla.</span>
           </div>
 
+          <div class="campo-form">
+            <label>Tipo de quantidade</label>
+            <div class="campo-checkbox-grupo">
+              <label class="campo-checkbox">
+                <input type="checkbox" id="campo-fracionavel" checked>
+                <span>Aceita quantidade fracionada (ex.: 1,5 Kg)</span>
+              </label>
+            </div>
+            <span class="dica-campo">Desmarque para unidades contadas inteiras (un, pote, caixa): o sistema passa a recusar casas decimais nelas.</span>
+          </div>
+
         </div>
 
         <div class="modal__rodape">
@@ -117,6 +129,10 @@
           <div class="visualizacao-item">
             <span class="visualizacao-label">Sigla</span>
             <span class="visualizacao-valor" id="vis-sigla">—</span>
+          </div>
+          <div class="visualizacao-item">
+            <span class="visualizacao-label">Quantidade</span>
+            <span class="visualizacao-valor" id="vis-fracionavel">—</span>
           </div>
           <div class="visualizacao-item">
             <span class="visualizacao-label">Status</span>

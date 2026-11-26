@@ -63,8 +63,9 @@ Explique o que foi consultado e oriente-o a ler a tabela; nunca invente valores.
 
 
 _ROTULOS_MODULOS = {
-    "geladeiras": "geladeiras e manutenções", "vendas": "vendas", "relatorios": "relatórios e margem de lucro",
-    "compras": "compras", "cotacoes": "cotações", "producao": "produção e receitas", "financeiro": "financeiro (títulos a pagar/receber e baixas)",
+    "produtos": "cadastro de produtos (estoque e preços)", "clientes": "cadastro de clientes", "fornecedores": "cadastro de fornecedores",
+    "geladeiras": "geladeiras e manutenções", "vendas": "vendas (pedidos e cotações de venda)", "relatorios": "relatórios e margem de lucro",
+    "compras": "compras (pedidos e cotações de compra)", "cotacoes": "cotações", "producao": "produção e receitas", "financeiro": "financeiro (títulos a pagar/receber e baixas)",
 }
 
 
@@ -72,8 +73,9 @@ def modulos_sem_acesso(efetivas: Set[str]) -> List[str]:
     """Rótulos dos módulos que o usuário não pode ver (só os nomes: nenhum dado). Vazio para quem vê tudo."""
     modulos = []
     for v in VIEWS.values():
-        if v.modulo and v.modulo not in modulos and not tem_permissao(efetivas, f"{v.modulo}.ver"):
-            modulos.append(v.modulo)
+        for m in v.modulos:
+            if m not in modulos and not tem_permissao(efetivas, f"{m}.ver"):
+                modulos.append(m)
     return [_ROTULOS_MODULOS.get(m, m) for m in modulos]
 
 

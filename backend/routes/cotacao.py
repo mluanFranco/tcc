@@ -10,8 +10,9 @@ from schemas.cotacao import (
 from schemas.pedido_venda import PedidoVendaCreate, ItemPedidoVendaCreate
 from schemas.pedido_compra import PedidoCompraCreate, ItemPedidoCompraCreate
 from core.security import get_current_user
+from core.quantidades import exigir_inteiro, unidade_negociacao
 from core.pedidos import registrar_pedido_venda, registrar_pedido_compra
-from core.permissoes import checar_permissao
+from core.permissoes import checar_permissao, exigir_tipo_cotacao, tipos_cotacao_permitidos
 from typing import List, Optional
 from datetime import date, datetime, time
 from decimal import Decimal
@@ -48,6 +49,12 @@ def _travar_cotacao(db: Session, cotacao_id: int) -> Cotacao:
     )
     if not cotacao:
         raise HTTPException(status_code=404, detail="Cotação não encontrada")
+    return cotacao
+
+
+def _travar_cotacao_permitida(db: Session, cotacao_id: int, request: Request, usuario: Usuario) -> Cotacao:
+    cotacao = _travar_cotacao(db, cotacao_id)
+    exigir_tipo_cotacao(request, db, usuario, cotacao.tipo)   # tipo sem acesso = 404, como se não existisse
     return cotacao
 
 
@@ -96,6 +103,7 @@ def _validar_itens(db: Session, tipo: str, itens) -> dict:
             raise HTTPException(status_code=404, detail=f"Produto {item.produto_id} não encontrado")
         if not produto.ativo:
             raise HTTPException(status_code=400, detail=f"O produto '{produto.nome}' está inativo")
+        exigir_inteiro(item.quantidade, unidade_negociacao(produto), f"Quantidade de '{produto.nome}'")
         if tipo == "venda" and item.preco_unitario is None:
             raise HTTPException(status_code=400, detail=f"Em cotação de venda o item '{produto.nome}' precisa de preço")
         if tipo == "compra" and item.desconto != 0:
@@ -124,9 +132,11 @@ def _observacao_do_pedido(cotacao: Cotacao) -> str:
 @router.post("/", response_model=CotacaoResponse)
 def criar_cotacao(
     dados: CotacaoCreate,
+    request: Request,
     db: Session = Depends(get_db),
     usuario: Usuario = Depends(get_current_user),
 ):
+    exigir_tipo_cotacao(request, db, usuario, dados.tipo, ocultar=False)
     _validar_parte(db, dados.tipo, dados.fornecedor_id, dados.cliente_id)
     _validar_forma(db, dados.forma_pagamento_id)
     _validar_endereco(db, dados.cliente_id, dados.endereco_entrega_id)
@@ -160,14 +170,16 @@ def criar_cotacao(
 
 @router.get("/", response_model=List[CotacaoResponse])
 def listar_cotacoes(
+    request: Request,
     tipo: Optional[str] = None,
     status: Optional[str] = None,
     fornecedor_id: Optional[int] = None,
     cliente_id: Optional[int] = None,
     db: Session = Depends(get_db),
-    _=Depends(get_current_user),
+    usuario: Usuario = Depends(get_current_user),
 ):
-    query = db.query(Cotacao)
+    # só os tipos que o usuário pode ver (ex.: grupo Vendas não recebe cotações de compra)
+    query = db.query(Cotacao).filter(Cotacao.tipo.in_(tipos_cotacao_permitidos(request, db, usuario)))
     if tipo:
         query = query.filter(Cotacao.tipo == tipo)
     if status:
@@ -182,14 +194,16 @@ def listar_cotacoes(
 @router.get("/comparativo/{produto_id}", response_model=List[ComparativoFornecedor])
 def comparar_precos_produto(
     produto_id: int,
+    request: Request,
     db: Session = Depends(get_db),
-    _=Depends(get_current_user),
+    usuario: Usuario = Depends(get_current_user),
 ):
     """
     Compara o preço de um produto entre fornecedores, do menor para o maior.
     Considera só cotações de COMPRA já respondidas (recebida ou aprovada) e itens com preço:
     rascunhos, cotações ainda sem resposta e recusadas não entram na comparação.
     """
+    exigir_tipo_cotacao(request, db, usuario, "compra", ocultar=False)   # compara fornecedores: é assunto de compras
     produto = db.query(Produto).filter(Produto.id == produto_id).first()
     if not produto:
         raise HTTPException(status_code=404, detail="Produto não encontrado")
@@ -220,10 +234,11 @@ def comparar_precos_produto(
 
 
 @router.get("/{cotacao_id}", response_model=CotacaoResponse)
-def buscar_cotacao(cotacao_id: int, db: Session = Depends(get_db), _=Depends(get_current_user)):
+def buscar_cotacao(cotacao_id: int, request: Request, db: Session = Depends(get_db), usuario: Usuario = Depends(get_current_user)):
     cotacao = db.query(Cotacao).filter(Cotacao.id == cotacao_id).first()
     if not cotacao:
         raise HTTPException(status_code=404, detail="Cotação não encontrada")
+    exigir_tipo_cotacao(request, db, usuario, cotacao.tipo)
     return cotacao
 
 
@@ -231,10 +246,11 @@ def buscar_cotacao(cotacao_id: int, db: Session = Depends(get_db), _=Depends(get
 def atualizar_cotacao(
     cotacao_id: int,
     dados: CotacaoUpdate,
+    request: Request,
     db: Session = Depends(get_db),
-    _=Depends(get_current_user),
+    usuario: Usuario = Depends(get_current_user),
 ):
-    cotacao = _travar_cotacao(db, cotacao_id)
+    cotacao = _travar_cotacao_permitida(db, cotacao_id, request, usuario)
     if cotacao.status not in STATUS_EDITAVEIS:
         raise HTTPException(status_code=400, detail=f"Cotação '{cotacao.status}' não pode mais ser alterada")
 
@@ -293,10 +309,11 @@ def atualizar_cotacao(
 def atualizar_status_cotacao(
     cotacao_id: int,
     dados: CotacaoUpdateStatus,
+    request: Request,
     db: Session = Depends(get_db),
-    _=Depends(get_current_user),
+    usuario: Usuario = Depends(get_current_user),
 ):
-    cotacao = _travar_cotacao(db, cotacao_id)
+    cotacao = _travar_cotacao_permitida(db, cotacao_id, request, usuario)
 
     novo = dados.status
     if novo not in STATUS_VALIDOS:
@@ -332,7 +349,7 @@ def aprovar_cotacao(
     cotação de compra gera pedido de compra; cotação de venda gera pedido de venda (reservando estoque).
     Se o pedido não puder ser criado (por exemplo, venda sem estoque), nada é gravado e a cotação continua como estava.
     """
-    cotacao = _travar_cotacao(db, cotacao_id)
+    cotacao = _travar_cotacao_permitida(db, cotacao_id, request, usuario)
 
     # A aprovação cria um pedido: além de editar cotações, o usuário precisa poder editar o módulo do pedido gerado
     checar_permissao(request, db, usuario, "compras.editar" if cotacao.tipo == "compra" else "vendas.editar")
@@ -402,8 +419,8 @@ def aprovar_cotacao(
 
 
 @router.delete("/{cotacao_id}")
-def excluir_cotacao(cotacao_id: int, db: Session = Depends(get_db), _=Depends(get_current_user)):
-    cotacao = _travar_cotacao(db, cotacao_id)
+def excluir_cotacao(cotacao_id: int, request: Request, db: Session = Depends(get_db), usuario: Usuario = Depends(get_current_user)):
+    cotacao = _travar_cotacao_permitida(db, cotacao_id, request, usuario)
     if cotacao.pedido_venda_id or cotacao.pedido_compra_id:
         raise HTTPException(
             status_code=400,

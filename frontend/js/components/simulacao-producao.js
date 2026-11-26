@@ -34,13 +34,13 @@ function resumoDaSimulacao(sim) {
   const faltando = sim.itens.filter(i => !i.suficiente).map(i => i.produto_nome);
   const inativos = sim.itens.filter(i => !i.insumo_ativo).map(i => i.produto_nome);
   if (!sim.receita_ativa) {
-    return { classe: "falta", texto: "A receita está inativa: reative-a para poder confirmar a produção." };
+    return { classe: "falta", texto: "A receita está inativa: reative-a para poder produzir." };
   }
   if (inativos.length) {
-    return { classe: "falta", texto: `Insumo inativo na receita: ${inativos.join(", ")}. Corrija a receita antes de confirmar.` };
+    return { classe: "falta", texto: `Insumo inativo na receita: ${inativos.join(", ")}. Corrija a receita antes de produzir.` };
   }
   if (faltando.length) {
-    return { classe: "falta", texto: `Estoque insuficiente de: ${faltando.join(", ")}. A ordem pode ser criada, mas só poderá ser confirmada quando houver estoque.` };
+    return { classe: "falta", texto: `Estoque insuficiente de: ${faltando.join(", ")}. A ordem de produção só pode ser criada quando houver estoque, porque ela reserva os insumos.` };
   }
   return { classe: "ok", texto: "Há estoque suficiente de todos os insumos para esta produção." };
 }

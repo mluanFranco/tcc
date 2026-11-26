@@ -9,7 +9,8 @@
 // Depende de formatadores.js (escaparHtml).
 
 const ROTULO_MODULO_PERMISSAO = {
-  cadastros: "Cadastros", geladeiras: "Geladeiras", vendas: "Vendas", compras: "Compras", cotacoes: "Cotações",
+  produtos: "Produtos", categorias: "Categorias", subcategorias: "Subcategorias", unidades: "Unidades de Medida",
+  clientes: "Clientes", fornecedores: "Fornecedores", formas_pagamento: "Formas de Pagamento", geladeiras: "Geladeiras", vendas: "Vendas", compras: "Compras", cotacoes: "Cotações",
   producao: "Produção", financeiro: "Financeiro", relatorios: "Relatórios", assistente: "Assistente de IA"
 };
 const ROTULO_ACAO_PERMISSAO = { ver: "Visualizar", editar: "Criar e alterar" };

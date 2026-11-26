@@ -6,10 +6,10 @@ let abaAtivaUnidade = "ativos";
 let unidadeEmEdicaoId = null;
 
 document.addEventListener("DOMContentLoaded", async () => {
-  if (!exigirAutenticacao()) return;
+  if (!exigirPermissao("unidades.ver")) return;
 
-  // Cadastros: qualquer usuário logado consulta; criar, editar e desativar exigem cadastros.editar.
-  const podeEditar = temPermissao("cadastros.editar");
+  // Ver a tela exige unidades.ver; criar, editar e desativar exigem unidades.editar.
+  const podeEditar = temPermissao("unidades.editar");
 
   const elementos = {
     tabelaCorpo: document.getElementById("tabela-unidades-corpo"),
@@ -83,6 +83,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         <tr>
           <td class="celula-nome">${escaparHtml(unidade.nome)}</td>
           <td>${escaparHtml(unidade.sigla)}</td>
+          <td>${unidade.fracionavel ? "Fracionada" : "Inteira"}</td>
           <td><span class="badge-status ${badgeStatusClasse}">${unidade.ativo ? "Ativa" : "Inativa"}</span></td>
           <td class="celula-acoes">
             <button class="botao-icone" data-acao="visualizar" data-id="${unidade.id}" title="Visualizar" aria-label="Visualizar">
@@ -107,6 +108,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       elementos.modalTitulo.textContent = "Editar unidade de medida";
       document.getElementById("campo-nome").value = unidade.nome;
       document.getElementById("campo-sigla").value = unidade.sigla;
+      document.getElementById("campo-fracionavel").checked = unidade.fracionavel !== false;
     } else {
       unidadeEmEdicaoId = null;
       elementos.modalTitulo.textContent = "Nova unidade de medida";
@@ -123,6 +125,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   function abrirModalVisualizacao(unidade) {
     document.getElementById("vis-nome").textContent = unidade.nome;
     document.getElementById("vis-sigla").textContent = unidade.sigla;
+    document.getElementById("vis-fracionavel").textContent = unidade.fracionavel ? "Fracionada (aceita casas decimais)" : "Inteira (sem casas decimais)";
     document.getElementById("vis-status").textContent = unidade.ativo ? "Ativa" : "Inativa";
     document.getElementById("vis-criado-em").textContent =
       formatarData(unidade.created_at);
@@ -160,7 +163,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     const dados = {
       nome: document.getElementById("campo-nome").value,
-      sigla: document.getElementById("campo-sigla").value
+      sigla: document.getElementById("campo-sigla").value,
+      fracionavel: document.getElementById("campo-fracionavel").checked
     };
 
     if (!validarForm(dados)) return;

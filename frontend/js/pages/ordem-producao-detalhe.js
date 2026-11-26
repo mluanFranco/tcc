@@ -2,8 +2,10 @@
 //
 // Status (o backend impõe; a tela só mostra o que cabe):
 //   aberta → confirmada | cancelada      confirmada → cancelada
-// - ABERTA: não movimentou nada. Os insumos mostrados são uma PRÉVIA pela receita atual (+ simulação de estoque).
-// - Confirmar: consome os insumos, dá entrada no produto fabricado e GRAVA consumo e custo reais.
+// - ABERTA: os insumos já estão RESERVADOS (quantidades congeladas na criação). O custo mostrado é prévia.
+//   Não usa a simulação da receita: ela desconta o reservado e acusaria falta por causa da própria reserva.
+// - Confirmar: consome o que foi reservado, dá entrada no produto fabricado e GRAVA o custo real.
+// - Cancelar aberta: libera a reserva.
 // - Cancelar confirmada: devolve os insumos (pelas quantidades gravadas) e retira o fabricado; o servidor recusa
 //   se o produto já foi vendido ou reservado.
 
@@ -29,7 +31,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   const ROTULOS = { aberta: "Aberta", confirmada: "Confirmada", cancelada: "Cancelada" };
 
   let ordem = null;
-  let simulacao = null;       // só para ordem aberta (pode ficar null se a consulta falhar)
   let ocupado = false;
 
   const numero = () => formatarNumeroPedido(ordem.id);
@@ -75,15 +76,10 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   function renderizarInsumos() {
     if (ordem.status === "aberta") {
-      el.tituloInsumos.textContent = "Consumo previsto de insumos";
-      if (simulacao) {
-        renderizarSimulacao(el.insumos, simulacao);
-      } else {
-        // sem a simulação, mostra ao menos a prévia que a própria ordem traz
-        const total = ordem.itens.reduce((s, i) => s + Number(i.subtotal || 0), 0);
-        el.insumos.innerHTML = tabelaDeItens() + blocoDeCustos("Custo estimado", Math.round(total * 100) / 100, Math.round(total / Number(ordem.quantidade) * 100) / 100);
-      }
-      el.notaInsumos.textContent = "Prévia calculada pela receita atual. O consumo e o custo reais só são gravados quando a produção é confirmada.";
+      el.tituloInsumos.textContent = "Insumos reservados";
+      const total = ordem.itens.reduce((s, i) => s + Number(i.subtotal || 0), 0);
+      el.insumos.innerHTML = tabelaDeItens() + blocoDeCustos("Custo estimado", Math.round(total * 100) / 100, Math.round(total / Number(ordem.quantidade) * 100) / 100);
+      el.notaInsumos.textContent = "Estas quantidades já estão reservadas no estoque (não podem ser usadas por outra ordem ou venda) e serão consumidas na confirmação. O custo é uma prévia: o real é gravado quando a produção é confirmada. Cancelar a ordem libera a reserva.";
       el.notaInsumos.hidden = false;
       return;
     }
@@ -117,12 +113,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     renderizarInsumos();
 
-    if (ordem.status === "aberta" && simulacao && !simulacao.pode_produzir) {
-      el.faixaAviso.textContent = "Ainda não é possível confirmar esta ordem: veja a situação dos insumos abaixo.";
-      el.faixaAviso.hidden = false;
-    } else {
-      el.faixaAviso.hidden = true;
-    }
+    el.faixaAviso.hidden = true;
 
     document.title = `Ordem de Produção ${numero()} — Nova Sorvetes`;
     el.estadoPagina.hidden = true;
@@ -144,20 +135,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // ---------- Dados ----------
 
-  async function carregarSimulacao() {
-    simulacao = null;
-    if (ordem.status !== "aberta") return;
-    try {
-      simulacao = await receitaService.simular(ordem.receita_id, String(Number(ordem.quantidade)));
-    } catch (erro) {
-      simulacao = null;   // a tela segue com a prévia da própria ordem
-    }
-  }
-
   async function recarregar() {
     try {
       ordem = await ordemProducaoService.buscarPorId(ordem.id);
-      await carregarSimulacao();
       renderizarOrdem();
     } catch (erro) {
       toast.erro(erro.message);
@@ -170,22 +150,13 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (ocupado) return;
     definirOcupado(true);
 
-    // Confere o estoque agora (a simulação da tela pode estar velha). O servidor é quem decide;
-    // aqui só se evita uma confirmação que certamente seria recusada.
-    await carregarSimulacao();
-    renderizarOrdem();
-    if (simulacao && !simulacao.pode_produzir) {
-      definirOcupado(false);
-      toast.erro(resumoDaSimulacao(simulacao).texto);
-      return;
-    }
-
-    const consumo = simulacao
-      ? simulacao.itens.map(i => `${formatarNumero(i.necessario)}${i.unidade_sigla ? " " + i.unidade_sigla : ""} de ${i.produto_nome}`).join("; ")
-      : "os insumos da receita";
+    // os insumos já estão reservados: a confirmação consome exatamente essas quantidades
+    const consumo = ordem.itens.length
+      ? ordem.itens.map(i => `${formatarNumero(i.quantidade)}${i.unidade_sigla ? " " + i.unidade_sigla : ""} de ${i.produto_nome}`).join("; ")
+      : "os insumos reservados";
     const confirmou = await confirmarAcao({
       titulo: `Confirmar a produção ${numero()}?`,
-      mensagem: `Serão consumidos: ${consumo}. Entrarão no estoque ${textoQuantidade()} de ${ordem.produto_nome}. O custo real será gravado na ordem.`,
+      mensagem: `Serão consumidos os insumos reservados: ${consumo}. Entrarão no estoque ${textoQuantidade()} de ${ordem.produto_nome}. O custo real será gravado na ordem.`,
       textoConfirmar: "Confirmar produção",
       textoCancelar: "Voltar"
     });
@@ -193,7 +164,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     try {
       ordem = await ordemProducaoService.atualizarStatus(ordem.id, "confirmada");
-      simulacao = null;
       renderizarOrdem();
       definirOcupado(false);
       toast.sucesso(`Produção ${numero()} confirmada: ${textoQuantidade()} de ${ordem.produto_nome} no estoque.`);
@@ -211,7 +181,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       titulo: `Cancelar a ordem ${numero()}?`,
       mensagem: estavaConfirmada
         ? `Os insumos consumidos voltarão ao estoque e ${textoQuantidade()} de ${ordem.produto_nome} serão retirados. Só é possível se esse produto ainda estiver disponível (não vendido nem reservado).`
-        : "A ordem ainda não movimentou estoque; ela apenas ficará como cancelada e não poderá mais ser confirmada.",
+        : "A reserva dos insumos será liberada e a ordem ficará como cancelada; ela não poderá mais ser confirmada.",
       textoConfirmar: "Cancelar ordem",
       textoCancelar: "Voltar",
       perigo: true
@@ -221,10 +191,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     definirOcupado(true);
     try {
       ordem = await ordemProducaoService.atualizarStatus(ordem.id, "cancelada");
-      simulacao = null;
       renderizarOrdem();
       definirOcupado(false);
-      toast.sucesso(estavaConfirmada ? `Ordem ${numero()} cancelada e estoque revertido.` : `Ordem ${numero()} cancelada.`);
+      toast.sucesso(estavaConfirmada ? `Ordem ${numero()} cancelada e estoque revertido.` : `Ordem ${numero()} cancelada e reserva liberada.`);
     } catch (erro) {
       toast.erro(erro.message);
       await recarregar();
@@ -251,11 +220,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     return;
   }
 
-  await carregarSimulacao();
   renderizarOrdem();
 
   if (recemCriada) {
-    toast.sucesso(`Ordem de produção ${numero()} criada (aberta).`);
+    toast.sucesso(`Ordem de produção ${numero()} criada: insumos reservados.`);
     history.replaceState(null, "", `ordem-producao-detalhe.html?id=${ordem.id}`);
   }
 });

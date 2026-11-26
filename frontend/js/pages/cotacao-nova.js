@@ -5,6 +5,11 @@
 document.addEventListener("DOMContentLoaded", async () => {
   if (!exigirPermissao("cotacoes.editar")) return;
 
+  if (tiposCotacaoPermitidos().length === 0) {
+    toast.erro("Você não tem acesso a nenhum tipo de cotação (é preciso ver compras ou vendas).");
+    setTimeout(() => { window.location.href = "cotacoes.html"; }, 1500);
+    return;
+  }
   const tipoInicial = new URLSearchParams(window.location.search).get("tipo") === "venda" ? "venda" : "compra";
 
   const el = {

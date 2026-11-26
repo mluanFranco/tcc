@@ -14,9 +14,9 @@ let formaEmEdicaoId = null;
 let requisicaoAtual = 0;   // descarta respostas antigas se o usuário trocar de aba rápido
 
 document.addEventListener("DOMContentLoaded", async () => {
-  if (!exigirAutenticacao()) return;
+  if (!exigirPermissao("formas_pagamento.ver")) return;
 
-  const podeEditar = temPermissao("cadastros.editar");
+  const podeEditar = temPermissao("formas_pagamento.editar");
 
   const $ = (id) => document.getElementById(id);
   const el = {

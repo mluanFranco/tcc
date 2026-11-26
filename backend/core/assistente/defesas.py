@@ -3,7 +3,7 @@ Cada tentativa de ataque precisa ser BLOQUEADA, e cada uso legítimo precisa ser
 (as tentativas de escrita são inofensivas: WHERE 1 = 0, objetos inexistentes ou de nome de teste, e limpos ao final).
 
 Camadas verificadas:
-  1  banco: o usuário sistema_ia só tem SELECT nas 15 views (conferido com SHOW GRANTS e com tentativas reais de escrita)
+  1  banco: o usuário sistema_ia só tem SELECT nas views do esquema (conferido com SHOW GRANTS e com tentativas reais de escrita)
   2  views sem dados pessoais e documentadas (colunas do banco = colunas do esquema, nenhuma coluna sensível)
   3  validador de SQL (comandos, comentários, vários comandos, tabelas reais, funções perigosas, junções caras)
   4  permissão por módulo (view financeira sem financeiro.ver etc.)
@@ -28,6 +28,9 @@ logging.getLogger("sqlglot").setLevel(logging.ERROR)   # o aviso de "sintaxe nã
 C1, C2, C3, C4, C5 = "1-banco", "2-views", "3-validador", "4-permissao", "5-limites"
 SO_ASSISTENTE = {"assistente.ver"}
 SEM_FINANCEIRO = {"vendas.ver", "assistente.ver"}
+GRUPO_VENDAS = {"vendas.editar", "cotacoes.editar", "assistente.ver"}   # como o grupo Vendas: sem compras
+SO_COTACOES = {"cotacoes.ver", "assistente.ver"}                         # cotações sem vendas nem compras
+SO_PRODUTOS = {"produtos.ver", "assistente.ver"}                         # vê só o cadastro de produtos
 _COLUNAS_SENSIVEIS = ("cpf", "cnpj", "telefone", "celular", "email", "senha", "hash", "token", "endereco", "cep", "logradouro", "foto")
 _ERROS_DE_PRIVILEGIO = {1044, 1045, 1142, 1143, 1227, 1370, 1290, 1792, 1410}
 
@@ -78,13 +81,21 @@ NEGADOS_PELO_ESCOPO: Tuple[Tuple[str, str, set], ...] = (
     ("produção sem producao.ver", "SELECT COUNT(*) FROM v_producao", SEM_FINANCEIRO),
     ("view financeira escondida em JOIN", "SELECT v.id FROM v_vendas v JOIN v_titulos t ON t.pedido_id = v.id", SEM_FINANCEIRO),
     ("view financeira escondida em subconsulta", "SELECT (SELECT SUM(saldo) FROM v_titulos) AS x FROM v_vendas", SEM_FINANCEIRO),
+    ("cotações de compra para o grupo Vendas (sem compras.ver)", "SELECT COUNT(*) FROM v_cotacoes_compra", GRUPO_VENDAS),
+    ("cotações de compra escondidas em UNION com as de venda",
+     "SELECT produto FROM v_cotacoes_venda UNION SELECT produto FROM v_cotacoes_compra", GRUPO_VENDAS),
+    ("cotações de venda só com cotacoes.ver (sem vendas.ver)", "SELECT COUNT(*) FROM v_cotacoes_venda", SO_COTACOES),
+    ("produtos sem produtos.ver", "SELECT COUNT(*) FROM v_produtos", SO_ASSISTENTE),
+    ("clientes sem clientes.ver (mesmo vendo vendas)", "SELECT nome, cidade FROM v_clientes", SEM_FINANCEIRO),
+    ("fornecedores sem fornecedores.ver", "SELECT COUNT(*) FROM v_fornecedores", SO_PRODUTOS),
 )
 
 # (descrição, SQL, permissões) — precisa ser PERMITIDO (e o validador não pode estragar o uso legítimo)
 PERMITIDOS: Tuple[Tuple[str, str, set], ...] = (
     ("vendas com vendas.ver", "SELECT status, COUNT(*) AS n FROM v_vendas GROUP BY status", SEM_FINANCEIRO),
-    ("cadastros são livres para quem usa o assistente", "SELECT COUNT(*) FROM v_produtos WHERE ativo = 1", SO_ASSISTENTE),
+    ("produtos com produtos.ver", "SELECT COUNT(*) FROM v_produtos WHERE ativo = 1", SO_PRODUTOS),
     ("administrador lê a view financeira", "SELECT SUM(saldo) FROM v_titulos", set(CODIGOS)),
+    ("cotações de venda para o grupo Vendas", "SELECT status, COUNT(*) FROM v_cotacoes_venda GROUP BY status", GRUPO_VENDAS),
     ("junção de duas views com permissão", "SELECT v.status, COUNT(*) FROM v_vendas v JOIN v_venda_itens i ON i.pedido_venda_id = v.id GROUP BY v.status", SEM_FINANCEIRO),
 )
 
@@ -111,7 +122,7 @@ def _r(camada: str, tentativa: str, esperado: str, ok: bool, detalhe: str = "", 
 
 
 def _usuario_e_privilegios() -> List[Dict[str, Any]]:
-    """SHOW GRANTS: só SELECT nas 15 views (e USAGE, que não dá nada)."""
+    """SHOW GRANTS: só SELECT nas views do esquema (e USAGE, que não dá nada)."""
     eng = executor.obter_engine()
     with eng.connect() as con:
         concessoes = [str(l[0]) for l in con.execute(text("SHOW GRANTS FOR CURRENT_USER()")).fetchall()]
@@ -131,7 +142,7 @@ def _usuario_e_privilegios() -> List[Dict[str, Any]]:
     saida = [_r(C1, "o usuário sistema_ia só tem privilégio SELECT (nenhum INSERT/UPDATE/DELETE/DDL/GRANT)", "só SELECT", not indevidos,
                 "; ".join(indevidos) or f"{len(concessoes)} concessão(ões)")]
     faltam, sobram = sorted(set(VIEWS) - objetos), sorted(objetos - set(VIEWS))
-    saida.append(_r(C1, "o SELECT vale exatamente para as 15 views do esquema (nem mais, nem menos)", "15 views", not faltam and not sobram,
+    saida.append(_r(C1, f"o SELECT vale exatamente para as {len(VIEWS)} views do esquema (nem mais, nem menos)", f"{len(VIEWS)} views", not faltam and not sobram,
                     ("sem permissão em: " + ", ".join(faltam) + ". " if faltam else "") + ("permissão além das views: " + ", ".join(sobram) if sobram else "") or f"{len(objetos)} views"))
     return saida
 

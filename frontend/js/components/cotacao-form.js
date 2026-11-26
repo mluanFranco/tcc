@@ -15,7 +15,10 @@
 function criarFormularioCotacao(raiz, { modo = "criar", tipoInicial = "compra", cotacao = null, aoMudar = () => {} } = {}) {
   const editando = modo === "editar";
 
+  // só os tipos que o usuário pode usar (ex.: grupo Vendas não vê "Compra"); o backend recusa os demais
+  const tiposPermitidos = tiposCotacaoPermitidos();
   let tipo = editando ? cotacao.tipo : (tipoInicial === "venda" ? "venda" : "compra");
+  if (!editando && !tiposPermitidos.includes(tipo) && tiposPermitidos.length) tipo = tiposPermitidos[0];
   let produtos = [];              // os que podem aparecer nas linhas, em ordem alfabética
   let produtosPorId = {};
   let siglasPorUnidade = {};
@@ -37,12 +40,12 @@ function criarFormularioCotacao(raiz, { modo = "criar", tipoInicial = "compra", 
         <div class="campo-form cartao-grade--cheia" id="cf-grupo-tipo">
           <label>Tipo *</label>
           <div class="seletor-tipo" role="radiogroup" aria-label="Tipo da cotação">
-            <button type="button" class="seletor-tipo__opcao" data-tipo="compra" role="radio">
+            ${tiposPermitidos.includes("compra") || editando ? `<button type="button" class="seletor-tipo__opcao" data-tipo="compra" role="radio">
               <strong>Compra</strong><span>Peço o preço a um fornecedor</span>
-            </button>
-            <button type="button" class="seletor-tipo__opcao" data-tipo="venda" role="radio">
+            </button>` : ""}
+            ${tiposPermitidos.includes("venda") || editando ? `<button type="button" class="seletor-tipo__opcao" data-tipo="venda" role="radio">
               <strong>Venda</strong><span>Ofereço um preço a um cliente</span>
-            </button>
+            </button>` : ""}
           </div>
         </div>
 
@@ -664,8 +667,9 @@ function criarFormularioCotacao(raiz, { modo = "criar", tipoInicial = "compra", 
     try {
       const [prods, forns, clis, fms, unidades] = await Promise.all([
         produtoService.listar({ incluirInativos: true }),
-        fornecedorService.listar({ incluirInativos: true }),
-        clienteService.listar({ incluirInativos: true }),
+        // a parte de cada tipo só é lida por quem pode usar o tipo (compra = fornecedores, venda = clientes)
+        tiposPermitidos.includes("compra") || (editando && cotacao.tipo === "compra") ? fornecedorService.listar({ incluirInativos: true }) : Promise.resolve([]),
+        tiposPermitidos.includes("venda") || (editando && cotacao.tipo === "venda") ? clienteService.listar({ incluirInativos: true }) : Promise.resolve([]),
         formaPagamentoService.listar({ incluirInativos: true }),
         unidadeMedidaService.listar({ incluirInativos: true })
       ]);

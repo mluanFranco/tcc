@@ -14,10 +14,10 @@ let produtosVisiveis = [];       // o que a tabela está mostrando (base da expo
 let produtoEmEdicaoId = null;
 
 document.addEventListener("DOMContentLoaded", async () => {
-  if (!exigirAutenticacao()) return;
+  if (!exigirPermissao("produtos.ver")) return;
 
-  // Cadastros: qualquer usuário logado consulta; criar, editar e desativar exigem cadastros.editar.
-  const podeEditar = temPermissao("cadastros.editar");
+  // Ver a tela exige produtos.ver; criar, editar e desativar exigem produtos.editar.
+  const podeEditar = temPermissao("produtos.editar");
 
   aplicarMascaraMoeda(document.getElementById("campo-preco-custo"));
 
@@ -685,8 +685,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   elementos.campoEstoqueMinimo.addEventListener("input", atualizarEmbalagem);
   elementos.campoPorcentagem.addEventListener("input", atualizarPreviewPrecoVenda);
 
-  // Exportar (PDF/Excel): cadastros em massa só para quem pode editar cadastros
-  if (temPermissao("cadastros.editar")) {
+  // Exportar (PDF/Excel): cadastros em massa só para quem pode editar produtos
+  if (temPermissao("produtos.editar")) {
     exportador.montar({
       modulo: "produtos",
       obterIds: () => produtosVisiveis.map(p => p.id),

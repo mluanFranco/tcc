@@ -55,6 +55,7 @@ class ReceitaResponse(BaseModel):
     produto_id: int
     produto_nome: str
     unidade_sigla: Optional[str]
+    unidade_fracionavel: bool = True     # False = produto em unidade inteira: rendimento e ordem sem casas decimais
     rendimento: QuantidadeSaida
     observacao: Optional[str]
     ativo: bool

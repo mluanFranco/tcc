@@ -4,6 +4,7 @@ from database import get_db
 from models import Produto, Categoria, Subcategoria, UnidadeMedida
 from schemas.produto import ProdutoCreate, ProdutoUpdate, ProdutoResponse, validar_embalagem
 from core.security import get_current_user
+from core.quantidades import exigir_inteiro
 from decimal import Decimal
 from typing import List
 
@@ -53,6 +54,17 @@ def _validar_unidade_embalagem(db: Session, embalagem_unidade_id: int, unidade_b
         raise HTTPException(status_code=400, detail="A unidade da embalagem está inativa")
 
 
+def _validar_unidade_inteira(db: Session, unidade_id: int, estoque_minimo, fator, produto: Produto = None) -> None:
+    """Unidade base inteira (un, pote...): estoque mínimo e fator da embalagem sem casas decimais
+    (1 caixa = 12 un, nunca 12,5). Se o produto já existe, o estoque atual também precisa caber na unidade."""
+    unidade = db.query(UnidadeMedida).filter(UnidadeMedida.id == unidade_id).first()
+    exigir_inteiro(estoque_minimo, unidade, "Estoque mínimo")
+    exigir_inteiro(fator, unidade, "Fator da embalagem (quantas unidades base cabem em 1 embalagem)")
+    if produto is not None:
+        exigir_inteiro(produto.estoque_atual, unidade, f"Estoque atual de '{produto.nome}'")
+        exigir_inteiro(produto.estoque_reservado, unidade, f"Estoque reservado de '{produto.nome}'")
+
+
 def _calcular_preco_venda(preco_custo: float, porcentagem: float) -> float:
     return round(preco_custo + (preco_custo * porcentagem / 100), 2)
 
@@ -67,6 +79,7 @@ def criar_produto(dados: ProdutoCreate, db: Session = Depends(get_db), _=Depends
     payload = dados.model_dump()
     if payload["embalagem_unidade_id"] is None:
         payload["fator_embalagem"] = Decimal("1")
+    _validar_unidade_inteira(db, payload["unidade_medida_id"], payload.get("estoque_minimo"), payload["fator_embalagem"])
 
     if payload["e_vendavel"]:
         payload["preco_venda"] = _calcular_preco_venda(payload["preco_custo"], payload["porcentagem"])
@@ -156,6 +169,8 @@ def atualizar_produto(produto_id: int, dados: ProdutoUpdate, db: Session = Depen
     if embalagem_final is not None and (embalagem_final != produto.embalagem_unidade_id or unidade_final != produto.unidade_medida_id):
         _validar_unidade_embalagem(db, embalagem_final, unidade_final)
     atualizacoes["fator_embalagem"] = fator_final
+    _validar_unidade_inteira(db, unidade_final, atualizacoes.get("estoque_minimo", produto.estoque_minimo), fator_final,
+                             produto if unidade_final != produto.unidade_medida_id else None)
 
     if not e_insumo_final and not e_vendavel_final:
         raise HTTPException(

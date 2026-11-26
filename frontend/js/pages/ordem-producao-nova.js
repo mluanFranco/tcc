@@ -1,6 +1,7 @@
 // Nova Ordem de Produção.
-// A ordem nasce ABERTA e não reserva estoque: a conferência de insumos aqui é só uma simulação
-// (GET /receitas/{id}/simulacao) e não bloqueia a criação. O consumo real acontece ao confirmar.
+// A ordem nasce ABERTA e já RESERVA os insumos: o servidor só cria se houver insumo disponível (400 se faltar).
+// A simulação (GET /receitas/{id}/simulacao) mostra a situação antes; se ela acusar falta, a tela nem envia.
+// O consumo real acontece ao confirmar, pelas quantidades reservadas.
 // ?receita=ID abre com a receita já escolhida (vem do botão "Produzir" da receita).
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -23,6 +24,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   let requisicaoSimulacao = 0;
   let temporizadorSimulacao = null;
   let instantaneoInicial = "";
+  let ultimaSimulacao = null;   // { chave, sim }: a última simulação desenhada (para barrar a criação sem insumo)
 
   const receitaEscolhida = () => receitas.find(r => String(r.id) === el.receita.value) || null;
   const instantaneo = () => JSON.stringify([el.receita.value, el.quantidade.value, el.observacao.value.trim()]);
@@ -43,9 +45,14 @@ document.addEventListener("DOMContentLoaded", async () => {
       el.simulacao.innerHTML = MENSAGEM_VAZIA;
       return;
     }
+    if (receita.unidade_fracionavel === false && !Number.isInteger(quantidade)) {
+      el.simulacao.innerHTML = `<div class="simulacao-vazia">${escaparHtml(textoInteira(receita))}</div>`;
+      return;
+    }
     try {
       const sim = await receitaService.simular(receita.id, texto);
       if (minha !== requisicaoSimulacao) return;
+      ultimaSimulacao = { chave: `${receita.id}|${texto}`, sim };
       renderizarSimulacao(el.simulacao, sim);
     } catch (erro) {
       if (minha !== requisicaoSimulacao) return;
@@ -58,9 +65,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     temporizadorSimulacao = setTimeout(simular, atraso);
   }
 
+  const textoInteira = (r) => `${r.produto_nome} é produzido em unidade inteira (${r.unidade_sigla || "un"}): informe uma quantidade sem casas decimais.`;
+
   function atualizarDicas() {
     const r = receitaEscolhida();
     el.sigla.textContent = r && r.unidade_sigla ? r.unidade_sigla : "";
+    el.quantidade.step = r && r.unidade_fracionavel === false ? "1" : "0.001";
     el.dicaRendimento.textContent = r
       ? `A receita rende ${formatarNumero(r.rendimento)}${r.unidade_sigla ? " " + r.unidade_sigla : ""} por vez; qualquer quantidade é aceita.`
       : "";
@@ -92,6 +102,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     let erro = "";
     if (el.quantidade.value === "" || !(quantidade > 0)) erro = "Informe uma quantidade maior que zero.";
     else if (!casasDecimaisOk(quantidade, 3)) erro = "A quantidade aceita no máximo 3 casas decimais.";
+    else if (receitaEscolhida() && receitaEscolhida().unidade_fracionavel === false && !Number.isInteger(quantidade)) erro = textoInteira(receitaEscolhida());
     el.grupoQuantidade.classList.toggle("invalido", Boolean(erro));
     if (erro) {
       el.erroQuantidade.textContent = erro;
@@ -106,6 +117,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (problema) {
       toast.erro(problema.mensagem);
       problema.foco.focus();
+      return;
+    }
+    const chave = `${el.receita.value}|${el.quantidade.value}`;
+    if (ultimaSimulacao && ultimaSimulacao.chave === chave && !ultimaSimulacao.sim.pode_produzir) {
+      toast.erro(resumoDaSimulacao(ultimaSimulacao.sim).texto);
       return;
     }
     salvando = true;

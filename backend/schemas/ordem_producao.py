@@ -34,7 +34,7 @@ class OrdemProducaoResponse(BaseModel):
     usuario_id: int
     usuario_nome: Optional[str]
     observacao: Optional[str]
-    itens_previa: bool          # True = ordem aberta: itens calculados pela receita atual (ainda não congelados)
+    itens_previa: bool          # True = ordem aberta: quantidades = o RESERVADO (congelado); custo ainda é prévia
     itens: List[OrdemProducaoItemResponse]
     custo_total: Optional[float]
     custo_unitario: Optional[float]

@@ -15,10 +15,10 @@ let enderecoEntregaEmEdicaoId = null;
 let clientesVisiveis = [];   // o que a tabela está mostrando (base da exportação)
 
 document.addEventListener("DOMContentLoaded", async () => {
-  if (!exigirAutenticacao()) return;
+  if (!exigirPermissao("clientes.ver")) return;
 
-  // Cadastros: qualquer usuário logado consulta; criar, editar e desativar exigem cadastros.editar.
-  const podeEditar = temPermissao("cadastros.editar");
+  // Ver a tela exige clientes.ver; criar, editar e desativar exigem clientes.editar.
+  const podeEditar = temPermissao("clientes.editar");
 
   const elementos = {
     tabelaCorpo: document.getElementById("tabela-clientes-corpo"),
@@ -654,8 +654,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (e.target === elementos.modalVisualizarOverlay) fecharModalVisualizacao();
   });
 
-  // Exportar (PDF/Excel): dados pessoais em massa só para quem pode editar cadastros
-  if (temPermissao("cadastros.editar")) {
+  // Exportar (PDF/Excel): dados pessoais em massa só para quem pode editar clientes
+  if (temPermissao("clientes.editar")) {
     exportador.montar({
       modulo: "clientes",
       obterIds: () => clientesVisiveis.map(c => c.id),

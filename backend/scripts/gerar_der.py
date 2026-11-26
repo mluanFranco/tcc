@@ -354,7 +354,7 @@ add(marcador(x1 + 40, fy - 5, -1, "zero_um"))
 add(f'<line x1="{x1+40}" y1="{fy-5}" x2="{x1+90}" y2="{fy-5}" stroke="#64748b" stroke-width="1.6"/>')
 add(marcador(x1 + 90, fy - 5, 1, "muitos"))
 add(f'<text x="{x1+135}" y="{fy}" font-size="13.5" fill="#334155">zero ou um (FK opcional) para muitos</text>')
-add(f'<text x="{PX}" y="{fy+24}" font-size="13" fill="#64748b">Além das 32 tabelas, o banco possui 15 views somente leitura '
+add(f'<text x="{PX}" y="{fy+24}" font-size="13" fill="#64748b">Além das 32 tabelas, o banco possui 16 views somente leitura '
     f'(prefixo v_) usadas pelo Assistente de IA. PK = chave primária · FK = chave estrangeira · UQ = valor único.</text>')
 add('</svg>')
 

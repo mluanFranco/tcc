@@ -23,11 +23,14 @@ a pagar conforme a forma de pagamento. Compra é INVESTIMENTO em estoque, não d
     "cotacoes": ("cotacao cotacoes orcamento proposta aprovar aprovada recusada validade", """\
 COTAÇÕES. Dois tipos: de COMPRA (parte = fornecedor; o preço pode ficar vazio até o fornecedor responder) e de VENDA (parte = cliente;
 com desconto em reais por item). Status: rascunho, enviada, recebida, aprovada, recusada. Ao aprovar, a cotação gera o pedido
-correspondente (de compra ou de venda). Também tem PDF para enviar à outra parte."""),
+correspondente (de compra ou de venda). Também tem PDF para enviar à outra parte.
+ACESSO: cotação de compra exige também ver compras; a de venda, ver vendas (ex.: o grupo Vendas só trabalha com cotações de venda)."""),
     "producao": ("producao produzir receita receitas ordem insumo rendimento fabricar custo", """\
 PRODUÇÃO. A RECEITA define o produto final, o rendimento (quanto uma receita rende) e os insumos com as quantidades. A ORDEM DE PRODUÇÃO
-('aberta', 'confirmada' ou 'cancelada') diz quanto fabricar. Ao confirmar, consome os insumos do estoque, dá entrada do produto
-final e calcula o custo total e o custo unitário; antes disso não há custo. Ordem cancelada não altera estoque."""),
+('aberta', 'confirmada' ou 'cancelada') diz quanto fabricar. Ao CRIAR, a ordem já RESERVA os insumos (estoque_reservado): só é criada
+se houver insumo disponível, e a quantidade reservada fica congelada (mudar a receita depois não altera a ordem). Ao confirmar, consome o
+que foi reservado, dá entrada do produto final e calcula o custo total e o custo unitário. Cancelar uma ordem aberta libera a reserva;
+cancelar uma confirmada devolve os insumos e retira o produto (se ele ainda estiver disponível)."""),
     "financeiro": ("financeiro titulo titulos pagar receber baixa baixas estorno parcela vencimento atraso inadimplencia categoria avulso saldo", """\
 FINANCEIRO. TÍTULOS são as contas: tipo 'receber' (vindos de vendas confirmadas) e 'pagar' (vindos de compras), uma linha por parcela,
 mais lançamentos AVULSOS (ex.: aluguel) com categoria financeira própria. Status: aberto, parcial, pago, cancelado. BAIXA é o pagamento
@@ -40,7 +43,7 @@ usa a data do pagamento das baixas (estornadas não contam). FLUXO PREVISTO usa 
 em faixas (1-30, 31-60, 61-90, mais de 90 dias). Há também séries (mês, trimestre, estação, ano), comparativo entre dois períodos e
 rankings de produtos, clientes e fornecedores. Exigem a permissão de relatórios."""),
     "estoque": ("estoque minimo reservado disponivel baixo produto produtos insumo vendavel unidade embalagem pote saco caixa fator conversao", """\
-ESTOQUE. Cada produto tem estoque_atual, estoque_reservado (separado por vendas em aberto), estoque_disponivel (atual - reservado) e
+ESTOQUE. Cada produto tem estoque_atual, estoque_reservado (separado por vendas em aberto e pelos insumos das ordens de produção abertas), estoque_disponivel (atual - reservado) e
 estoque_minimo. Estoque baixo = estoque_atual <= estoque_minimo. Produto pode ser insumo (matéria-prima), vendável ou ambos. As quantidades
 aceitam casas decimais (ex.: kg).
 EMBALAGEM. O estoque e as receitas ficam sempre na unidade base do produto (ex.: litro). O produto pode ter uma embalagem de compra e venda
@@ -58,7 +61,9 @@ CADASTROS: produtos (com categoria, subcategoria e unidade de medida), clientes 
     "acesso": ("acesso permissao permissoes grupo grupos usuario usuarios admin perfil senha foto login", """\
 ACESSO. Cada usuário pertence a um GRUPO DE ACESSO e pode ter permissões extras. As permissões são por módulo: 'ver' (consultar) e
 'editar' (criar e alterar; já inclui ver). O administrador tem tudo e é o único que gerencia usuários, grupos e permissões.
-Cadastros são de leitura livre para qualquer usuário logado. Usuário inativo não entra no sistema."""),
+Cada cadastro (produtos, categorias, subcategorias, unidades, clientes, fornecedores, formas de pagamento) tem o seu ver/editar;
+quem usa vendas, compras, cotações, produção, geladeiras ou financeiro também consegue LISTAR, nos formulários, os cadastros
+de que precisa (ex.: clientes no pedido de venda), mas só altera um cadastro com o 'editar' dele. Usuário inativo não entra no sistema."""),
     "assistente": ("assistente ia inteligencia artificial pergunta perguntas chat limite privacidade", """\
 ASSISTENTE DE IA. Responde perguntas sobre os dados do sistema em linguagem natural. Só LÊ dados: nunca altera nada. Enxerga apenas o que o
 próprio usuário já poderia ver nas telas (a permissão de cada módulo vale também aqui) e não tem acesso a documentos, telefones, e-mails

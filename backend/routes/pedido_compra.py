@@ -8,6 +8,7 @@ from schemas.pedido_compra import (
 )
 from core.security import get_current_user
 from core.estoque import quantidade_base, travar_produtos
+from core.quantidades import exigir_inteiro, unidade_negociacao
 from core.pedidos import registrar_pedido_compra
 from core.financeiro import cancelar_titulos_do_pedido
 from core.permissoes import exigir
@@ -117,6 +118,8 @@ def registrar_recebimento(
 
     for item_id, quantidade in recebido_agora.items():
         item = itens_do_pedido[item_id]
+        produto = produtos[item.produto_id]
+        exigir_inteiro(quantidade, unidade_negociacao(produto), f"Quantidade recebida de '{produto.nome}'")
         restante = item.quantidade - item.quantidade_recebida
         if quantidade > restante:
             produto = produtos[item.produto_id]

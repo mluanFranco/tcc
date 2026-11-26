@@ -6,10 +6,10 @@ let abaAtivaCategoria = "ativos";
 let categoriaEmEdicaoId = null;
 
 document.addEventListener("DOMContentLoaded", async () => {
-  if (!exigirAutenticacao()) return;
+  if (!exigirPermissao("categorias.ver")) return;
 
-  // Cadastros: qualquer usuário logado consulta; criar, editar e desativar exigem cadastros.editar.
-  const podeEditar = temPermissao("cadastros.editar");
+  // Ver a tela exige categorias.ver; criar, editar e desativar exigem categorias.editar.
+  const podeEditar = temPermissao("categorias.editar");
 
   const elementos = {
     tabelaCorpo: document.getElementById("tabela-categorias-corpo"),
